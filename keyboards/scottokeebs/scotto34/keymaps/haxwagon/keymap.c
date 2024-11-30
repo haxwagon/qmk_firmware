@@ -17,6 +17,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include QMK_KEYBOARD_H
 
+// layers
+enum LAYERS {
+    LAYER_QWERTY,
+    LAYER_SPECIAL,
+    LAYER_NUMSYMS,
+    LAYER_EDIT,
+    LAYER_MEDIA,
+    LAYER_MOUSE,
+    LAYER_JOYSTICK
+};
+
 // key combos
 const uint16_t PROGMEM left_alt_combo[] = {KC_S, KC_D, COMBO_END};
 const uint16_t PROGMEM left_ctl_combo[] = {KC_A, KC_S, COMBO_END};
@@ -50,13 +61,31 @@ combo_t key_combos[] = {
 // key overrides
 const key_override_t f11_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
 const key_override_t f12_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
+const key_override_t f13_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
+const key_override_t f14_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
+const key_override_t f15_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
+const key_override_t f16_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
+const key_override_t f17_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
+const key_override_t f18_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
+const key_override_t f19_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
+const key_override_t f20_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
 const key_override_t *key_overrides[] = {
 	&f11_key_override,
-	&f12_key_override
+	&f12_key_override,
+	&f13_key_override,
+	&f14_key_override,
+	&f15_key_override,
+	&f16_key_override,
+	&f17_key_override,
+	&f18_key_override,
+	&f19_key_override,
+	&f20_key_override
 };
 
 // joystick settings
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
+//    JOYSTICK_AXIS_IN(PINNAME, LOWVAL, 0VAL, HIGHVAL) or JOYSTICK_AXIS_VIRTUAL
+    JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
@@ -66,59 +95,49 @@ static bool joystick_precision = false;
 static uint16_t joystick_precision_mod = 64;
 static uint16_t joystick_axis_val = 127;
 
-enum LAYERS {
-    LAYER_QWERTY,
-    LAYER_SPECIAL,
-    LAYER_NUMSYMS,
-    LAYER_EDIT,
-    LAYER_MEDIA,
-    LAYER_MOUSE,
-    LAYER_JOYSTICK
-};
-
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_QWERTY] = LAYOUT_split_3x5_2(
         KC_Q,         KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I,     KC_O,   KC_P,
         KC_A,         KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K,     KC_L,   KC_SCLN,
         LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, KC_COMMA, KC_DOT, RSFT_T(KC_SLSH),
-                LT(LAYER_NUMSYMS, KC_SPACE), LT(LAYER_SPECIAL, KC_SPACE), LT(LAYER_SPECIAL, KC_SPACE), LT(LAYER_NUMSYMS, KC_SPACE)
+        LT(LAYER_NUMSYMS, KC_SPACE), LT(LAYER_SPECIAL, KC_SPACE), LT(LAYER_SPECIAL, KC_SPACE), LT(LAYER_NUMSYMS, KC_SPACE)
     ),
     [LAYER_SPECIAL] = LAYOUT_split_3x5_2(
         KC_ESC,         KC_NO,   KC_NO,   KC_NO,   TG(LAYER_JOYSTICK), KC_MINS, KC_PLUS, KC_EQL,  KC_DEL,  KC_BSPC,
         KC_TAB,         KC_NO,   KC_NO,   KC_NO,   KC_NO,              KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_ENT,
         LSFT_T(KC_GRV), KC_NO,   KC_LCBR, KC_RCBR, KC_NO,              KC_NO,   KC_LBRC, KC_RBRC, KC_QUOT, RSFT_T(KC_BSLS),
-                KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_NUMSYMS] = LAYOUT_split_3x5_2(
         KC_F1,           KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,
         KC_1,            KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,
         LSFT_T(KC_EXLM), KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
-                KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_EDIT] = LAYOUT_split_3x5_2(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, LCTL(KC_X), LCTL(KC_Z), KC_UP,   KC_DEL,  KC_INS,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, LCTL(KC_C), KC_LEFT,    KC_DOWN, KC_RGHT, KC_ENT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, LCTL(KC_V), KC_PGDN,    KC_PGUP, KC_HOME, KC_END,
-                KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_MEDIA] = LAYOUT_split_3x5_2(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,   KC_MRWD, KC_VOLU, KC_MFFD, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPLY, KC_MPRV, KC_VOLD, KC_MNXT, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,   KC_NO,   KC_MUTE, KC_NO,   KC_NO,
-                KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_MOUSE] = LAYOUT_split_3x5_2(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, MS_BTN5, MS_BTN2, MS_BTN3, MS_BTN4, MS_BTN6,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, MS_BTN1,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, MS_BTN7,
-                KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
         JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_3, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH,  JOYSTICK_HAT_NORTHEAST,
         JS_6,  KC_P4, KC_P5, KC_P6, JS_7, JS_1, JS_0, JOYSTICK_HAT_WEST,      JOYSTICK_HAT_CENTER, JOYSTICK_HAT_EAST,
         JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_4, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH,  JOYSTICK_HAT_SOUTHEAST,
-                TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK)
+        TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK)
     )
 };
 

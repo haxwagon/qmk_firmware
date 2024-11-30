@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Define options
 #define ENCODER_A_PINS { GP6 }
 #define ENCODER_B_PINS { GP7 }
-#define JOYSTICK_AXIS_COUNT 4
+#define JOYSTICK_AXIS_COUNT 5
 #define JOYSTICK_AXIS_RESOLUTION 10
 #define JOYSTICK_BUTTON_COUNT 12
 #define JOYSTICK_HAS_HAT
