@@ -1,6 +1,5 @@
 #include QMK_KEYBOARD_H
 
-// layers
 enum LAYERS {
     LAYER_QWERTY,  // default
     LAYER_FUNC,    // lower
@@ -13,20 +12,64 @@ enum LAYERS {
     LAYER_JOYSTICK,
     LAYER_NUMPAD,
 };
+static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
-// tap dances
-enum {
-    TD_BRACES,
-    TD_BRACKETS,
-    TD_COMMSCLN,
-    TD_DOTEXLM,
-    TD_PARENS,
-    TD_PASTSLS,
-    TD_PPLSMNS,
-    TD_QUOTGRV,
-    TD_SLASHES,
+#if defined(COMBO_ENABLE)
+const uint16_t PROGMEM left_alt_combo[]      = {KC_X, KC_C, COMBO_END};
+const uint16_t PROGMEM left_ctl_combo[]      = {KC_C, KC_V, COMBO_END};
+const uint16_t PROGMEM left_ctl_alt_combo[]  = {KC_X, KC_C, KC_V, COMBO_END};
+const uint16_t PROGMEM left_ctl_gui_combo[]  = {KC_C, KC_V, KC_B, COMBO_END};
+const uint16_t PROGMEM left_gui_combo[]      = {KC_V, KC_B, COMBO_END};
+const uint16_t PROGMEM right_alt_combo[]     = {KC_COMM, KC_DOT, COMBO_END};
+const uint16_t PROGMEM right_ctl_combo[]     = {KC_M, KC_COMM, COMBO_END};
+const uint16_t PROGMEM right_gui_combo[]     = {KC_N, KC_M, COMBO_END};
+const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_M, KC_COMM, KC_DOT, COMBO_END};
+const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_N, KC_M, KC_COMM, COMBO_END};
+combo_t key_combos[] = {
+    COMBO(left_alt_combo, KC_LALT),
+    COMBO(left_ctl_combo, KC_LCTL),
+    COMBO(left_gui_combo, KC_LGUI),
+    COMBO(left_ctl_alt_combo, LCTL(KC_LALT)),
+    COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)),
+    COMBO(right_alt_combo, KC_RALT),
+    COMBO(right_ctl_combo, KC_RCTL),
+    COMBO(right_gui_combo, KC_RGUI),
+    COMBO(right_ctl_alt_combo, RCTL(KC_RALT)),
+    COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
 };
+#endif
 
+#if defined(KEY_OVERRIDE_ENABLE)
+const key_override_t backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
+const key_override_t f11_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
+const key_override_t f12_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
+const key_override_t f13_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
+const key_override_t f14_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
+const key_override_t f15_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
+const key_override_t f16_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
+const key_override_t f17_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
+const key_override_t f18_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
+const key_override_t f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
+const key_override_t f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
+const key_override_t *key_overrides[]           = {
+    &backspace_del_key_override,
+	&f11_key_override,
+	&f12_key_override,
+	&f13_key_override,
+	&f14_key_override,
+	&f15_key_override,
+	&f16_key_override,
+	&f17_key_override,
+	&f18_key_override,
+	&f19_key_override,
+	&f20_key_override,
+};
+#endif
+
+#if defined(TAP_DANCE_ENABLE)
+
+#if defined(TAP_DANCE_QUAD_SUPPORT)
+//#region Tap Dance Quad Support
 typedef enum {
     TD_NONE,
     TD_UNKNOWN,
@@ -104,6 +147,20 @@ void td_quad_reset(tap_dance_state_t *state, void *user_data) {
 #define ACTION_TAP_DANCE_QUAD(kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold) \
     { .fn = {NULL, td_quad_finished, td_quad_reset, NULL}, \
       .user_data = (void *)&((td_quad_keycodes_t){kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold}), }
+#endif
+enum {
+    TD_BRACES,
+    TD_BRACKETS,
+    TD_COMMSCLN,
+    TD_DOTEXLM,
+    TD_EQLPLUS,
+    TD_MINSUNDS,
+    TD_PARENS,
+    TD_PASTSLS,
+    TD_PPLSMNS,
+    TD_QUOTGRV,
+    TD_SLASHES,
+};
 
 tap_dance_action_t tap_dance_actions[] = {
     // Tap once for Escape, twice for Caps Lock
@@ -111,63 +168,17 @@ tap_dance_action_t tap_dance_actions[] = {
     [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC),
     [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN),
     [TD_DOTEXLM]  = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM),
+    [TD_EQLPLUS]  = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS),
+    [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS),
     [TD_PARENS]   = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
     [TD_PASTSLS]  = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS),
     [TD_PPLSMNS]  = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS),
     [TD_QUOTGRV]  = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV),
     [TD_SLASHES]  = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE)
 };
+#endif
 
-// key combos
-const uint16_t PROGMEM left_alt_combo[]      = {KC_X, KC_C, COMBO_END};
-const uint16_t PROGMEM left_ctl_combo[]      = {KC_C, KC_V, COMBO_END};
-const uint16_t PROGMEM left_ctl_alt_combo[]  = {KC_X, KC_C, KC_V, COMBO_END};
-const uint16_t PROGMEM left_ctl_gui_combo[]  = {KC_C, KC_V, KC_B, COMBO_END};
-const uint16_t PROGMEM left_gui_combo[]      = {KC_V, KC_B, COMBO_END};
-const uint16_t PROGMEM right_alt_combo[]     = {KC_COMM, KC_DOT, COMBO_END};
-const uint16_t PROGMEM right_ctl_combo[]     = {KC_M, KC_COMM, COMBO_END};
-const uint16_t PROGMEM right_gui_combo[]     = {KC_N, KC_M, COMBO_END};
-const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_M, KC_COMM, KC_DOT, COMBO_END};
-const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_N, KC_M, KC_COMM, COMBO_END};
-combo_t key_combos[] = {
-    COMBO(left_alt_combo, KC_LALT),
-    COMBO(left_ctl_combo, KC_LCTL),
-    COMBO(left_gui_combo, KC_LGUI),
-    COMBO(left_ctl_alt_combo, LCTL(KC_LALT)),
-    COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)),
-    COMBO(right_alt_combo, KC_RALT),
-    COMBO(right_ctl_combo, KC_RCTL),
-    COMBO(right_gui_combo, KC_RGUI),
-    COMBO(right_ctl_alt_combo, RCTL(KC_RALT)),
-    COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
-};
-
-// key overrides
-const key_override_t backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
-const key_override_t f11_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
-const key_override_t f12_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
-const key_override_t f13_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
-const key_override_t f14_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
-const key_override_t f15_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
-const key_override_t f16_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
-const key_override_t f17_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
-const key_override_t f18_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
-const key_override_t f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
-const key_override_t f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
-const key_override_t *key_overrides[]           = {
-    &backspace_del_key_override,
-	&f11_key_override,
-	&f12_key_override,
-	&f13_key_override,
-	&f14_key_override,
-	&f15_key_override,
-	&f16_key_override,
-	&f17_key_override,
-	&f18_key_override,
-	&f19_key_override,
-	&f20_key_override,
-};
-
+#if defined(JOYSTICK_ENABLE)
 // joystick settings
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 //    JOYSTICK_AXIS_IN(PINNAME, LOWVAL, 0VAL, HIGHVAL) or JOYSTICK_AXIS_VIRTUAL
@@ -178,10 +189,9 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
 };
-static bool joystick_precision = false;
-static uint16_t joystick_precision_mod = 64;
-static uint16_t joystick_axis_val = 127;
-
+static const uint16_t js_maxvalue = 127;
+static const uint16_t js_precisions[2][3] = { {10, 10, 10}, {10, 10, 10} };
+static uint16_t js_values[2][3] = { {0, 0, 0}, {0, 0, 0} };
 enum JS_AXES {
     JS_AXIS_0_X,
     JS_AXIS_0_Y,
@@ -190,99 +200,10 @@ enum JS_AXES {
     JS_AXIS_1_Y,
     JS_AXIS_1_Z
 };
-
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [LAYER_QWERTY] = LAYOUT_split_3x5_2(
-        KC_Q,         KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I,            KC_O,           KC_P,
-        KC_A,         KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K,            KC_L,           KC_SCLN,
-        LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTEXLM), RSFT_T(KC_SLSH),
-        LT(TL_UPPR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_UPPR, KC_SPACE)
-    ),
-    [LAYER_FUNC] = LAYOUT_split_3x5_2(
-        KC_ESC,  TT(LAYER_GAMEPAD), TT(LAYER_MEDIA),  TT(LAYER_NUMPAD), TT(LAYER_JOYSTICK), KC_UNDS,       KC_MINS,         KC_PLUS,       KC_EQL,         KC_BSPC,
-        KC_TAB,  KC_MENU,           KC_HOME,          KC_FIND,          KC_NO,              KC_LEFT,       KC_DOWN,         KC_UP,         KC_RGHT,        KC_ENT,
-        KC_LSFT, KC_NO,             KC_NO,            KC_NO,            KC_NO,              TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_PARENS), TD(TD_QUOTGRV), RSFT_T(KC_BSLS),
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
-    ),
-    [LAYER_GAMEPAD] = LAYOUT_split_3x5_2(
-        KC_ESC,  KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TAB,  KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        MO(LAYER_GAMEPAD2), KC_SPACE, TG(LAYER_GAMEPAD), TG(LAYER_GAMEPAD)
-    ),
-    [LAYER_GAMEPAD2] = LAYOUT_split_3x5_2(
-        KC_F1,   KC_F2, KC_F3, KC_F4, KC_F5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_1,    KC_2,  KC_3,  KC_4,  KC_5,  KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LSFT, KC_NO, KC_T,  KC_G,  KC_B,  KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TRNS, KC_SPACE, KC_TRNS, KC_TRNS
-    ),
-    [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
-        JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_3, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH,  JOYSTICK_HAT_NORTHEAST,
-        JS_6,  KC_P4, KC_P5, KC_P6, JS_7, JS_1, JS_0, JOYSTICK_HAT_WEST,      JOYSTICK_HAT_CENTER, JOYSTICK_HAT_EAST,
-        JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_4, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH,  JOYSTICK_HAT_SOUTHEAST,
-        TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK), TG(LAYER_JOYSTICK)
-    ),
-    [LAYER_MEDIA] = LAYOUT_split_3x5_2(
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,   KC_BRID, KC_BRIU, KC_NO,   KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, KC_MPLY,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO,   KC_MFFD, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
-    ),
-    [LAYER_MOVE] = LAYOUT_split_3x5_2(
-        MS_WHLU, MS_WHLL, MS_UP,   MS_WHLR, MS_BTN2, KC_NO,   KC_NO,    KC_NO,   KC_DEL,  KC_INS,
-        MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN,  KC_UP,   KC_RGHT, KC_ENT,
-        MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN,  KC_PGUP, KC_END,  KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
-    ),
-    [LAYER_NUMPAD] = LAYOUT_split_3x5_2(
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PASTSLS), KC_P7, KC_P8, KC_P9, KC_BSPC,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PPLSMNS), KC_P4, KC_P5, KC_P6, KC_PENT,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_P0,          KC_P1, KC_P2, KC_P3, KC_PDOT,
-        TG(LAYER_NUMPAD), TG(LAYER_NUMPAD), TG(LAYER_NUMPAD), TG(LAYER_NUMPAD)
-    ),
-    [LAYER_NUMSYMS] = LAYOUT_split_3x5_2(
-        KC_F1,           KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,
-        KC_1,            KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,
-        LSFT_T(KC_EXLM), KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
-    ),
-};
-
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    int16_t precision_val = joystick_axis_val;
-    if (joystick_precision) {
-        precision_val -= joystick_precision_mod;
-    }
-
-    // switch (keycode) {
-    //     case KC_P4:
-    //         joystick_set_axis(JS_AXIS_0_X, record->event.pressed ? -precision_val : 0);
-    //         return false;
-    //     case KC_P6:
-    //         joystick_set_axis(JS_AXIS_0_X, record->event.pressed ? precision_val : 0);
-    //         return false;
-    //     case KC_P8:
-    //         joystick_set_axis(JS_AXIS_0_Y, record->event.pressed ? -precision_val : 0);
-    //         return false;
-    //     case KC_P2:
-    //     case KC_P5:
-    //         joystick_set_axis(JS_AXIS_0_Y, record->event.pressed ? precision_val : 0);
-    //         return false;
-    //     case KC_P7:
-    //         joystick_set_axis(JS_AXIS_Z, record->event.pressed ? -precision_val : 0);
-    //         return false;
-    //     case KC_P9:
-    //         joystick_set_axis(JS_AXIS_Z, record->event.pressed ? precision_val : 0);
-    //         return false;
-    //     case KC_P0:
-    //         joystick_precision = record->event.pressed;
-    //         return false;
-    // }
-    return true;
-}
+#endif
 
 #if defined(ENCODER_ENABLE)
-bool encoder_0_update(bool clockwise) {
+bool encoder_update_user(uint8_t encoder, bool clockwise) {
     switch (get_highest_layer(layer_state)) {
         case LAYER_MEDIA:
             if (clockwise) {
@@ -291,30 +212,28 @@ bool encoder_0_update(bool clockwise) {
                 tap_code(KC_VOLU);
             }
             break;
+#if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            int16_t precision_val = joystick_axis_val;
             if (clockwise) {
-                joystick_set_axis(2, precision_val);
+                js_values[encoder][2] += js_precisions[encoder][2];
+                if (js_values[encoder][2] > js_maxvalue) {
+                    js_values[encoder][2] = js_maxvalue;
+                }
             } else {
-                joystick_set_axis(2, -precision_val);
+                js_values[encoder][2] -= js_precisions[encoder][2];
+                if (js_values[encoder][2] < -js_maxvalue) {
+                    js_values[encoder][2] = -js_maxvalue;
+                }
             }
+            joystick_set_axis(JS_AXIS_0_Z, js_values[encoder][2]);
             break;
+#endif
         default:
             if (clockwise) {
                 tap_code(MS_WHLD);
             } else {
                 tap_code(MS_WHLU);
             }
-            break;
-    }
-    return false;
-}
-bool encoder_update_user(uint8_t encoder_index, bool clockwise) {
-    switch (encoder_index) {
-        case 0:
-            return encoder_0_update(clockwise);
-            break;
-        default:
             break;
     }
     return false;
@@ -394,3 +313,93 @@ bool oled_task_user(void) {
     return false;
 }
 #endif
+
+
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    [LAYER_QWERTY] = LAYOUT_split_3x5_2(
+        KC_Q,         KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I,            KC_O,           KC_P,
+        KC_A,         KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K,            KC_L,           KC_SCLN,
+        LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTEXLM), RSFT_T(KC_SLSH),
+        LT(TL_UPPR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_UPPR, KC_SPACE)
+    ),
+    [LAYER_FUNC] = LAYOUT_split_3x5_2(
+        KC_ESC,  TT(LAYER_GAMEPAD), TT(LAYER_MEDIA), TT(LAYER_NUMPAD), TT(LAYER_JOYSTICK), DM_REC1,        DM_REC2,         DM_PLY2,        DM_PLY1,        KC_BSPC,
+        KC_TAB,  KC_MENU,           KC_HOME,         KC_FIND,          KC_NO,              KC_LEFT,        KC_DOWN,         KC_UP,          KC_RGHT,        KC_ENT,
+        KC_LSFT, TD(TD_EQLPLUS),    TD(TD_MINSUNDS), TD(TD_SLASHES),   KC_NO,              TD(TD_BRACES),  TD(TD_BRACKETS), TD(TD_PARENS),  TD(TD_QUOTGRV), RSFT_T(KC_BSLS),
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+    ),
+    [LAYER_GAMEPAD] = LAYOUT_split_3x5_2(
+        KC_ESC,  KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_TAB,  KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        MO(LAYER_GAMEPAD2), KC_SPACE, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT)
+    ),
+    [LAYER_GAMEPAD2] = LAYOUT_split_3x5_2(
+        KC_F1,   KC_F2, KC_F3, KC_F4, KC_F5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_1,    KC_2,  KC_3,  KC_4,  KC_5,  KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_LSFT, KC_NO, KC_T,  KC_G,  KC_B,  KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_TRNS, KC_SPACE, KC_TRNS, KC_TRNS
+    ),
+    [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
+        JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_3, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH,  JOYSTICK_HAT_NORTHEAST,
+        JS_6,  KC_P4, KC_P5, KC_P6, JS_7, JS_1, JS_0, JOYSTICK_HAT_WEST,      JOYSTICK_HAT_CENTER, JOYSTICK_HAT_EAST,
+        JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_4, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH,  JOYSTICK_HAT_SOUTHEAST,
+        TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT)
+    ),
+    [LAYER_MEDIA] = LAYOUT_split_3x5_2(
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,   KC_BRID, KC_BRIU, KC_NO,   KC_NO,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, KC_MPLY,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO,   KC_MFFD, KC_NO,
+        TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT)
+    ),
+    [LAYER_MOVE] = LAYOUT_split_3x5_2(
+        MS_WHLU, MS_WHLL, MS_UP,   MS_WHLR, MS_BTN2, KC_NO,   KC_NO,    KC_NO,   KC_DEL,  KC_INS,
+        MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN,  KC_UP,   KC_RGHT, KC_ENT,
+        MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN,  KC_PGUP, KC_END,  KC_NO,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+    ),
+    [LAYER_NUMPAD] = LAYOUT_split_3x5_2(
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PASTSLS), KC_P7, KC_P8, KC_P9, KC_BSPC,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PPLSMNS), KC_P4, KC_P5, KC_P6, KC_PENT,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_P0,          KC_P1, KC_P2, KC_P3, KC_PDOT,
+        TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT)
+    ),
+    [LAYER_NUMSYMS] = LAYOUT_split_3x5_2(
+        KC_F1,           KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,
+        KC_1,            KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,
+        LSFT_T(KC_EXLM), KC_AT,   KC_HASH, KC_DLR,  KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+    ),
+};
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    // int16_t precision_val = joystick_axis_val;
+    // if (joystick_precision) {
+    //     precision_val -= joystick_precision_mod;
+    // }
+    // switch (keycode) {
+    //     case KC_P4:
+    //         joystick_set_axis(JS_AXIS_0_X, record->event.pressed ? -precision_val : 0);
+    //         return false;
+    //     case KC_P6:
+    //         joystick_set_axis(JS_AXIS_0_X, record->event.pressed ? precision_val : 0);
+    //         return false;
+    //     case KC_P8:
+    //         joystick_set_axis(JS_AXIS_0_Y, record->event.pressed ? -precision_val : 0);
+    //         return false;
+    //     case KC_P2:
+    //     case KC_P5:
+    //         joystick_set_axis(JS_AXIS_0_Y, record->event.pressed ? precision_val : 0);
+    //         return false;
+    //     case KC_P7:
+    //         joystick_set_axis(JS_AXIS_Z, record->event.pressed ? -precision_val : 0);
+    //         return false;
+    //     case KC_P9:
+    //         joystick_set_axis(JS_AXIS_Z, record->event.pressed ? precision_val : 0);
+    //         return false;
+    //     case KC_P0:
+    //         joystick_precision = record->event.pressed;
+    //         return false;
+    // }
+    return true;
+}
