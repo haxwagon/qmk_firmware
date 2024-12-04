@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include "analog.h"
 #include "print.h"
 
 enum LAYERS {
@@ -170,11 +171,11 @@ tap_dance_action_t tap_dance_actions[] = {
 #if defined(JOYSTICK_ENABLE)
 // joystick settings
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    JOYSTICK_AXIS_IN(GP16, 0, 127, 256),
-    JOYSTICK_AXIS_IN(GP17, 0, 127, 256),
-    JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_IN(GP26, 0, 127, 256),
     JOYSTICK_AXIS_IN(GP27, 0, 127, 256),
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
 };
 static const uint8_t js_maxvalue = 127;
@@ -225,6 +226,7 @@ void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
 
 #if defined(ENCODER_ENABLE)
 bool encoder_update_user(uint8_t encoder, bool clockwise) {
+    dprintf("Encoder: %d, Clockwise: %d", encoder, clockwise);
     switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
@@ -252,12 +254,12 @@ bool encoder_update_user(uint8_t encoder, bool clockwise) {
 
 #if defined(OLED_ENABLE)
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    print("oled_init_user");
+    dprint("oled_init_user");
     return OLED_ROTATION_0;
 }
 
 bool oled_task_user(void) {
-    print("oled_task_user");
+    dprint("oled_task_user");
     oled_set_cursor(0, 1);
     oled_write("Hello", false);
     oled_set_cursor(1, 1);
@@ -331,6 +333,34 @@ bool oled_task_user(void) {
     }
 
     return false;
+}
+#endif
+
+#if defined(POINTING_DEVICE_ENABLE)
+report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
+    dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
+    /* TODO: intercept mouse movement to turn into JS1 x/y if in JS mode
+    if (set_scrolling) {
+        mouse_report.h = mouse_report.x;
+        mouse_report.v = mouse_report.y;
+        mouse_report.x = 0;
+        mouse_report.y = 0;
+    }
+
+// modify buttons
+ // @brief Handles pointing device buttons
+ //
+ // Returns modified button bitmask using bool pressed and selected pointing_device_buttons_t button in uint8_t buttons bitmask.
+ //
+ // @param buttons[in] uint8_t bitmask
+ // @param pressed[in] bool
+ // @param button[in] pointing_device_buttons_t value
+ // @return Modified uint8_t bitmask buttons
+// __attribute__((weak)) uint8_t pointing_device_handle_buttons(uint8_t buttons, bool pressed, pointing_device_buttons_t button) {
+    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, data.button, POINTING_DEVICE_BUTTON1);
+
+    */
+    return mouse_report;
 }
 #endif
 
