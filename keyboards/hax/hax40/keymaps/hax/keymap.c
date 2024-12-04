@@ -16,6 +16,10 @@ enum LAYERS {
 };
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
+enum CUSTOM_KEYCODES {
+    CKC_CENTER_RIGHT_JS = SAFE_RANGE,
+};
+
 #if defined(COMBO_ENABLE)
 const uint16_t PROGMEM left_alt_combo[]      = {KC_X, KC_C, COMBO_END};
 const uint16_t PROGMEM left_ctl_combo[]      = {KC_C, KC_V, COMBO_END};
@@ -27,51 +31,32 @@ const uint16_t PROGMEM right_ctl_combo[]     = {KC_M, KC_COMM, COMBO_END};
 const uint16_t PROGMEM right_gui_combo[]     = {KC_N, KC_M, COMBO_END};
 const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_M, KC_COMM, KC_DOT, COMBO_END};
 const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_N, KC_M, KC_COMM, COMBO_END};
-combo_t key_combos[] = {
-    COMBO(left_alt_combo, KC_LALT),
-    COMBO(left_ctl_combo, KC_LCTL),
-    COMBO(left_gui_combo, KC_LGUI),
-    COMBO(left_ctl_alt_combo, LCTL(KC_LALT)),
-    COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)),
-    COMBO(right_alt_combo, KC_RALT),
-    COMBO(right_ctl_combo, KC_RCTL),
-    COMBO(right_gui_combo, KC_RGUI),
-    COMBO(right_ctl_alt_combo, RCTL(KC_RALT)),
-    COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
+combo_t                key_combos[]          = {
+    COMBO(left_alt_combo, KC_LALT), COMBO(left_ctl_combo, KC_LCTL), COMBO(left_gui_combo, KC_LGUI), COMBO(left_ctl_alt_combo, LCTL(KC_LALT)), COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)), COMBO(right_alt_combo, KC_RALT), COMBO(right_ctl_combo, KC_RCTL), COMBO(right_gui_combo, KC_RGUI), COMBO(right_ctl_alt_combo, RCTL(KC_RALT)), COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
 };
 #endif
 
 #if defined(KEY_OVERRIDE_ENABLE)
-const key_override_t backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
-const key_override_t f11_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
-const key_override_t f12_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
-const key_override_t f13_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
-const key_override_t f14_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
-const key_override_t f15_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
-const key_override_t f16_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
-const key_override_t f17_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
-const key_override_t f18_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
-const key_override_t f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
-const key_override_t f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
-const key_override_t *key_overrides[]           = {
-    &backspace_del_key_override,
-	&f11_key_override,
-	&f12_key_override,
-	&f13_key_override,
-	&f14_key_override,
-	&f15_key_override,
-	&f16_key_override,
-	&f17_key_override,
-	&f18_key_override,
-	&f19_key_override,
-	&f20_key_override,
+const key_override_t  backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
+const key_override_t  f11_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
+const key_override_t  f12_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
+const key_override_t  f13_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
+const key_override_t  f14_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
+const key_override_t  f15_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
+const key_override_t  f16_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
+const key_override_t  f17_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
+const key_override_t  f18_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
+const key_override_t  f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
+const key_override_t  f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
+const key_override_t *key_overrides[]            = {
+    &backspace_del_key_override, &f11_key_override, &f12_key_override, &f13_key_override, &f14_key_override, &f15_key_override, &f16_key_override, &f17_key_override, &f18_key_override, &f19_key_override, &f20_key_override,
 };
 #endif
 
 #if defined(TAP_DANCE_ENABLE)
 
-#if defined(TAP_DANCE_QUAD_SUPPORT)
-//#region Tap Dance Quad Support
+#    if defined(TAP_DANCE_QUAD_SUPPORT)
+// #region Tap Dance Quad Support
 typedef enum {
     TD_NONE,
     TD_UNKNOWN,
@@ -95,7 +80,6 @@ td_quad_state_t current_dance_quad_state(tap_dance_state_t *state) {
     switch (state->count) {
         case 1:
             if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
-            // Key has not been interrupted, but the key is still held. Means you want to send a 'HOLD'.
             return TD_SINGLE_HOLD;
         case 2:
             if (state->interrupted) return TD_DOUBLE_SINGLE_TAP;
@@ -110,7 +94,7 @@ td_quad_state_t current_dance_quad_state(tap_dance_state_t *state) {
 }
 
 void td_quad_finished(tap_dance_state_t *state, void *user_data) {
-    td_quad_keycodes_t* kcs = (td_quad_keycodes_t*)user_data;
+    td_quad_keycodes_t *kcs = (td_quad_keycodes_t *)user_data;
     switch (current_dance_quad_state(state)) {
         case TD_SINGLE_TAP: if (kcs->kc_tap) { register_code(kcs->kc_tap); } break;
         case TD_SINGLE_HOLD: if (kcs->kc_hold) { register_code(kcs->kc_hold); } break;
@@ -122,7 +106,7 @@ void td_quad_finished(tap_dance_state_t *state, void *user_data) {
 }
 
 void td_quad_reset(tap_dance_state_t *state, void *user_data) {
-    td_quad_keycodes_t* kcs = (td_quad_keycodes_t*)user_data;
+    td_quad_keycodes_t *kcs = (td_quad_keycodes_t *)user_data;
     switch (current_dance_quad_state(state)) {
         case TD_SINGLE_TAP: if (kcs->kc_tap) { unregister_code(kcs->kc_tap); } break;
         case TD_SINGLE_HOLD: if (kcs->kc_hold) { unregister_code(kcs->kc_hold); } break;
@@ -133,10 +117,11 @@ void td_quad_reset(tap_dance_state_t *state, void *user_data) {
     }
 }
 
-#define ACTION_TAP_DANCE_QUAD(kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold) \
-    { .fn = {NULL, td_quad_finished, td_quad_reset, NULL}, \
-      .user_data = (void *)&((td_quad_keycodes_t){kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold}), }
-#endif
+#   define ACTION_TAP_DANCE_QUAD(kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold) { \
+        .fn = {NULL, td_quad_finished, td_quad_reset, NULL}, \
+        .user_data = (void *)&((td_quad_keycodes_t){kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold}), \
+    }
+#   endif
 
 enum {
     TD_BRACES,
@@ -154,18 +139,7 @@ enum {
 
 tap_dance_action_t tap_dance_actions[] = {
     // Tap once for Escape, twice for Caps Lock
-    [TD_BRACES]   = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR),
-    [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC),
-    [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN),
-    [TD_DOTEXLM]  = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM),
-    [TD_EQLPLUS]  = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS),
-    [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS),
-    [TD_PARENS]   = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
-    [TD_PASTSLS]  = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS),
-    [TD_PPLSMNS]  = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS),
-    [TD_QUOTGRV]  = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV),
-    [TD_SLASHES]  = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE)
-};
+    [TD_BRACES] = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR), [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC), [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN), [TD_DOTEXLM] = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM), [TD_EQLPLUS] = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS), [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS), [TD_PARENS] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN), [TD_PASTSLS] = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS), [TD_PPLSMNS] = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS), [TD_QUOTGRV] = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV), [TD_SLASHES] = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE)};
 #endif
 
 #if defined(JOYSTICK_ENABLE)
@@ -178,16 +152,28 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
 };
-static const uint8_t js_maxvalue = 127;
-static const uint8_t js_precisions[2][3] = { {10, 10, 10}, {10, 10, 10} };
-static uint16_t js_values[2][3] = { {0, 0, 0}, {0, 0, 0} };
+static const uint8_t js_maxvalue         = 127;
+static const uint8_t js_precisions[2][3] = {{10, 10, 10}, {10, 10, 10}};
+static uint16_t      js_values[2][3]     = {{0, 0, 0}, {0, 0, 0}};
 enum JS_AXES {
     JS_AXIS_0_X,
     JS_AXIS_0_Y,
     JS_AXIS_0_Z,
     JS_AXIS_1_X,
     JS_AXIS_1_Y,
-    JS_AXIS_1_Z
+    JS_AXIS_1_Z,
+};
+enum JS_XINPUT_BUTTONS { // xinput
+    JS_XINPUT_BUTTON_A,
+    JS_XINPUT_BUTTON_B,
+    JS_XINPUT_BUTTON_X,
+    JS_XINPUT_BUTTON_Y,
+    JS_XINPUT_BUTTON_LB,
+    JS_XINPUT_BUTTON_RB,
+    JS_XINPUT_BUTTON_SELECT,
+    JS_XINPUT_BUTTON_START,
+    JS_XINPUT_BUTTON_L3,
+    JS_XINPUT_BUTTON_R3,
 };
 uint8_t joystick_axis(uint8_t joystick, uint8_t axis) {
     switch (joystick) {
@@ -212,15 +198,16 @@ uint8_t joystick_axis(uint8_t joystick, uint8_t axis) {
     }
     return 0;
 }
-void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
-    js_values[joystick][axis] += delta;
-    if (js_values[joystick][axis] > js_maxvalue) {
-        js_values[joystick][axis] = js_maxvalue;
-    }
-    if (js_values[joystick][axis] < -js_maxvalue) {
-        js_values[joystick][axis] = -js_maxvalue;
-    }
+void set_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t value) {
+    js_values[joystick][axis] = value;
     joystick_set_axis(joystick_axis(joystick, axis), js_values[joystick][axis]);
+}
+void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
+    uint8_t value = js_values[joystick][axis];
+    value += delta;
+    if (value > js_maxvalue) { value = js_maxvalue; }
+    if (value < -js_maxvalue) { value = -js_maxvalue; }
+    set_joystick_axis(joystick, axis, value);
 }
 #endif
 
@@ -228,24 +215,19 @@ void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
 bool encoder_update_user(uint8_t encoder, bool clockwise) {
     dprintf("Encoder: %d, Clockwise: %d", encoder, clockwise);
     switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
+#    if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
             uint8_t delta = clockwise ? js_precisions[encoder][2] : -js_precisions[encoder][2];
             update_joystick_axis(encoder, 2, delta);
             break;
-#endif
+#    endif
         default:
             switch (encoder) {
-                case 0:
-                    clockwise ? tap_code(MS_WHLD) : tap_code(MS_WHLU);
-                    break;
-                case 1:
-                    clockwise ? tap_code(KC_VOLD) : tap_code(KC_VOLU);
-                    break;
+                case 0: clockwise ? tap_code(MS_WHLD) : tap_code(MS_WHLU); break;
+                case 1: clockwise ? tap_code(KC_VOLD) : tap_code(KC_VOLU); break;
                 default:
                     break;
             }
-            break;
             break;
     }
     return false;
@@ -339,45 +321,40 @@ bool oled_task_user(void) {
 #if defined(POINTING_DEVICE_ENABLE)
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
-    /* TODO: intercept mouse movement to turn into JS1 x/y if in JS mode
-    if (set_scrolling) {
-        mouse_report.h = mouse_report.x;
-        mouse_report.v = mouse_report.y;
-        mouse_report.x = 0;
-        mouse_report.y = 0;
+    switch (get_highest_layer(layer_state)) {
+#    if defined(JOYSTICK_ENABLE)
+        case LAYER_JOYSTICK:
+            update_joystick_axis(1, 0, mouse_report.x);
+            update_joystick_axis(1, 1, mouse_report.y);
+            mouse_report.x = 0;
+            mouse_report.y = 0;
+            if (mouse_report.buttons > 0) {
+                register_joystick_button(JS_XINPUT_BUTTON_R3);
+                mouse_report.buttons = 0;
+            }
+            break;
+#    endif
+        default:
+            break;
     }
-
-// modify buttons
- // @brief Handles pointing device buttons
- //
- // Returns modified button bitmask using bool pressed and selected pointing_device_buttons_t button in uint8_t buttons bitmask.
- //
- // @param buttons[in] uint8_t bitmask
- // @param pressed[in] bool
- // @param button[in] pointing_device_buttons_t value
- // @return Modified uint8_t bitmask buttons
-// __attribute__((weak)) uint8_t pointing_device_handle_buttons(uint8_t buttons, bool pressed, pointing_device_buttons_t button) {
-    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, data.button, POINTING_DEVICE_BUTTON1);
-
-    */
     return mouse_report;
 }
 #endif
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [LAYER_QWERTY] = LAYOUT_ortho_4x10(
+    [LAYER_QWERTY]   = LAYOUT_ortho_4x10(
         KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P,
         KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_SCLN,
         LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTEXLM), RSFT_T(KC_SLSH),
         KC_NO, KC_NO, KC_NO, LT(TL_UPPR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_UPPR, KC_SPACE), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_FUNC] = LAYOUT_ortho_4x10(
+    [LAYER_FUNC]     = LAYOUT_ortho_4x10(
         KC_ESC, TT(LAYER_GAMEPAD), TT(LAYER_MEDIA), TT(LAYER_NUMPAD), TT(LAYER_JOYSTICK), DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
         KC_TAB, KC_MENU, KC_HOME, KC_FIND, KC_NO, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         KC_LSFT, TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), KC_NO, TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_PARENS), TD(TD_QUOTGRV), RSFT_T(KC_BSLS),
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_GAMEPAD] = LAYOUT_ortho_4x10(
+    [LAYER_GAMEPAD]  = LAYOUT_ortho_4x10(
         KC_ESC, KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_TAB, KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
@@ -393,27 +370,27 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_4, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST,
         JS_6, KC_P4, KC_P5, KC_P6, JS_7, JS_1, JS_0, JOYSTICK_HAT_WEST, JOYSTICK_HAT_CENTER, JOYSTICK_HAT_EAST,
         JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_3, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST,
-        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
+        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), CKC_CENTER_RIGHT_JS, CKC_CENTER_RIGHT_JS, KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_MEDIA] = LAYOUT_ortho_4x10(
+    [LAYER_MEDIA]    = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_BRID, KC_BRIU, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, KC_MPLY,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO, KC_MFFD, KC_NO,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_MOVE] = LAYOUT_ortho_4x10(
+    [LAYER_MOVE]     = LAYOUT_ortho_4x10(
         MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, KC_NO, KC_NO, KC_DEL, KC_INS,
         MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN, KC_PGUP, KC_END, KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_NUMPAD] = LAYOUT_ortho_4x10(
+    [LAYER_NUMPAD]   = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PASTSLS), KC_P7, KC_P8, KC_P9, KC_BSPC,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PPLSMNS), KC_P4, KC_P5, KC_P6, KC_PENT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_P0, KC_P1, KC_P2, KC_P3, KC_PDOT,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_NUMSYMS] = LAYOUT_ortho_4x10(
+    [LAYER_NUMSYMS]  = LAYOUT_ortho_4x10(
         KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
         LSFT_T(KC_EXLM), KC_AT, KC_HASH, KC_DLR, KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
@@ -422,41 +399,22 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 void keyboard_post_init_user(void) {
-  // Customise these values to desired behaviour
-  debug_enable=true;
-  debug_matrix=true;
-  debug_keyboard=true;
-  debug_mouse=true;
+    // Customise these values to desired behaviour
+    debug_enable   = true;
+    debug_matrix   = true;
+    debug_keyboard = true;
+    debug_mouse    = true;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // int16_t precision_val = joystick_axis_val;
-    // if (joystick_precision) {
-    //     precision_val -= joystick_precision_mod;
-    // }
-    // switch (keycode) {
-    //     case KC_P4:
-    //         joystick_set_axis(JS_AXIS_0_X, record->event.pressed ? -precision_val : 0);
-    //         return false;
-    //     case KC_P6:
-    //         joystick_set_axis(JS_AXIS_0_X, record->event.pressed ? precision_val : 0);
-    //         return false;
-    //     case KC_P8:
-    //         joystick_set_axis(JS_AXIS_0_Y, record->event.pressed ? -precision_val : 0);
-    //         return false;
-    //     case KC_P2:
-    //     case KC_P5:
-    //         joystick_set_axis(JS_AXIS_0_Y, record->event.pressed ? precision_val : 0);
-    //         return false;
-    //     case KC_P7:
-    //         joystick_set_axis(JS_AXIS_Z, record->event.pressed ? -precision_val : 0);
-    //         return false;
-    //     case KC_P9:
-    //         joystick_set_axis(JS_AXIS_Z, record->event.pressed ? precision_val : 0);
-    //         return false;
-    //     case KC_P0:
-    //         joystick_precision = record->event.pressed;
-    //         return false;
-    // }
-    return true;
+    switch (keycode) {
+#if defined(JOYSTICK_ENABLE)
+        case CKC_CENTER_RIGHT_JS:
+            set_joystick_axis(1, 0, 0);
+            set_joystick_axis(1, 1, 0);
+            return false;
+#endif
+        default:
+            return true;
+    }
 }
