@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include "print.h"
 
 enum LAYERS {
     LAYER_QWERTY,  // default
@@ -90,26 +91,21 @@ typedef struct {
 } td_quad_keycodes_t;
 
 td_quad_state_t current_dance_quad_state(tap_dance_state_t *state) {
-    if (state->count == 1) {
-        if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
-        // Key has not been interrupted, but the key is still held. Means you want to send a 'HOLD'.
-        else return TD_SINGLE_HOLD;
-    } else if (state->count == 2) {
-        // TD_DOUBLE_SINGLE_TAP is to distinguish between typing "pepper", and actually wanting a double tap
-        // action when hitting 'pp'. Suggested use case for this return value is when you want to send two
-        // keystrokes of the key, and not the 'double tap' action/macro.
-        if (state->interrupted) return TD_DOUBLE_SINGLE_TAP;
-        else if (state->pressed) return TD_DOUBLE_HOLD;
-        else return TD_DOUBLE_TAP;
+    switch (state->count) {
+        case 1:
+            if (state->interrupted || !state->pressed) return TD_SINGLE_TAP;
+            // Key has not been interrupted, but the key is still held. Means you want to send a 'HOLD'.
+            return TD_SINGLE_HOLD;
+        case 2:
+            if (state->interrupted) return TD_DOUBLE_SINGLE_TAP;
+            else if (state->pressed) return TD_DOUBLE_HOLD;
+            return TD_DOUBLE_TAP;
+        case 3:
+            if (state->interrupted || !state->pressed) return TD_TRIPLE_TAP;
+            return TD_TRIPLE_HOLD;
+        default:
+            return TD_UNKNOWN;
     }
-
-    // Assumes no one is trying to type the same letter three times (at least not quickly).
-    // If your tap dance key is 'KC_W', and you want to type "www." quickly - then you will need to add
-    // an exception here to return a 'TD_TRIPLE_SINGLE_TAP', and define that enum just like 'TD_DOUBLE_SINGLE_TAP'
-    if (state->count == 3) {
-        if (state->interrupted || !state->pressed) return TD_TRIPLE_TAP;
-        else return TD_TRIPLE_HOLD;
-    } else return TD_UNKNOWN;
 }
 
 void td_quad_finished(tap_dance_state_t *state, void *user_data) {
@@ -119,15 +115,7 @@ void td_quad_finished(tap_dance_state_t *state, void *user_data) {
         case TD_SINGLE_HOLD: if (kcs->kc_hold) { register_code(kcs->kc_hold); } break;
         case TD_DOUBLE_TAP: if (kcs->kc_double_tap) { register_code(kcs->kc_double_tap); } break;
         case TD_DOUBLE_HOLD: if (kcs->kc_double_tap_hold) { register_code(kcs->kc_double_tap_hold); } break;
-        // Last case is for fast typing. Assuming your key is `f`:
-        // For example, when typing the word `buffer`, and you want to make sure that you send `ff` and not `Esc`.
-        // In order to type `ff` when typing fast, the next character will have to be hit within the `TAPPING_TERM`, which by default is 200ms.
-        case TD_DOUBLE_SINGLE_TAP:
-            if (kcs->kc_tap) {
-                tap_code(kcs->kc_tap);
-                register_code(kcs->kc_tap);
-            }
-            break;
+        case TD_DOUBLE_SINGLE_TAP: if (kcs->kc_tap) { tap_code(kcs->kc_tap); register_code(kcs->kc_tap); } break;
         default: break;
     }
 }
@@ -148,6 +136,7 @@ void td_quad_reset(tap_dance_state_t *state, void *user_data) {
     { .fn = {NULL, td_quad_finished, td_quad_reset, NULL}, \
       .user_data = (void *)&((td_quad_keycodes_t){kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold}), }
 #endif
+
 enum {
     TD_BRACES,
     TD_BRACKETS,
@@ -181,16 +170,15 @@ tap_dance_action_t tap_dance_actions[] = {
 #if defined(JOYSTICK_ENABLE)
 // joystick settings
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-//    JOYSTICK_AXIS_IN(PINNAME, LOWVAL, 0VAL, HIGHVAL) or JOYSTICK_AXIS_VIRTUAL
+    JOYSTICK_AXIS_IN(GP16, 0, 127, 256),
+    JOYSTICK_AXIS_IN(GP17, 0, 127, 256),
     JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_IN(GP26, 0, 127, 256),
+    JOYSTICK_AXIS_IN(GP27, 0, 127, 256),
     JOYSTICK_AXIS_VIRTUAL,
 };
-static const uint16_t js_maxvalue = 127;
-static const uint16_t js_precisions[2][3] = { {10, 10, 10}, {10, 10, 10} };
+static const uint8_t js_maxvalue = 127;
+static const uint8_t js_precisions[2][3] = { {10, 10, 10}, {10, 10, 10} };
 static uint16_t js_values[2][3] = { {0, 0, 0}, {0, 0, 0} };
 enum JS_AXES {
     JS_AXIS_0_X,
@@ -200,40 +188,62 @@ enum JS_AXES {
     JS_AXIS_1_Y,
     JS_AXIS_1_Z
 };
+uint8_t joystick_axis(uint8_t joystick, uint8_t axis) {
+    switch (joystick) {
+        case 0:
+            switch (axis) {
+                case 0: return JS_AXIS_0_X;
+                case 1: return JS_AXIS_0_Y;
+                case 2: return JS_AXIS_0_Z;
+                default: break;
+            }
+            break;
+        case 1:
+            switch (axis) {
+                case 0: return JS_AXIS_1_X;
+                case 1: return JS_AXIS_1_Y;
+                case 2: return JS_AXIS_1_Z;
+                default: break;
+            }
+            break;
+        default:
+            break;
+    }
+    return 0;
+}
+void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
+    js_values[joystick][axis] += delta;
+    if (js_values[joystick][axis] > js_maxvalue) {
+        js_values[joystick][axis] = js_maxvalue;
+    }
+    if (js_values[joystick][axis] < -js_maxvalue) {
+        js_values[joystick][axis] = -js_maxvalue;
+    }
+    joystick_set_axis(joystick_axis(joystick, axis), js_values[joystick][axis]);
+}
 #endif
 
 #if defined(ENCODER_ENABLE)
 bool encoder_update_user(uint8_t encoder, bool clockwise) {
     switch (get_highest_layer(layer_state)) {
-        case LAYER_MEDIA:
-            if (clockwise) {
-                tap_code(KC_VOLD);
-            } else {
-                tap_code(KC_VOLU);
-            }
-            break;
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            if (clockwise) {
-                js_values[encoder][2] += js_precisions[encoder][2];
-                if (js_values[encoder][2] > js_maxvalue) {
-                    js_values[encoder][2] = js_maxvalue;
-                }
-            } else {
-                js_values[encoder][2] -= js_precisions[encoder][2];
-                if (js_values[encoder][2] < -js_maxvalue) {
-                    js_values[encoder][2] = -js_maxvalue;
-                }
-            }
-            joystick_set_axis(JS_AXIS_0_Z, js_values[encoder][2]);
+            uint8_t delta = clockwise ? js_precisions[encoder][2] : -js_precisions[encoder][2];
+            update_joystick_axis(encoder, 2, delta);
             break;
 #endif
         default:
-            if (clockwise) {
-                tap_code(MS_WHLD);
-            } else {
-                tap_code(MS_WHLU);
+            switch (encoder) {
+                case 0:
+                    clockwise ? tap_code(MS_WHLD) : tap_code(MS_WHLU);
+                    break;
+                case 1:
+                    clockwise ? tap_code(KC_VOLD) : tap_code(KC_VOLU);
+                    break;
+                default:
+                    break;
             }
+            break;
             break;
     }
     return false;
@@ -241,7 +251,17 @@ bool encoder_update_user(uint8_t encoder, bool clockwise) {
 #endif
 
 #if defined(OLED_ENABLE)
+oled_rotation_t oled_init_user(oled_rotation_t rotation) {
+    print("oled_init_user");
+    return OLED_ROTATION_0;
+}
+
 bool oled_task_user(void) {
+    print("oled_task_user");
+    oled_set_cursor(0, 1);
+    oled_write("Hello", false);
+    oled_set_cursor(1, 1);
+
     // Host Keyboard LED Status
     led_t led_state = host_keyboard_led_state();
     oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
@@ -314,7 +334,6 @@ bool oled_task_user(void) {
 }
 #endif
 
-
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_QWERTY] = LAYOUT_split_3x5_2(
         KC_Q,         KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I,            KC_O,           KC_P,
@@ -341,9 +360,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_SPACE, KC_TRNS, KC_TRNS
     ),
     [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
-        JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_3, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH,  JOYSTICK_HAT_NORTHEAST,
+        JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_4, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH,  JOYSTICK_HAT_NORTHEAST,
         JS_6,  KC_P4, KC_P5, KC_P6, JS_7, JS_1, JS_0, JOYSTICK_HAT_WEST,      JOYSTICK_HAT_CENTER, JOYSTICK_HAT_EAST,
-        JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_4, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH,  JOYSTICK_HAT_SOUTHEAST,
+        JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_3, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH,  JOYSTICK_HAT_SOUTHEAST,
         TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT)
     ),
     [LAYER_MEDIA] = LAYOUT_split_3x5_2(
@@ -371,6 +390,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 };
+
+void keyboard_post_init_user(void) {
+  // Customise these values to desired behaviour
+  debug_enable=true;
+  debug_matrix=true;
+  debug_keyboard=true;
+  debug_mouse=true;
+}
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // int16_t precision_val = joystick_axis_val;
