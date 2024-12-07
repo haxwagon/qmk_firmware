@@ -16,7 +16,7 @@ enum LAYERS {
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
 enum CUSTOM_KEYCODES {
-    CKC_CENTER_RIGHT_JS = SAFE_RANGE,
+    CKC_JS_CENTER_RIGHT = SAFE_RANGE,
 };
 
 #if defined(KEY_OVERRIDE_ENABLE)
@@ -191,7 +191,7 @@ enum JS_AXES {
     JS_AXIS_1_Y,
     JS_AXIS_1_Z,
 };
-enum JS_XINPUT_BUTTONS { // xinput
+enum JS_XINPUT_BUTTONS { // xinput order
     JS_XINPUT_BUTTON_A,
     JS_XINPUT_BUTTON_B,
     JS_XINPUT_BUTTON_X,
@@ -358,9 +358,12 @@ bool oled_task_user(void) {
             oled_write_P(PSTR("                    \n"), false);
             break;
         case LAYER_JOYSTICK:
-            oled_write_P(PSTR("10 z< /\\ z>  8  3  2 NW  N NE\n"), false);
-            oled_write_P(PSTR(" 6 <= \\/ =>  7  1  0  W  C  E\n"), false);
-            oled_write_P(PSTR("11    \\/     9  5  4 SW  S SE\n"), false);
+            oled_write_P(PSTR("   NW  N NE         \n"), false);
+            oled_write_P(PSTR("      CR LB SE ST RB\n"), false);
+            oled_write_P(PSTR("    W  C  E         \n"), false);
+            oled_write_P(PSTR("      CR  X  A  B  Y\n"), false);
+            oled_write_P(PSTR("   SW  S SE         \n"), false);
+            oled_write_P(PSTR("      CR L3 10 11 R3\n"), false);
             break;
         case LAYER_MEDIA:
             oled_write_P(PSTR("                    \n"), false);
@@ -454,10 +457,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_4, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST,
-        JS_6, KC_P4, KC_P5, KC_P6, JS_7, JS_1, JS_0, JOYSTICK_HAT_WEST, JOYSTICK_HAT_CENTER, JOYSTICK_HAT_EAST,
-        JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_3, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST,
-        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), CKC_CENTER_RIGHT_JS, CKC_CENTER_RIGHT_JS, KC_NO, KC_NO, KC_NO
+        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_4, JS_6, JS_7, JS_5,
+        KC_NO, JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_2, JS_0, JS_1, JS_3,
+        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_8, JS_10, JS_11, JS_9,
+        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
     [LAYER_MEDIA] = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_BRID, KC_BRIU, KC_NO, KC_NO,
@@ -486,11 +489,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 void keyboard_post_init_user(void) {
-    // Customise these values to desired behaviour
+    #if defined(CONSOLE_ENABLE)
     debug_enable   = true;
     debug_matrix   = false;
     debug_keyboard = false;
     debug_mouse    = true;
+    #endif
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -514,7 +518,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
 #endif
 #if defined(JOYSTICK_ENABLE)
-        case CKC_CENTER_RIGHT_JS:
+        case CKC_JS_CENTER_RIGHT:
             set_joystick_axis(1, 0, 0);
             set_joystick_axis(1, 1, 0);
             return false;
