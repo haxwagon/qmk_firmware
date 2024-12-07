@@ -241,6 +241,10 @@ void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
 }
 #endif
 
+#if defined(DYNAMIC_MACRO_ENABLE)
+static uint8_t dynamic_macro_recording = 0;
+#endif
+
 #if defined(ENCODER_ENABLE)
 bool encoder_update_user(uint8_t encoder, bool clockwise) {
     dprintf("Encoder: %d, Clockwise: %d", encoder, clockwise);
@@ -266,85 +270,134 @@ bool encoder_update_user(uint8_t encoder, bool clockwise) {
 
 #if defined(OLED_ENABLE)
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    dprint("oled_init_user");
     return OLED_ROTATION_0;
 }
 
 bool oled_task_user(void) {
-    dprint("oled_task_user");
-    oled_set_cursor(0, 1);
-    oled_write("Hello", false);
-    oled_set_cursor(1, 1);
+    switch (get_highest_layer(layer_state)) {
+        case LAYER_QWERTY:
+            oled_write_P(PSTR("Default"), false);
+            break;
+        case LAYER_FUNC:
+            oled_write_P(PSTR("Functions"), false);
+            break;
+        case LAYER_GAMEPAD:
+            oled_write_P(PSTR("Gamepad"), false);
+            break;
+        case LAYER_GAMEPAD2:
+            oled_write_P(PSTR("Gamepad 2"), false);
+            break;
+        case LAYER_JOYSTICK:
+            oled_write_P(PSTR("Joystick"), false);
+            break;
+        case LAYER_MEDIA:
+            oled_write_P(PSTR("Media"), false);
+            break;
+        case LAYER_MOVE:
+            oled_write_P(PSTR("Move"), false);
+            break;
+        case LAYER_NUMPAD:
+            oled_write_P(PSTR("Numpad"), false);
+            break;
+        case LAYER_NUMSYMS:
+            oled_write_P(PSTR("Nums & Syms"), false);
+            break;
+        default:
+            oled_write_P(PSTR("Undefined"), false);
+            break;
+    }
+    oled_write_P(PSTR("\n"), false);
 
+#if defined(DYNAMIC_MACRO_ENABLE)
+    switch (dynamic_macro_recording) {
+        case 1: oled_write_P(PSTR("REC1 "), false); break;
+        case 2: oled_write_P(PSTR("REC2 "), false); break;
+        default: oled_write_P(PSTR("     "), false); break;
+    }
+#endif
     // Host Keyboard LED Status
     led_t led_state = host_keyboard_led_state();
     oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
     oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
     oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
 
+    oled_write_P(PSTR("\n"), false);
+
     // Host Keyboard Layer Status
-    /*
-    oled_write_P(PSTR("Layer: "), false);
     switch (get_highest_layer(layer_state)) {
         case LAYER_QWERTY:
-            oled_write_P(PSTR("Default\n"), false);
-            oled_write_P(PSTR(" Q  W  E  R  T  Y  U  I  O  P\n"), false);
-            oled_write_P(PSTR(" A  S  D  F  G  H  J  K  L  ;\n"), false);
-            oled_write_P(PSTR(" Z  X  C  V  B  N  M ,; .!  /\n"), false);
+            oled_write_P(PSTR(" Q  W  E  R  T      \n"), false);
+            oled_write_P(PSTR("       Y  U  I  O  P\n"), false);
+            oled_write_P(PSTR(" A  S  D  F  G      \n"), false);
+            oled_write_P(PSTR("       H  J  K  L  ;\n"), false);
+            oled_write_P(PSTR(" Z  X  C  V  B      \n"), false);
+            oled_write_P(PSTR("       N  M ,; .!  /\n"), false);
             break;
         case LAYER_FUNC:
-            oled_write_P(PSTR("Functions\n"), false);
-            oled_write_P(PSTR("ES    ME NP JS  _  -  +  = <-\n"), false);
-            oled_write_P(PSTR("->              <  v  ^  > EN\n"), false);
-            oled_write_P(PSTR("               {} [] () '`  \\\n"), false);
+            oled_write_P(PSTR("ES GP ME NP JS      \n"), false);
+            oled_write_P(PSTR("      R1 R2 P2 P1 <-\n"), false);
+            oled_write_P(PSTR("-> MN HM FD         \n"), false);
+            oled_write_P(PSTR("       <  v  ^  > EN\n"), false);
+            oled_write_P(PSTR("LS =+ -_ /\\        \n"), false);
+            oled_write_P(PSTR("      {} [] () '`  \\\n"), false);
             break;
         case LAYER_GAMEPAD:
-            oled_write_P(PSTR("Gamepad\n"), false);
-            oled_write_P(PSTR("ES  Q  W  E  R               \n"), false);
-            oled_write_P(PSTR("->  A  S  D  F               \n"), false);
-            oled_write_P(PSTR("LS  Z  X  C  V               \n"), false);
+            oled_write_P(PSTR("ES  Q  W  E  R      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("->  A  S  D  F      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("LS  Z  X  C  V      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
             break;
         case LAYER_GAMEPAD2:
-            oled_write_P(PSTR("Gamepad 2\n"), false);
-            oled_write_P(PSTR("F1 F2 F3 F4 F5               \n"), false);
-            oled_write_P(PSTR(" 1  2  3  4  5               \n"), false);
-            oled_write_P(PSTR("LS     T  G  B               \n"), false);
+            oled_write_P(PSTR("F1 F2 F3 F4 F5      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR(" 1  2  3  4  5      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("LS     T  G  B      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
             break;
         case LAYER_JOYSTICK:
-            oled_write_P(PSTR("Joystick\n"), false);
             oled_write_P(PSTR("10 z< /\\ z>  8  3  2 NW  N NE\n"), false);
             oled_write_P(PSTR(" 6 <= \\/ =>  7  1  0  W  C  E\n"), false);
             oled_write_P(PSTR("11    \\/     9  5  4 SW  S SE\n"), false);
             break;
         case LAYER_MEDIA:
-            oled_write_P(PSTR("Media\n"), false);
-            oled_write_P(PSTR("                  BD BU      \n"), false);
-            oled_write_P(PSTR("               |< VD VU >| EN\n"), false);
-            oled_write_P(PSTR("               << MU    >>   \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("         BD BU      \n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("      |< VD VU >| EN\n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("      << MU    >>   \n"), false);
             break;
         case LAYER_MOVE:
-            oled_write_P(PSTR("Move\n"), false);
-            oled_write_P(PSTR("WU WL MU WR M2          DE IN\n"), false);
-            oled_write_P(PSTR("WD ML MD MR M1  <  v  ^  > EN\n"), false);
-            oled_write_P(PSTR("M7 M6 M5 M4 M3 HM PD PU ED   \n"), false);
+            oled_write_P(PSTR("WU WL MU WR M2      \n"), false);
+            oled_write_P(PSTR("               DE IN\n"), false);
+            oled_write_P(PSTR("WD ML MD MR M1      \n"), false);
+            oled_write_P(PSTR("       <  v  ^  > EN\n"), false);
+            oled_write_P(PSTR("M7 M6 M5 M4 M3      \n"), false);
+            oled_write_P(PSTR("      HM PD PU ED   \n"), false);
             break;
         case LAYER_NUMPAD:
-            oled_write_P(PSTR("Numpad\n"), false);
-            oled_write_P(PSTR("               * /  7  8  9 <-\n"), false);
-            oled_write_P(PSTR("               +-  4  5  6 EN\n"), false);
-            oled_write_P(PSTR("                0  1  2  3  .\n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("     * /  7  8  9 <-\n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("      +-  4  5  6 EN\n"), false);
+            oled_write_P(PSTR("                    \n"), false);
+            oled_write_P(PSTR("       0  1  2  3  .\n"), false);
             break;
         case LAYER_NUMSYMS:
-            oled_write_P(PSTR("Numbers & Symbols\n"), false);
-            oled_write_P(PSTR("F1 F2 F3 F4 F5 F6 F7 F8 F9 F0\n"), false);
-            oled_write_P(PSTR(" 1  2  3  4  5  6  7  8  9  0\n"), false);
-            oled_write_P(PSTR(" !  @  #  $  %  ^  &  *  (  )\n"), false);
+            oled_write_P(PSTR("F1 F2 F3 F4 F5      \n"), false);
+            oled_write_P(PSTR("      F6 F7 F8 F9 F0\n"), false);
+            oled_write_P(PSTR(" 1  2  3  4  5      \n"), false);
+            oled_write_P(PSTR("       6  7  8  9  0\n"), false);
+            oled_write_P(PSTR(" !  @  #  $  %      \n"), false);
+            oled_write_P(PSTR("       ^  &  *  (  )\n"), false);
             break;
         default:
             // Or use the write_ln shortcut over adding '\n' to the end of your string
             oled_write_ln_P(PSTR("Undefined"), false);
     }
-    */
 
     return false;
 }
@@ -380,7 +433,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P,
         KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_SCLN,
         LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTEXLM), RSFT_T(KC_SLSH),
-        KC_NO, KC_NO, KC_NO, TL_UPPR, TL_LOWR, KC_SPACE, TL_UPPR, KC_NO, KC_NO, KC_NO
+        KC_NO, KC_NO, KC_NO, TL_LOWR, TL_UPPR, KC_SPACE, TL_UPPR, KC_NO, KC_NO, KC_NO
     ),
     [LAYER_FUNC] = LAYOUT_ortho_4x10(
         KC_ESC, TT(LAYER_GAMEPAD), TT(LAYER_MEDIA), TT(LAYER_NUMPAD), TT(LAYER_JOYSTICK), DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
@@ -444,6 +497,22 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
 
     switch (keycode) {
+#if defined(DYNAMIC_MACRO_ENABLE)
+        case DM_REC1:
+            switch (dynamic_macro_recording) {
+                case 0: dynamic_macro_recording = 1; break;
+                case 1: dynamic_macro_recording = 0; break;
+                default: break;
+            }
+            break;
+        case DM_REC2:
+            switch (dynamic_macro_recording) {
+                case 0: dynamic_macro_recording = 2; break;
+                case 2: dynamic_macro_recording = 0; break;
+                default: break;
+            }
+            break;
+#endif
 #if defined(JOYSTICK_ENABLE)
         case CKC_CENTER_RIGHT_JS:
             set_joystick_axis(1, 0, 0);
@@ -451,6 +520,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
 #endif
         default:
-            return true;
+            break;
     }
+    return true;
 }
