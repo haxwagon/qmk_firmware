@@ -423,7 +423,32 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
                 mouse_report.buttons = 0;
             }
             break;
+
 #    endif
+        case LAYER_MOVE:
+            if (abs(mouse_report.y) > abs(mouse_report.x)) {
+                // scrolling vertically
+                if (mouse_report.y > 0) {
+                    tap_code(MS_WHLD);
+                    mouse_report.x = 0;
+                    mouse_report.y = 0;
+                } else if (mouse_report.y < 0) {
+                    tap_code(MS_WHLU);
+                    mouse_report.x = 0;
+                    mouse_report.y = 0;
+                }
+            } else if (abs(mouse_report.x) > abs(mouse_report.y)) {
+                if (mouse_report.x > 0) {
+                    tap_code(MS_WHLR);
+                    mouse_report.x = 0;
+                    mouse_report.y = 0;
+                } else if (mouse_report.x < 0) {
+                    tap_code(MS_WHLL);
+                    mouse_report.x = 0;
+                    mouse_report.y = 0;
+                }
+            }
+            break;
         default:
             break;
     }
