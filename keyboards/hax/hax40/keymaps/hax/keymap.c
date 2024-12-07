@@ -4,37 +4,20 @@
 
 enum LAYERS {
     LAYER_QWERTY,  // default
-    LAYER_FUNC,    // lower
-    LAYER_NUMSYMS, // upper
-    LAYER_MOVE,    // adjust
-    // ** MODES **
+    LAYER_NUMSYMS,
+    LAYER_FUNC,
+    LAYER_MOVE,
     LAYER_GAMEPAD,
     LAYER_GAMEPAD2,
-    LAYER_MEDIA,
     LAYER_JOYSTICK,
+    LAYER_MEDIA,
     LAYER_NUMPAD,
-};
+ };
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
 enum CUSTOM_KEYCODES {
     CKC_CENTER_RIGHT_JS = SAFE_RANGE,
 };
-
-#if defined(COMBO_ENABLE)
-const uint16_t PROGMEM left_alt_combo[]      = {KC_X, KC_C, COMBO_END};
-const uint16_t PROGMEM left_ctl_combo[]      = {KC_C, KC_V, COMBO_END};
-const uint16_t PROGMEM left_ctl_alt_combo[]  = {KC_X, KC_C, KC_V, COMBO_END};
-const uint16_t PROGMEM left_ctl_gui_combo[]  = {KC_C, KC_V, KC_B, COMBO_END};
-const uint16_t PROGMEM left_gui_combo[]      = {KC_V, KC_B, COMBO_END};
-const uint16_t PROGMEM right_alt_combo[]     = {KC_COMM, KC_DOT, COMBO_END};
-const uint16_t PROGMEM right_ctl_combo[]     = {KC_M, KC_COMM, COMBO_END};
-const uint16_t PROGMEM right_gui_combo[]     = {KC_N, KC_M, COMBO_END};
-const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_M, KC_COMM, KC_DOT, COMBO_END};
-const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_N, KC_M, KC_COMM, COMBO_END};
-combo_t                key_combos[]          = {
-    COMBO(left_alt_combo, KC_LALT), COMBO(left_ctl_combo, KC_LCTL), COMBO(left_gui_combo, KC_LGUI), COMBO(left_ctl_alt_combo, LCTL(KC_LALT)), COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)), COMBO(right_alt_combo, KC_RALT), COMBO(right_ctl_combo, KC_RCTL), COMBO(right_gui_combo, KC_RGUI), COMBO(right_ctl_alt_combo, RCTL(KC_RALT)), COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
-};
-#endif
 
 #if defined(KEY_OVERRIDE_ENABLE)
 const key_override_t  backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
@@ -49,7 +32,17 @@ const key_override_t  f18_key_override           = ko_make_basic(MOD_MASK_SHIFT,
 const key_override_t  f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
 const key_override_t  f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
 const key_override_t *key_overrides[]            = {
-    &backspace_del_key_override, &f11_key_override, &f12_key_override, &f13_key_override, &f14_key_override, &f15_key_override, &f16_key_override, &f17_key_override, &f18_key_override, &f19_key_override, &f20_key_override,
+    &backspace_del_key_override,
+    &f11_key_override,
+    &f12_key_override,
+    &f13_key_override,
+    &f14_key_override,
+    &f15_key_override,
+    &f16_key_override,
+    &f17_key_override,
+    &f18_key_override,
+    &f19_key_override,
+    &f20_key_override,
 };
 #endif
 
@@ -138,8 +131,43 @@ enum {
 };
 
 tap_dance_action_t tap_dance_actions[] = {
-    // Tap once for Escape, twice for Caps Lock
-    [TD_BRACES] = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR), [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC), [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN), [TD_DOTEXLM] = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM), [TD_EQLPLUS] = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS), [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS), [TD_PARENS] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN), [TD_PASTSLS] = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS), [TD_PPLSMNS] = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS), [TD_QUOTGRV] = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV), [TD_SLASHES] = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE)};
+    [TD_BRACES] = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR),
+    [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC),
+    [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN),
+    [TD_DOTEXLM] = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM),
+    [TD_EQLPLUS] = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS),
+    [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS),
+    [TD_PARENS] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
+    [TD_PASTSLS] = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS),
+    [TD_PPLSMNS] = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS),
+    [TD_QUOTGRV] = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV),
+    [TD_SLASHES] = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE),
+};
+#endif
+
+#if defined(COMBO_ENABLE)
+const uint16_t PROGMEM left_alt_combo[]      = {KC_Q, KC_W, COMBO_END};
+const uint16_t PROGMEM left_ctl_combo[]      = {KC_W, KC_E, COMBO_END};
+const uint16_t PROGMEM left_ctl_alt_combo[]  = {KC_Q, KC_W, KC_E, COMBO_END};
+const uint16_t PROGMEM left_ctl_gui_combo[]  = {KC_W, KC_E, KC_R, COMBO_END};
+const uint16_t PROGMEM left_gui_combo[]      = {KC_E, KC_R, COMBO_END};
+const uint16_t PROGMEM right_alt_combo[]     = {KC_O, KC_P, COMBO_END};
+const uint16_t PROGMEM right_ctl_combo[]     = {KC_I, KC_O, COMBO_END};
+const uint16_t PROGMEM right_gui_combo[]     = {KC_U, KC_I, COMBO_END};
+const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_I, KC_O, KC_P, COMBO_END};
+const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_U, KC_I, KC_O, COMBO_END};
+combo_t                key_combos[]          = {
+    COMBO(left_alt_combo, KC_LALT),
+    COMBO(left_ctl_combo, KC_LCTL),
+    COMBO(left_gui_combo, KC_LGUI),
+    COMBO(left_ctl_alt_combo, LCTL(KC_LALT)),
+    COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)),
+    COMBO(right_alt_combo, KC_RALT),
+    COMBO(right_ctl_combo, KC_RCTL),
+    COMBO(right_gui_combo, KC_RGUI),
+    COMBO(right_ctl_alt_combo, RCTL(KC_RALT)),
+    COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
+};
 #endif
 
 #if defined(JOYSTICK_ENABLE)
@@ -199,6 +227,8 @@ uint8_t joystick_axis(uint8_t joystick, uint8_t axis) {
     return 0;
 }
 void set_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t value) {
+    dprintf("Setting joystick %d axis %d to %d\n", joystick, axis, value);
+
     js_values[joystick][axis] = value;
     joystick_set_axis(joystick_axis(joystick, axis), js_values[joystick][axis]);
 }
@@ -253,6 +283,7 @@ bool oled_task_user(void) {
     oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
 
     // Host Keyboard Layer Status
+    /*
     oled_write_P(PSTR("Layer: "), false);
     switch (get_highest_layer(layer_state)) {
         case LAYER_QWERTY:
@@ -299,7 +330,7 @@ bool oled_task_user(void) {
             break;
         case LAYER_NUMPAD:
             oled_write_P(PSTR("Numpad\n"), false);
-            oled_write_P(PSTR("               */  7  8  9 <-\n"), false);
+            oled_write_P(PSTR("               * /  7  8  9 <-\n"), false);
             oled_write_P(PSTR("               +-  4  5  6 EN\n"), false);
             oled_write_P(PSTR("                0  1  2  3  .\n"), false);
             break;
@@ -313,6 +344,7 @@ bool oled_task_user(void) {
             // Or use the write_ln shortcut over adding '\n' to the end of your string
             oled_write_ln_P(PSTR("Undefined"), false);
     }
+    */
 
     return false;
 }
@@ -320,7 +352,9 @@ bool oled_task_user(void) {
 
 #if defined(POINTING_DEVICE_ENABLE)
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
-    dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
+    if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
+        dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
+    }
     switch (get_highest_layer(layer_state)) {
 #    if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
@@ -342,29 +376,29 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 #endif
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [LAYER_QWERTY]   = LAYOUT_ortho_4x10(
+    [LAYER_QWERTY] = LAYOUT_ortho_4x10(
         KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P,
         KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_SCLN,
         LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTEXLM), RSFT_T(KC_SLSH),
-        KC_NO, KC_NO, KC_NO, LT(TL_UPPR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_LOWR, KC_SPACE), LT(TL_UPPR, KC_SPACE), KC_NO, KC_NO, KC_NO
+        KC_NO, KC_NO, KC_NO, TL_UPPR, TL_LOWR, KC_SPACE, TL_UPPR, KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_FUNC]     = LAYOUT_ortho_4x10(
+    [LAYER_FUNC] = LAYOUT_ortho_4x10(
         KC_ESC, TT(LAYER_GAMEPAD), TT(LAYER_MEDIA), TT(LAYER_NUMPAD), TT(LAYER_JOYSTICK), DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
         KC_TAB, KC_MENU, KC_HOME, KC_FIND, KC_NO, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         KC_LSFT, TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), KC_NO, TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_PARENS), TD(TD_QUOTGRV), RSFT_T(KC_BSLS),
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_GAMEPAD]  = LAYOUT_ortho_4x10(
+    [LAYER_GAMEPAD] = LAYOUT_ortho_4x10(
         KC_ESC, KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_TAB, KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, MO(LAYER_GAMEPAD2), KC_SPACE, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
+        KC_NO, KC_NO, KC_NO, MO(LAYER_GAMEPAD2), KC_NO, KC_SPACE, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
     [LAYER_GAMEPAD2] = LAYOUT_ortho_4x10(
         KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_LSFT, KC_NO, KC_T, KC_G, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_SPACE, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
         JS_10, KC_P7, KC_P8, KC_P9, JS_8, JS_4, JS_2, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST,
@@ -372,41 +406,43 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         JS_11, KC_P1, KC_P2, KC_P3, JS_9, JS_5, JS_3, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), CKC_CENTER_RIGHT_JS, CKC_CENTER_RIGHT_JS, KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_MEDIA]    = LAYOUT_ortho_4x10(
+    [LAYER_MEDIA] = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_BRID, KC_BRIU, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, KC_MPLY,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO, KC_MFFD, KC_NO,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_MOVE]     = LAYOUT_ortho_4x10(
+    [LAYER_MOVE] = LAYOUT_ortho_4x10(
         MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, KC_NO, KC_NO, KC_DEL, KC_INS,
         MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN, KC_PGUP, KC_END, KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_NUMPAD]   = LAYOUT_ortho_4x10(
+    [LAYER_NUMPAD] = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PASTSLS), KC_P7, KC_P8, KC_P9, KC_BSPC,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PPLSMNS), KC_P4, KC_P5, KC_P6, KC_PENT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_P0, KC_P1, KC_P2, KC_P3, KC_PDOT,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_NUMSYMS]  = LAYOUT_ortho_4x10(
+    [LAYER_NUMSYMS] = LAYOUT_ortho_4x10(
         KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
         LSFT_T(KC_EXLM), KC_AT, KC_HASH, KC_DLR, KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_SPACE, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 };
 
 void keyboard_post_init_user(void) {
     // Customise these values to desired behaviour
     debug_enable   = true;
-    debug_matrix   = true;
-    debug_keyboard = true;
+    debug_matrix   = false;
+    debug_keyboard = false;
     debug_mouse    = true;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
+
     switch (keycode) {
 #if defined(JOYSTICK_ENABLE)
         case CKC_CENTER_RIGHT_JS:
