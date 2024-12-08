@@ -10,6 +10,7 @@ enum LAYERS {
     LAYER_GAMEPAD,
     LAYER_GAMEPAD2,
     LAYER_JOYSTICK,
+    LAYER_JOYSTICK2,
     LAYER_MEDIA,
     LAYER_NUMPAD,
  };
@@ -246,6 +247,7 @@ bool encoder_update_user(uint8_t encoder, bool clockwise) {
     switch (get_highest_layer(layer_state)) {
 #    if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
+        case LAYER_JOYSTICK2:
             uint8_t delta = clockwise ? js_precisions[encoder][2] : -js_precisions[encoder][2];
             update_joystick_axis(encoder, 2, delta);
             break;
@@ -353,6 +355,7 @@ bool oled_task_user(void) {
             oled_write_P(PSTR("                    \n"), false);
             break;
         case LAYER_JOYSTICK:
+        case LAYER_JOYSTICK2:
             oled_write_P(PSTR("   NW  N NE         \n"), false);
             oled_write_P(PSTR("      CR LB SE ST RB\n"), false);
             oled_write_P(PSTR("    W  C  E         \n"), false);
@@ -420,7 +423,15 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
                 mouse_report.buttons = 0;
             }
             break;
-
+        case LAYER_JOYSTICK2:
+            update_joystick_axis(0, 2, mouse_report.y * pointing_device_js_dpi);
+            mouse_report.x = 0;
+            mouse_report.y = 0;
+            if (mouse_report.buttons > 0) {
+                register_joystick_button(JS_XINPUT_BUTTON_R3);
+                mouse_report.buttons = 0;
+            }
+            break;
 #    endif
         case LAYER_MOVE:
             if (abs(mouse_report.y) > abs(mouse_report.x)) {
@@ -482,8 +493,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
         KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_Y, JS_4, JS_6, JS_7, JS_5,
-        KC_NO, JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_2, JS_0, JS_1, JS_3,
+        MO(LAYER_JOYSTICK2), JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_2, JS_0, JS_1, JS_3,
         KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_X, JS_8, JS_10, JS_11, JS_9,
+        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
+    ),
+    [LAYER_JOYSTICK2] = LAYOUT_ortho_4x10(
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
     [LAYER_MEDIA] = LAYOUT_ortho_4x10(
