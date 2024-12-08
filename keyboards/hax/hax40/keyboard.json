@@ -13,6 +13,20 @@
         "nkro": true,
         "rgblight": true
     },
+    "joystick": {
+        "enabled": true,
+        "driver": "analog",
+        "button_count": 12,
+        "axis_resolution": 10,
+        "axes": {
+            "x": {"input_pin": "GP26", "low": 1023, "rest": 512, "high": 0},
+            "y": {"input_pin": "GP27", "low": 0, "rest": 512, "high": 1023},
+            "z": "virtual",
+            "rx": "virtual",
+            "ry": "virtual",
+            "rz": "virtual"
+        }
+    },
     "matrix_pins": {
         "cols": ["GP9", "GP10", "GP11", "GP12", "GP13", "GP18", "GP19", "GP20", "GP21", "GP22"],
         "rows": ["GP0", "GP1", "GP14", "GP15"]
@@ -21,8 +35,8 @@
     "url": "https://github.com/hawxagon",
     "usb": {
         "device_version": "1.0.0",
-        "pid": "0x1019",
-        "vid": "0x534B"
+        "pid": "0xA740",
+        "vid": "0xFEED"
     },
     "ws2812": {
         "pin": "GP23",

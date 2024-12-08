@@ -1,22 +1,16 @@
-# Scotto34 (PCB Edition)
+#  Hax40
 
-![Scotto34 (PCB Edition)](https://i.imgur.com/nTxYa7ih.jpg)
-
-A low profile 34-key split monoblock ortholinear keyboard that uses 18x17mm spaced Choc switches and an exposed controller in the middle.
-
-*   Keyboard Maintainer: [Joe Scotto](https://github.com/joe-scotto)
-*   Hardware Supported: Scotto34 (PCB Edition), Raspberry Pi Pico
-*   Hardware Availability: [ScottoKeebs](https://scottokeebs.com), [Amazon](https://amazon.com), [AliExpress](https://aliexpress.com)
+A modification to the [Scotto34 (PCB Edition)](https://i.imgur.com/nTxYa7ih.jpg) keyboard which also includes a layer display, trackball, and joystick
 
 # Compiling
 
 Make example for this keyboard (after setting up your build environment):
 
-    make scottokeebs/scotto34:default
+    make hax/hax40:default
 
 Flashing example for this keyboard:
 
-    make scottokeebs/scotto34:default:flash
+    make hax/hax40:default:flash
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 

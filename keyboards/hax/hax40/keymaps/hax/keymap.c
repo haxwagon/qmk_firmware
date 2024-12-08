@@ -16,7 +16,11 @@ enum LAYERS {
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
 enum CUSTOM_KEYCODES {
-    CKC_JS_CENTER_RIGHT = SAFE_RANGE,
+    CKC_POINTING_DEVICE_INC_DPI = SAFE_RANGE,
+    CKC_POINTING_DEVICE_DEC_DPI,
+    CKC_JS_CENTER_RIGHT,
+    CKC_JS_CENTER_RIGHT_X,
+    CKC_JS_CENTER_RIGHT_Y,
 };
 
 #if defined(KEY_OVERRIDE_ENABLE)
@@ -171,16 +175,7 @@ combo_t                key_combos[]          = {
 #endif
 
 #if defined(JOYSTICK_ENABLE)
-// joystick settings
-joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    JOYSTICK_AXIS_IN(GP26, 0, 127, 256),
-    JOYSTICK_AXIS_IN(GP27, 0, 127, 256),
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-};
-static const uint8_t js_maxvalue         = 127;
+static const int16_t js_maxvalue         = 512;
 static const uint8_t js_precisions[2][3] = {{10, 10, 10}, {10, 10, 10}};
 static uint16_t      js_values[2][3]     = {{0, 0, 0}, {0, 0, 0}};
 enum JS_AXES {
@@ -226,14 +221,14 @@ uint8_t joystick_axis(uint8_t joystick, uint8_t axis) {
     }
     return 0;
 }
-void set_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t value) {
+void set_joystick_axis(uint8_t joystick, uint8_t axis, int16_t value) {
     dprintf("Setting joystick %d axis %d to %d\n", joystick, axis, value);
 
     js_values[joystick][axis] = value;
     joystick_set_axis(joystick_axis(joystick, axis), js_values[joystick][axis]);
 }
-void update_joystick_axis(uint8_t joystick, uint8_t axis, uint8_t delta) {
-    uint8_t value = js_values[joystick][axis];
+void update_joystick_axis(uint8_t joystick, uint8_t axis, int16_t delta) {
+    int16_t value = js_values[joystick][axis];
     value += delta;
     if (value > js_maxvalue) { value = js_maxvalue; }
     if (value < -js_maxvalue) { value = -js_maxvalue; }
@@ -407,6 +402,8 @@ bool oled_task_user(void) {
 #endif
 
 #if defined(POINTING_DEVICE_ENABLE)
+static uint8_t pointing_device_dpi = POINTING_DEVICE_DEFAULT_DPI;
+static const uint16_t pointing_device_js_dpi = POINTING_DEVICE_DEFAULT_JS_DPI;
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
         dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
@@ -414,8 +411,8 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     switch (get_highest_layer(layer_state)) {
 #    if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            update_joystick_axis(1, 0, mouse_report.x);
-            update_joystick_axis(1, 1, mouse_report.y);
+            update_joystick_axis(1, 0, mouse_report.x * pointing_device_js_dpi);
+            update_joystick_axis(1, 1, mouse_report.y * pointing_device_js_dpi);
             mouse_report.x = 0;
             mouse_report.y = 0;
             if (mouse_report.buttons > 0) {
@@ -450,6 +447,8 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
             }
             break;
         default:
+            mouse_report.x *= pointing_device_dpi;
+            mouse_report.y *= pointing_device_dpi;
             break;
     }
     return mouse_report;
@@ -482,9 +481,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_4, JS_6, JS_7, JS_5,
+        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_Y, JS_4, JS_6, JS_7, JS_5,
         KC_NO, JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_2, JS_0, JS_1, JS_3,
-        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_8, JS_10, JS_11, JS_9,
+        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_X, JS_8, JS_10, JS_11, JS_9,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
     [LAYER_MEDIA] = LAYOUT_ortho_4x10(
@@ -494,7 +493,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
     [LAYER_MOVE] = LAYOUT_ortho_4x10(
-        MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, KC_NO, KC_NO, KC_DEL, KC_INS,
+        MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, CKC_POINTING_DEVICE_DEC_DPI, CKC_POINTING_DEVICE_INC_DPI, KC_DEL, KC_INS,
         MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN, KC_PGUP, KC_END, KC_NO,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
@@ -542,9 +541,29 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
 #endif
+#if defined(POINTING_DEVICE_ENABLE)
+        case CKC_POINTING_DEVICE_DEC_DPI:
+            if (pointing_device_dpi > POINTING_DEVICE_MIN_DPI) {
+                pointing_device_dpi--;
+                dprintf("DPI: %d\n", pointing_device_dpi);
+            }
+            break;
+        case CKC_POINTING_DEVICE_INC_DPI:
+            if (pointing_device_dpi < POINTING_DEVICE_MAX_DPI) {
+                pointing_device_dpi++;
+                dprintf("DPI: %d\n", pointing_device_dpi);
+            }
+            break;
+#endif
 #if defined(JOYSTICK_ENABLE)
         case CKC_JS_CENTER_RIGHT:
             set_joystick_axis(1, 0, 0);
+            set_joystick_axis(1, 1, 0);
+            return false;
+        case CKC_JS_CENTER_RIGHT_X:
+            set_joystick_axis(1, 0, 0);
+            return false;
+        case CKC_JS_CENTER_RIGHT_Y:
             set_joystick_axis(1, 1, 0);
             return false;
 #endif
