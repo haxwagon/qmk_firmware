@@ -1,6 +1,7 @@
 #pragma once
 
 // Define options
+#define CIRQUE_PINNACLE_CUSTOM
 #define DYNAMIC_MACRO_NO_NESTING
 #define DYNAMIC_MACRO_SIZE 256
 #define ENCODER_A_PINS {GP4, GP6 }

@@ -394,12 +394,6 @@ void cirque_pinnacle_configure_cursor_glide(float trigger_px) {
 }
 #endif
 
-#ifndef CIRQUE_PINNACLE_CUSTOM
-report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
-    return cirque_pinnacle_get_device_report(CIRQUE_PINNACLE_ADDR, mouse_report);
-}
-#endif
-
 #if CIRQUE_PINNACLE_POSITION_MODE
 
 #    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
@@ -489,14 +483,6 @@ void cirque_pinnacle_set_cpi(uint16_t cpi) {
     cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
 }
 
-// clang-format off
-const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
-    .init       = cirque_pinnacle_init,
-    .get_report = cirque_pinnacle_get_report,
-    .set_cpi    = cirque_pinnacle_set_cpi,
-    .get_cpi    = cirque_pinnacle_get_cpi
-};
-// clang-format on
 #else
 
 report_mouse_t cirque_pinnacle_get_device_report(report_mouse_t mouse_report) {
@@ -512,6 +498,15 @@ report_mouse_t cirque_pinnacle_get_device_report(report_mouse_t mouse_report) {
         mouse_report.v = touchData.wheelCount;
     }
     return mouse_report;
+}
+
+#endif
+
+
+
+#ifndef CIRQUE_PINNACLE_CUSTOM
+report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
+    return cirque_pinnacle_get_device_report(CIRQUE_PINNACLE_ADDR, mouse_report);
 }
 
 // clang-format off
