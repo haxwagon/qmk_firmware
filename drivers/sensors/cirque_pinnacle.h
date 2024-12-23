@@ -23,36 +23,34 @@
 #    define CIRQUE_PINNACLE_DIAMETER_MM 40
 #endif
 
-#if CIRQUE_PINNACLE_POSITION_MODE
-// Coordinate scaling values
-#    ifndef CIRQUE_PINNACLE_X_LOWER
-#        define CIRQUE_PINNACLE_X_LOWER 127 // min "reachable" X value
-#    endif
-#    ifndef CIRQUE_PINNACLE_X_UPPER
-#        define CIRQUE_PINNACLE_X_UPPER 1919 // max "reachable" X value
-#    endif
-#    ifndef CIRQUE_PINNACLE_Y_LOWER
-#        define CIRQUE_PINNACLE_Y_LOWER 63 // min "reachable" Y value
-#    endif
-#    ifndef CIRQUE_PINNACLE_Y_UPPER
-#        define CIRQUE_PINNACLE_Y_UPPER 1471 // max "reachable" Y value
-#    endif
-#    ifndef CIRQUE_PINNACLE_X_RANGE
-#        define CIRQUE_PINNACLE_X_RANGE (CIRQUE_PINNACLE_X_UPPER - CIRQUE_PINNACLE_X_LOWER)
-#    endif
-#    ifndef CIRQUE_PINNACLE_Y_RANGE
-#        define CIRQUE_PINNACLE_Y_RANGE (CIRQUE_PINNACLE_Y_UPPER - CIRQUE_PINNACLE_Y_LOWER)
-#    endif
-#    if defined(POINTING_DEVICE_GESTURES_SCROLL_ENABLE)
-#        define CIRQUE_PINNACLE_CIRCULAR_SCROLL_ENABLE
-#    endif
-#else
-#    define CIRQUE_PINNACLE_X_RANGE 256
-#    define CIRQUE_PINNACLE_Y_RANGE 256
-#    if defined(POINTING_DEVICE_GESTURES_SCROLL_ENABLE)
-#        define CIRQUE_PINNACLE_SIDE_SCROLL_ENABLE
-#    endif
+// Absolute Coordinate scaling values
+#ifndef CIRQUE_PINNACLE_X_LOWER
+#    define CIRQUE_PINNACLE_X_LOWER 127 // min "reachable" X value
 #endif
+#ifndef CIRQUE_PINNACLE_X_UPPER
+#    define CIRQUE_PINNACLE_X_UPPER 1919 // max "reachable" X value
+#endif
+#ifndef CIRQUE_PINNACLE_Y_LOWER
+#    define CIRQUE_PINNACLE_Y_LOWER 63 // min "reachable" Y value
+#endif
+#ifndef CIRQUE_PINNACLE_Y_UPPER
+#    define CIRQUE_PINNACLE_Y_UPPER 1471 // max "reachable" Y value
+#endif
+#ifndef CIRQUE_PINNACLE_X_RANGE
+#    define CIRQUE_PINNACLE_X_RANGE (CIRQUE_PINNACLE_X_UPPER - CIRQUE_PINNACLE_X_LOWER)
+#endif
+#ifndef CIRQUE_PINNACLE_Y_RANGE
+#    define CIRQUE_PINNACLE_Y_RANGE (CIRQUE_PINNACLE_Y_UPPER - CIRQUE_PINNACLE_Y_LOWER)
+#endif
+#if defined(POINTING_DEVICE_GESTURES_SCROLL_ENABLE)
+#    define CIRQUE_PINNACLE_CIRCULAR_SCROLL_ENABLE
+#endif
+
+// Relative Coordinate scaling values
+#if defined(POINTING_DEVICE_GESTURES_SCROLL_ENABLE)
+#    define CIRQUE_PINNACLE_SIDE_SCROLL_ENABLE
+#endif
+
 #if !defined(POINTING_DEVICE_TASK_THROTTLE_MS)
 #    define POINTING_DEVICE_TASK_THROTTLE_MS 10 // Cirque Pinnacle in normal operation produces data every 10ms. Advanced configuration for pen/stylus usage might require lower values.
 #endif
@@ -118,6 +116,7 @@ typedef struct {
     uint16_t zValue;
     uint8_t  buttonFlags;
     bool     touchDown;
+    bool     hovering;
 } pinnacle_absolute_data_t;
 
 typedef struct {
@@ -132,11 +131,12 @@ typedef struct {
 #define cirque_pinnacle_spi_pointing_device_driver cirque_pinnacle_pointing_device_driver
 const pointing_device_driver_t cirque_pinnacle_pointing_device_driver;
 
-void            cirque_pinnacle_init_device(uint8_t device_address, bool absolute);
+void            cirque_pinnacle_init_device(uint8_t device_address, bool is_absolute);
 void            cirque_pinnacle_calibrate_device(uint8_t device_address);
 void            cirque_pinnacle_cursor_smoothing_device(uint8_t device_address, bool enable);
 pinnacle_absolute_data_t cirque_pinnacle_read_absolute_device_data(uint8_t device_address);
 pinnacle_relative_data_t cirque_pinnacle_read_relative_device_data(uint8_t device_address);
+void            cirque_pinnacle_scale_absolute_data(pinnacle_absolute_data_t* coordinates, uint16_t xResolution, uint16_t yResolution);
 report_mouse_t  cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report);
 
 #ifndef CIRQUE_PINNACLE_CUSTOM
@@ -147,7 +147,6 @@ report_mouse_t  cirque_pinnacle_get_report(report_mouse_t mouse_report);
 #endif
 
 pinnacle_data_t cirque_pinnacle_read_data(void);
-void            cirque_pinnacle_scale_data(pinnacle_data_t* coordinates, uint16_t xResolution, uint16_t yResolution);
 uint16_t        cirque_pinnacle_get_scale(void);
 void            cirque_pinnacle_set_scale(uint16_t scale);
 uint16_t        cirque_pinnacle_get_cpi(void);

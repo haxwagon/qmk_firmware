@@ -31,7 +31,7 @@ static cirque_pinnacle_features_t features = {.tap_enable = true, .circular_scro
 #if defined(CIRQUE_PINNACLE_TAP_ENABLE) && CIRQUE_PINNACLE_POSITION_MODE
 static trackpad_tap_context_t tap;
 
-static report_mouse_t trackpad_tap(report_mouse_t mouse_report, pinnacle_data_t touchData) {
+static report_mouse_t trackpad_tap(report_mouse_t mouse_report, pinnacle_absolute_data_t touchData) {
     if (touchData.touchDown != tap.touchDown) {
         tap.touchDown = touchData.touchDown;
         if (!touchData.zValue) {
@@ -87,7 +87,7 @@ static inline uint16_t atan2_16(int32_t dy, int32_t dx) {
     return a;
 }
 
-static circular_scroll_t circular_scroll(pinnacle_data_t touchData) {
+static circular_scroll_t circular_scroll(pinnacle_absolute_data_t touchData) {
     circular_scroll_t report = {0, 0, false};
     int8_t            x, y, wheel_clicks;
     uint8_t           center = INT8_MAX, mag;
@@ -204,7 +204,7 @@ void cirque_pinnacle_configure_circular_scroll(uint8_t outer_ring_pct, uint8_t t
 }
 #endif
 
-bool cirque_pinnacle_gestures(report_mouse_t* mouse_report, pinnacle_data_t touchData) {
+bool cirque_pinnacle_gestures(report_mouse_t* mouse_report, pinnacle_absolute_data_t touchData) {
     bool suppress_mouse_update = false;
 
 #ifdef CIRQUE_PINNACLE_CIRCULAR_SCROLL_ENABLE

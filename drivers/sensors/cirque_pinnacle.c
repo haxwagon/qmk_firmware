@@ -10,6 +10,17 @@
 
 #include <stdlib.h>
 
+#define ZVALUE_MAP_ROWS_Y 6
+#define ZVALUE_MAP_COLS_X 8
+static const uint8_t CIRQUE_ZVALUE_MAP[ZVALUE_MAP_ROWS_Y][ZVALUE_MAP_COLS_X] = {
+        {0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 2, 3, 5, 5, 3, 2, 0},
+        {0, 3, 5, 15, 15, 5, 2, 0},
+        {0, 3, 5, 15, 15, 5, 3, 0},
+        {0, 2, 3, 5, 5, 3, 2, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0},
+};
+
 #ifndef CIRQUE_PINNACLE_ATTENUATION
 #    ifdef CIRQUE_PINNACLE_CURVED_OVERLAY
 #        define CIRQUE_PINNACLE_ATTENUATION EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_2X
@@ -26,11 +37,18 @@ void cirque_pinnacle_enable_feed(uint8_t device_address, bool feedEnable);
 void RAP_ReadBytes(uint8_t device_address, uint8_t address, uint8_t* data, uint8_t count);
 void RAP_Write(uint8_t device_address, uint8_t address, uint8_t data);
 
-#if CIRQUE_PINNACLE_POSITION_MODE
-/*  Logical Scaling Functions */
-// Clips raw coordinates to "reachable" window of sensor
-// NOTE: values outside this window can only appear as a result of noise
-void ClipCoordinates(pinnacle_data_t* coordinates) {
+uint16_t cirque_pinnacle_get_scale(void) {
+    return scale_data;
+}
+void cirque_pinnacle_set_scale(uint16_t scale) {
+    scale_data = scale;
+}
+
+// Scales data to desired X & Y resolution
+void cirque_pinnacle_scale_absolute_data(pinnacle_absolute_data_t* coordinates, uint16_t xResolution, uint16_t yResolution) {
+    uint32_t xTemp = 0;
+    uint32_t yTemp = 0;
+
     if (coordinates->xValue < CIRQUE_PINNACLE_X_LOWER) {
         coordinates->xValue = CIRQUE_PINNACLE_X_LOWER;
     } else if (coordinates->xValue > CIRQUE_PINNACLE_X_UPPER) {
@@ -41,23 +59,6 @@ void ClipCoordinates(pinnacle_data_t* coordinates) {
     } else if (coordinates->yValue > CIRQUE_PINNACLE_Y_UPPER) {
         coordinates->yValue = CIRQUE_PINNACLE_Y_UPPER;
     }
-}
-#endif
-
-uint16_t cirque_pinnacle_get_scale(void) {
-    return scale_data;
-}
-void cirque_pinnacle_set_scale(uint16_t scale) {
-    scale_data = scale;
-}
-
-// Scales data to desired X & Y resolution
-void cirque_pinnacle_scale_data(pinnacle_data_t* coordinates, uint16_t xResolution, uint16_t yResolution) {
-#if CIRQUE_PINNACLE_POSITION_MODE
-    uint32_t xTemp = 0;
-    uint32_t yTemp = 0;
-
-    ClipCoordinates(coordinates);
 
     xTemp = coordinates->xValue;
     yTemp = coordinates->yValue;
@@ -66,25 +67,26 @@ void cirque_pinnacle_scale_data(pinnacle_data_t* coordinates, uint16_t xResoluti
     xTemp -= CIRQUE_PINNACLE_X_LOWER;
     yTemp -= CIRQUE_PINNACLE_Y_LOWER;
 
-    // scale coordinates to (xResolution, yResolution) range
-    coordinates->xValue = (uint16_t)(xTemp * xResolution / CIRQUE_PINNACLE_X_RANGE);
-    coordinates->yValue = (uint16_t)(yTemp * yResolution / CIRQUE_PINNACLE_Y_RANGE);
-#else
+    // scale coordinates to [0, xResolution - 1] x [0, yResolution - 1] range
+    coordinates->xValue = (uint16_t)(xTemp * (xResolution - 1) / CIRQUE_PINNACLE_X_RANGE);
+    coordinates->yValue = (uint16_t)(yTemp * (yResolution - 1) / CIRQUE_PINNACLE_Y_RANGE);
+}
+
+void cirque_pinnacle_scale_relative_data(pinnacle_relative_data_t* coordinates, uint16_t xResolution, uint16_t yResolution) {
     int32_t        xTemp = 0, yTemp = 0;
     ldiv_t         temp;
     static int32_t xRemainder, yRemainder;
 
-    temp       = ldiv(((int32_t)coordinates->xDelta) * (int32_t)xResolution + xRemainder, (int32_t)CIRQUE_PINNACLE_X_RANGE);
+    temp       = ldiv(((int32_t)coordinates->xDelta) * (int32_t)xResolution + xRemainder, (int32_t)256);
     xTemp      = temp.quot;
     xRemainder = temp.rem;
 
-    temp       = ldiv(((int32_t)coordinates->yDelta) * (int32_t)yResolution + yRemainder, (int32_t)CIRQUE_PINNACLE_Y_RANGE);
+    temp       = ldiv(((int32_t)coordinates->yDelta) * (int32_t)yResolution + yRemainder, (int32_t)256);
     yTemp      = temp.quot;
     yRemainder = temp.rem;
 
     coordinates->xDelta = (int16_t)xTemp;
     coordinates->yDelta = (int16_t)yTemp;
-#endif
 }
 
 // Clears Status1 register flags (SW_CC and SW_DR)
@@ -232,7 +234,7 @@ bool cirque_pinnacle_connected(uint8_t device_address) {
 }
 
 /*  Pinnacle-based TM040040/TM035035/TM023023 Functions  */
-void cirque_pinnacle_init_device(uint8_t device_address) {
+void cirque_pinnacle_init_device(uint8_t device_address, bool is_absolute) {
 #if defined(POINTING_DEVICE_DRIVER_cirque_pinnacle_spi)
     spi_init();
 #elif defined(POINTING_DEVICE_DRIVER_cirque_pinnacle_i2c)
@@ -250,24 +252,24 @@ void cirque_pinnacle_init_device(uint8_t device_address) {
     // Host clears SW_CC flag
     cirque_pinnacle_clear_flags(device_address);
 
-#if CIRQUE_PINNACLE_POSITION_MODE
-    RAP_Write(device_address, HOSTREG__FEEDCONFIG2, HOSTREG__FEEDCONFIG2_DEFVAL);
-#else
-    // FeedConfig2 (Feature flags for Relative Mode Only)
-    uint8_t feedconfig2 = HOSTREG__FEEDCONFIG2__GLIDE_EXTEND_DISABLE | HOSTREG__FEEDCONFIG2__INTELLIMOUSE_MODE;
-#    if !defined(CIRQUE_PINNACLE_TAP_ENABLE)
-    feedconfig2 |= HOSTREG__FEEDCONFIG2__ALL_TAP_DISABLE;
-#    endif
-#    if !defined(CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE)
-    feedconfig2 |= HOSTREG__FEEDCONFIG2__SECONDARY_TAP_DISABLE;
-#    elif !defined(CIRQUE_PINNACLE_TAP_ENABLE)
-#        error CIRQUE_PINNACLE_TAP_ENABLE must be defined for CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE to work
-#    endif
-#    if !defined(CIRQUE_PINNACLE_SIDE_SCROLL_ENABLE)
-    feedconfig2 |= HOSTREG__FEEDCONFIG2__SCROLL_DISABLE;
-#    endif
-    RAP_Write(device_address, HOSTREG__FEEDCONFIG2, feedconfig2);
-#endif
+    if (is_absolute) {
+        RAP_Write(device_address, HOSTREG__FEEDCONFIG2, HOSTREG__FEEDCONFIG2_DEFVAL);
+    } else {
+        // FeedConfig2 (Feature flags for Relative Mode Only)
+        uint8_t feedconfig2 = HOSTREG__FEEDCONFIG2__GLIDE_EXTEND_DISABLE | HOSTREG__FEEDCONFIG2__INTELLIMOUSE_MODE;
+    #    if !defined(CIRQUE_PINNACLE_TAP_ENABLE)
+        feedconfig2 |= HOSTREG__FEEDCONFIG2__ALL_TAP_DISABLE;
+    #    endif
+    #    if !defined(CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE)
+        feedconfig2 |= HOSTREG__FEEDCONFIG2__SECONDARY_TAP_DISABLE;
+    #    elif !defined(CIRQUE_PINNACLE_TAP_ENABLE)
+    #        error CIRQUE_PINNACLE_TAP_ENABLE must be defined for CIRQUE_PINNACLE_SECONDARY_TAP_ENABLE to work
+    #    endif
+    #    if !defined(CIRQUE_PINNACLE_SIDE_SCROLL_ENABLE)
+        feedconfig2 |= HOSTREG__FEEDCONFIG2__SCROLL_DISABLE;
+    #    endif
+        RAP_Write(device_address, HOSTREG__FEEDCONFIG2, feedconfig2);
+    }
 
     // FeedConfig1 (Data Output Flags)
     RAP_Write(device_address, HOSTREG__FEEDCONFIG1, CIRQUE_PINNACLE_POSITION_MODE ? HOSTREG__FEEDCONFIG1__DATA_TYPE__REL0_ABS1 : HOSTREG__FEEDCONFIG1_DEFVAL);
@@ -302,6 +304,13 @@ void cirque_pinnacle_set_cpi(uint16_t cpi) {
     cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
 }
 
+bool is_touch_hovering(pinnacle_absolute_data_t* touchData) {
+    pinnacle_absolute_data_t tempTouchData;
+    memcpy(&tempTouchData, touchData, sizeof(pinnacle_absolute_data_t));
+    cirque_pinnacle_scale_absolute_data(&tempTouchData, ZVALUE_MAP_COLS_X, ZVALUE_MAP_ROWS_Y);
+    return touchData->zValue < CIRQUE_ZVALUE_MAP[tempTouchData.yValue][tempTouchData.xValue];
+}
+
 pinnacle_absolute_data_t cirque_pinnacle_read_absolute_device_data(uint8_t device_address) {
     uint8_t                  data_ready = 0;
     uint8_t                  data[6]    = {0};
@@ -328,6 +337,7 @@ pinnacle_absolute_data_t cirque_pinnacle_read_absolute_device_data(uint8_t devic
     result.yValue      = data[3] | ((data[4] & 0xF0) << 4);          // merge high and low bits for Y
     result.zValue      = data[5] & 0x3F;                             // Z is only lower 6 bits, upper 2 bits are reserved/unused
     result.touchDown   = (result.xValue != 0 || result.yValue != 0); // (0,0) is a "magic coordinate" to indicate "finger touched down"
+    result.hovering    = is_touch_hovering(&result);
 
 #ifdef CIRQUE_PINNACLE_REACHABLE_CALIBRATION
     static uint16_t xMin = UINT16_MAX, yMin = UINT16_MAX, yMax = 0, xMax = 0;
@@ -374,7 +384,7 @@ pinnacle_relative_data_t cirque_pinnacle_read_relative_device_data(uint8_t devic
     } else {
         result.yDelta = -((int16_t)data[2]);
     }
-    result.wheelCount = ((int8_t*)data)[3];
+    result.scrollWheelCount = ((int8_t*)data)[3];
 
 #ifdef CIRQUE_PINNACLE_REACHABLE_CALIBRATION
     static uint16_t xMin = UINT16_MAX, yMin = UINT16_MAX, yMax = 0, xMax = 0;
@@ -418,10 +428,10 @@ bool auto_mouse_activation(report_mouse_t mouse_report) {
 #    endif
 
 report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
-    uint16_t          scale     = cirque_pinnacle_get_scale();
-    pinnacle_data_t   touchData = cirque_pinnacle_read_device_data(device_address);
-    mouse_xy_report_t report_x = 0, report_y = 0;
-    static uint16_t   x = 0, y = 0, last_scale = 0;
+    uint16_t                 scale        = cirque_pinnacle_get_scale();
+    pinnacle_absolute_data_t touchData    = cirque_pinnacle_read_absolute_device_data(device_address);
+    mouse_xy_report_t        report_x     = 0, report_y = 0;
+    static                   uint16_t   x = 0, y        = 0, last_scale = 0;
 
 #    if defined(CIRQUE_PINNACLE_TAP_ENABLE)
     mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
@@ -454,7 +464,7 @@ report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_
 #    endif
 
     // Scale coordinates to arbitrary X, Y resolution
-    cirque_pinnacle_scale_data(&touchData, scale, scale);
+    cirque_pinnacle_scale_absolute_data(&touchData, scale, scale);
 
     if (!cirque_pinnacle_gestures(&mouse_report, touchData)) {
         if (last_scale && scale == last_scale && x && y && touchData.xValue && touchData.yValue) {
@@ -492,16 +502,16 @@ mouse_report_update:
 #else
 
 report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
-    pinnacle_data_t touchData = cirque_pinnacle_read_device_data(device_address);
+    pinnacle_relative_data_t touchData = cirque_pinnacle_read_relative_device_data(device_address);
 
     // Scale coordinates to arbitrary X, Y resolution
-    cirque_pinnacle_scale_data(&touchData, cirque_pinnacle_get_scale(), cirque_pinnacle_get_scale());
+    cirque_pinnacle_scale_relative_data(&touchData, cirque_pinnacle_get_scale(), cirque_pinnacle_get_scale());
 
     if (touchData.valid) {
-        mouse_report.buttons = touchData.buttons;
+        mouse_report.buttons = touchData.buttonFlags;
         mouse_report.x = CONSTRAIN_HID_XY(touchData.xDelta);
         mouse_report.y = CONSTRAIN_HID_XY(touchData.yDelta);
-        mouse_report.v = touchData.wheelCount;
+        mouse_report.v = touchData.scrollWheelCount;
     }
     return mouse_report;
 }
@@ -512,7 +522,14 @@ report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_
 #ifndef CIRQUE_PINNACLE_CUSTOM
 
 void cirque_pinnacle_init(void) {
-    cirque_pinnacle_init_device(CIRQUE_PINNACLE_ADDR);
+
+    cirque_pinnacle_init_device(CIRQUE_PINNACLE_ADDR,
+#if CIRQUE_PINNACLE_POSITION_MODE
+        true
+#else
+        false
+#endif
+    );
 }
 
 void cirque_pinnacle_calibrate(void) {
