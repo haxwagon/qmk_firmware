@@ -487,10 +487,39 @@ bool oled_task_user(void)
 
 #if defined(POINTING_DEVICE_ENABLE)
 
-void           dual_cirque_pinnacle_init(void) { }
-report_mouse_t dual_cirque_pinnacle_get_report(report_mouse_t mouse_report) { return mouse_report; }
-uint16_t       dual_cirque_pinnacle_get_cpi(void) { return 0; }
-void           dual_cirque_pinnacle_set_cpi(uint16_t cpi) {}
+static uint8_t left_cirque_address = 0x2A;
+static uint8_t right_cirque_address = 0x2C; // solder 470kohm resistor on ADR
+
+void           dual_cirque_pinnacle_init(void) {
+    cirque_pinnacle_init_device(left_cirque_address);
+    cirque_pinnacle_init_device(right_cirque_address);
+}
+
+report_mouse_t dual_cirque_pinnacle_get_report(report_mouse_t mouse_report) {
+    pinnacle_data_t   left_data = cirque_pinnacle_read_device_data(left_cirque_address);
+    pinnacle_data_t   right_data = cirque_pinnacle_read_device_data(right_cirque_address);
+
+    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
+
+    if (!left_data.valid || !right_data.valid) {
+        return mouse_report;
+    }
+
+    mouse_report.buttons = left_data.buttons;
+    mouse_report.x = CONSTRAIN_HID_XY(left_data.xDelta);
+    mouse_report.y = CONSTRAIN_HID_XY(left_data.yDelta);
+    mouse_report.v = left_data.wheelCount;
+
+    return mouse_report;
+}
+
+uint16_t       dual_cirque_pinnacle_get_cpi(void) {
+    return cirque_pinnacle_get_cpi();
+}
+
+void           dual_cirque_pinnacle_set_cpi(uint16_t cpi) {
+    cirque_pinnacle_set_cpi(cpi);
+}
 
 const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
     .init       = dual_cirque_pinnacle_init,

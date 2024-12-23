@@ -187,12 +187,6 @@ void cirque_pinnacle_tune_edge_sensitivity(uint8_t device_address) {
 }
 
 // Perform calibration
-#ifndef CIRQUE_PINNACLE_CUSTOM
-void cirque_pinnacle_calibrate(void) {
-    cirque_pinnacle_calibrate_device(CIRQUE_PINNACLE_ADDR);
-}
-#endif
-
 void cirque_pinnacle_calibrate_device(uint8_t device_address) {
     uint8_t  calconfig;
     uint16_t timeout_timer;
@@ -211,12 +205,6 @@ void cirque_pinnacle_calibrate_device(uint8_t device_address) {
 }
 
 // Enable/disable cursor smoothing, smoothing is enabled by default
-#ifndef CIRQUE_PINNACLE_CUSTOM
-void cirque_pinnacle_cursor_smoothing(bool enable) {
-    cirque_pinnacle_cursor_smoothing_device(CIRQUE_PINNACLE_ADDR, enable);
-}
-#endif
-
 void cirque_pinnacle_cursor_smoothing_device(uint8_t device_address, bool enable) {
     uint8_t feedconfig3;
 
@@ -244,12 +232,6 @@ bool cirque_pinnacle_connected(uint8_t device_address) {
 }
 
 /*  Pinnacle-based TM040040/TM035035/TM023023 Functions  */
-#ifndef CIRQUE_PINNACLE_CUSTOM
-void cirque_pinnacle_init(void) {
-    cirque_pinnacle_init_device(CIRQUE_PINNACLE_ADDR);
-}
-#endif
-
 void cirque_pinnacle_init_device(uint8_t device_address) {
 #if defined(POINTING_DEVICE_DRIVER_cirque_pinnacle_spi)
     spi_init();
@@ -313,11 +295,12 @@ void cirque_pinnacle_init_device(uint8_t device_address) {
 #endif
 }
 
-#ifndef CIRQUE_PINNACLE_CUSTOM
-pinnacle_data_t cirque_pinnacle_read_data(void) {
-    return cirque_pinnacle_read_device_data(CIRQUE_PINNACLE_ADDR);
+uint16_t cirque_pinnacle_get_cpi(void) {
+    return CIRQUE_PINNACLE_PX_TO_INCH(cirque_pinnacle_get_scale());
 }
-#endif
+void cirque_pinnacle_set_cpi(uint16_t cpi) {
+    cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
+}
 
 pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address) {
     uint8_t         data_ready = 0;
@@ -476,16 +459,9 @@ mouse_report_update:
     return mouse_report;
 }
 
-uint16_t cirque_pinnacle_get_cpi(void) {
-    return CIRQUE_PINNACLE_PX_TO_INCH(cirque_pinnacle_get_scale());
-}
-void cirque_pinnacle_set_cpi(uint16_t cpi) {
-    cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
-}
-
 #else
 
-report_mouse_t cirque_pinnacle_get_device_report(report_mouse_t mouse_report) {
+report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
     pinnacle_data_t touchData = cirque_pinnacle_read_device_data(device_address);
 
     // Scale coordinates to arbitrary X, Y resolution
@@ -503,18 +479,34 @@ report_mouse_t cirque_pinnacle_get_device_report(report_mouse_t mouse_report) {
 #endif
 
 
-
 #ifndef CIRQUE_PINNACLE_CUSTOM
+
+void cirque_pinnacle_init(void) {
+    cirque_pinnacle_init_device(CIRQUE_PINNACLE_ADDR);
+}
+
+void cirque_pinnacle_calibrate(void) {
+    cirque_pinnacle_calibrate_device(CIRQUE_PINNACLE_ADDR);
+}
+
+void cirque_pinnacle_cursor_smoothing(bool enable) {
+    cirque_pinnacle_cursor_smoothing_device(CIRQUE_PINNACLE_ADDR, enable);
+}
+
 report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
     return cirque_pinnacle_get_device_report(CIRQUE_PINNACLE_ADDR, mouse_report);
+}
+
+pinnacle_data_t cirque_pinnacle_read_data(void) {
+    return cirque_pinnacle_read_device_data(CIRQUE_PINNACLE_ADDR);
 }
 
 // clang-format off
 const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
     .init       = cirque_pinnacle_init,
     .get_report = cirque_pinnacle_get_report,
-    .set_cpi    = cirque_pinnacle_set_scale,
-    .get_cpi    = cirque_pinnacle_get_scale
+    .set_cpi    = cirque_pinnacle_set_cpi,
+    .get_cpi    = cirque_pinnacle_get_cpi
 };
 // clang-format on
 #endif
