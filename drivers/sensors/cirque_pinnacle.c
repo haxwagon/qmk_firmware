@@ -302,10 +302,10 @@ void cirque_pinnacle_set_cpi(uint16_t cpi) {
     cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
 }
 
-pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address) {
-    uint8_t         data_ready = 0;
-    uint8_t         data[6]    = {0};
-    pinnacle_data_t result     = {0};
+pinnacle_absolute_data_t cirque_pinnacle_read_absolute_device_data(uint8_t device_address) {
+    uint8_t                  data_ready = 0;
+    uint8_t                  data[6]    = {0};
+    pinnacle_absolute_data_t result     = {0};
 
     // Check if there is valid data available
     RAP_ReadBytes(device_address, HOSTREG__STATUS1, &data_ready, 1);
@@ -321,7 +321,6 @@ pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address) {
     // Get ready for the next data sample
     cirque_pinnacle_clear_flags(device_address);
 
-#if CIRQUE_PINNACLE_POSITION_MODE
     // Decode data for absolute mode
     // Register 0x13 is unused in this mode (palm detection area)
     result.buttonFlags = data[0] & 0x3F;                             // bit0 to bit5 are switch 0-5, only hardware button presses (from input pin on the Pinnacle chip)
@@ -329,10 +328,42 @@ pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address) {
     result.yValue      = data[3] | ((data[4] & 0xF0) << 4);          // merge high and low bits for Y
     result.zValue      = data[5] & 0x3F;                             // Z is only lower 6 bits, upper 2 bits are reserved/unused
     result.touchDown   = (result.xValue != 0 || result.yValue != 0); // (0,0) is a "magic coordinate" to indicate "finger touched down"
-#else
+
+#ifdef CIRQUE_PINNACLE_REACHABLE_CALIBRATION
+    static uint16_t xMin = UINT16_MAX, yMin = UINT16_MAX, yMax = 0, xMax = 0;
+    if (result.xValue < xMin) xMin = result.xValue;
+    if (result.xValue > xMax) xMax = result.xValue;
+    if (result.yValue < yMin) yMin = result.yValue;
+    if (result.yValue > yMax) yMax = result.yValue;
+    pd_dprintf("%s: xLo=%3d xHi=%3d yLo=%3d yHi=%3d\n", __FUNCTION__, xMin, xMax, yMin, yMax);
+#endif
+
+    result.valid = true;
+    return result;
+}
+
+pinnacle_relative_data_t cirque_pinnacle_read_relative_device_data(uint8_t device_address) {
+    uint8_t                  data_ready = 0;
+    uint8_t                  data[6]    = {0};
+    pinnacle_relative_data_t result     = {0};
+
+    // Check if there is valid data available
+    RAP_ReadBytes(device_address, HOSTREG__STATUS1, &data_ready, 1);
+    if ((data_ready & HOSTREG__STATUS1__DATA_READY) == 0) {
+        // no data available yet
+        result.valid = false; // be explicit
+        return result;
+    }
+
+    // Read all data bytes
+    RAP_ReadBytes(device_address, HOSTREG__PACKETBYTE_0, data, 6);
+
+    // Get ready for the next data sample
+    cirque_pinnacle_clear_flags(device_address);
+
     // Decode data for relative mode
     // Registers 0x16 and 0x17 are unused in this mode
-    result.buttons = data[0] & 0x07; // Only three buttons are supported
+    result.buttonFlags = data[0] & 0x07; // Only three buttons are supported
     if ((data[0] & 0x10) && data[1] != 0) {
         result.xDelta = -((int16_t)256 - (int16_t)(data[1]));
     } else {
@@ -344,7 +375,6 @@ pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address) {
         result.yDelta = -((int16_t)data[2]);
     }
     result.wheelCount = ((int8_t*)data)[3];
-#endif
 
 #ifdef CIRQUE_PINNACLE_REACHABLE_CALIBRATION
     static uint16_t xMin = UINT16_MAX, yMin = UINT16_MAX, yMax = 0, xMax = 0;
@@ -498,7 +528,24 @@ report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
 }
 
 pinnacle_data_t cirque_pinnacle_read_data(void) {
-    return cirque_pinnacle_read_device_data(CIRQUE_PINNACLE_ADDR);
+    pinnacle_data_t data;
+#if CIRQUE_PINNACLE_POSITION_MODE
+    pinnacle_absolute_data_t absolute_data = cirque_pinnacle_read_absolute_device_data(CIRQUE_PINNACLE_ADDR);
+    data.valid       = absolute_data.valid;
+    data.xValue      = absolute_data.xValue;
+    data.yValue      = absolute_data.yValue;
+    data.zValue      = absolute_data.zValue;
+    data.buttonFlags = absolute_data.buttonFlags;
+    data.touchDown   = absolute_data.touchDown;
+#else
+    pinnacle_relative_data_t relative_data = cirque_pinnacle_read_relative_device_data(CIRQUE_PINNACLE_ADDR);
+    data.valid = relative_data.valid;
+    data.xDelta = relative_data.xDelta;
+    data.yDelta = relative_data.yDelta;
+    data.wheelCount = relative_data.scrollWheelCount;
+    data.buttons = relative_data.buttonFlags;
+#endif
+    return data;
 }
 
 // clang-format off

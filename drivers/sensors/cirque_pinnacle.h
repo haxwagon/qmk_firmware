@@ -110,14 +110,33 @@ typedef struct {
 #endif
 } pinnacle_data_t;
 
+
+typedef struct {
+    bool     valid;
+    uint16_t xValue;
+    uint16_t yValue;
+    uint16_t zValue;
+    uint8_t  buttonFlags;
+    bool     touchDown;
+} pinnacle_absolute_data_t;
+
+typedef struct {
+    bool    valid;
+    int16_t xDelta;
+    int16_t yDelta;
+    uint8_t buttonFlags;
+    int8_t  scrollWheelCount;
+} pinnacle_relative_data_t;
+
 #define cirque_pinnacle_i2c_pointing_device_driver cirque_pinnacle_pointing_device_driver
 #define cirque_pinnacle_spi_pointing_device_driver cirque_pinnacle_pointing_device_driver
 const pointing_device_driver_t cirque_pinnacle_pointing_device_driver;
 
-void            cirque_pinnacle_init_device(uint8_t device_address);
+void            cirque_pinnacle_init_device(uint8_t device_address, bool absolute);
 void            cirque_pinnacle_calibrate_device(uint8_t device_address);
 void            cirque_pinnacle_cursor_smoothing_device(uint8_t device_address, bool enable);
-pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address);
+pinnacle_absolute_data_t cirque_pinnacle_read_absolute_device_data(uint8_t device_address);
+pinnacle_relative_data_t cirque_pinnacle_read_relative_device_data(uint8_t device_address);
 report_mouse_t  cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report);
 
 #ifndef CIRQUE_PINNACLE_CUSTOM
