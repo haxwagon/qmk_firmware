@@ -21,10 +21,10 @@
 bool     touchpad_init;
 uint16_t scale_data = CIRQUE_PINNACLE_DEFAULT_SCALE;
 
-void cirque_pinnacle_clear_flags(void);
-void cirque_pinnacle_enable_feed(bool feedEnable);
-void RAP_ReadBytes(uint8_t address, uint8_t* data, uint8_t count);
-void RAP_Write(uint8_t address, uint8_t data);
+void cirque_pinnacle_clear_flags(uint8_t device_address);
+void cirque_pinnacle_enable_feed(uint8_t device_address, bool feedEnable);
+void RAP_ReadBytes(uint8_t device_address, uint8_t address, uint8_t* data, uint8_t count);
+void RAP_Write(uint8_t device_address, uint8_t address, uint8_t data);
 
 #if CIRQUE_PINNACLE_POSITION_MODE
 /*  Logical Scaling Functions */
@@ -88,151 +88,169 @@ void cirque_pinnacle_scale_data(pinnacle_data_t* coordinates, uint16_t xResoluti
 }
 
 // Clears Status1 register flags (SW_CC and SW_DR)
-void cirque_pinnacle_clear_flags(void) {
-    RAP_Write(HOSTREG__STATUS1, HOSTREG__STATUS1_DEFVAL & ~(HOSTREG__STATUS1__COMMAND_COMPLETE | HOSTREG__STATUS1__DATA_READY));
+void cirque_pinnacle_clear_flags(uint8_t device_address) {
+    RAP_Write(device_address, HOSTREG__STATUS1, HOSTREG__STATUS1_DEFVAL & ~(HOSTREG__STATUS1__COMMAND_COMPLETE | HOSTREG__STATUS1__DATA_READY));
     wait_us(50);
 }
 
 // Enables/Disables the feed
-void cirque_pinnacle_enable_feed(bool feedEnable) {
+void cirque_pinnacle_enable_feed(uint8_t device_address, bool feedEnable) {
     uint8_t feedconfig1;
-    RAP_ReadBytes(HOSTREG__FEEDCONFIG1, &feedconfig1, 1);
+    RAP_ReadBytes(device_address, HOSTREG__FEEDCONFIG1, &feedconfig1, 1);
 
     if (feedEnable) {
         feedconfig1 |= HOSTREG__FEEDCONFIG1__FEED_ENABLE;
     } else {
         feedconfig1 &= ~HOSTREG__FEEDCONFIG1__FEED_ENABLE;
     }
-    RAP_Write(HOSTREG__FEEDCONFIG1, feedconfig1);
+    RAP_Write(device_address, HOSTREG__FEEDCONFIG1, feedconfig1);
 }
 
 /*  ERA (Extended Register Access) Functions  */
 // Reads <count> bytes from an extended register at <address> (16-bit address),
 // stores values in <*data>
-void ERA_ReadBytes(uint16_t address, uint8_t* data, uint16_t count) {
+void ERA_ReadBytes(uint8_t device_address, uint16_t address, uint8_t* data, uint16_t count) {
     uint8_t  ERAControlValue = 0xFF;
     uint16_t timeout_timer;
 
-    cirque_pinnacle_enable_feed(false); // Disable feed
+    cirque_pinnacle_enable_feed(device_address, false); // Disable feed
 
-    RAP_Write(HOSTREG__EXT_REG_AXS_ADDR_HIGH, (uint8_t)(address >> 8));    // Send upper byte of ERA address
-    RAP_Write(HOSTREG__EXT_REG_AXS_ADDR_LOW, (uint8_t)(address & 0x00FF)); // Send lower byte of ERA address
+    RAP_Write(device_address, HOSTREG__EXT_REG_AXS_ADDR_HIGH, (uint8_t)(address >> 8));    // Send upper byte of ERA address
+    RAP_Write(device_address, HOSTREG__EXT_REG_AXS_ADDR_LOW, (uint8_t)(address & 0x00FF)); // Send lower byte of ERA address
 
     for (uint16_t i = 0; i < count; i++) {
-        RAP_Write(HOSTREG__EXT_REG_AXS_CTRL, HOSTREG__EREG_AXS__INC_ADDR_READ | HOSTREG__EREG_AXS__READ); // Signal ERA-read (auto-increment) to Pinnacle
+        RAP_Write(device_address, HOSTREG__EXT_REG_AXS_CTRL, HOSTREG__EREG_AXS__INC_ADDR_READ | HOSTREG__EREG_AXS__READ); // Signal ERA-read (auto-increment) to Pinnacle
 
         // Wait for status register 0x1E to clear
         timeout_timer = timer_read();
         do {
-            RAP_ReadBytes(HOSTREG__EXT_REG_AXS_CTRL, &ERAControlValue, 1);
+            RAP_ReadBytes(device_address, HOSTREG__EXT_REG_AXS_CTRL, &ERAControlValue, 1);
         } while ((ERAControlValue != 0x00) && (timer_elapsed(timeout_timer) <= CIRQUE_PINNACLE_TIMEOUT));
 
-        RAP_ReadBytes(HOSTREG__EXT_REG_AXS_VALUE, data + i, 1);
+        RAP_ReadBytes(device_address, HOSTREG__EXT_REG_AXS_VALUE, data + i, 1);
 
-        cirque_pinnacle_clear_flags();
+        cirque_pinnacle_clear_flags(device_address);
     }
 }
 
 // Writes a byte, <data>, to an extended register at <address> (16-bit address)
-void ERA_WriteByte(uint16_t address, uint8_t data) {
+void ERA_WriteByte(uint8_t device_address, uint16_t address, uint8_t data) {
     uint8_t  ERAControlValue = 0xFF;
     uint16_t timeout_timer;
 
-    cirque_pinnacle_enable_feed(false); // Disable feed
+    cirque_pinnacle_enable_feed(device_address, false); // Disable feed
 
-    RAP_Write(HOSTREG__EXT_REG_AXS_VALUE, data); // Send data byte to be written
+    RAP_Write(device_address, HOSTREG__EXT_REG_AXS_VALUE, data); // Send data byte to be written
 
-    RAP_Write(HOSTREG__EXT_REG_AXS_ADDR_HIGH, (uint8_t)(address >> 8));    // Upper byte of ERA address
-    RAP_Write(HOSTREG__EXT_REG_AXS_ADDR_LOW, (uint8_t)(address & 0x00FF)); // Lower byte of ERA address
+    RAP_Write(device_address, HOSTREG__EXT_REG_AXS_ADDR_HIGH, (uint8_t)(address >> 8));    // Upper byte of ERA address
+    RAP_Write(device_address, HOSTREG__EXT_REG_AXS_ADDR_LOW, (uint8_t)(address & 0x00FF)); // Lower byte of ERA address
 
-    RAP_Write(HOSTREG__EXT_REG_AXS_CTRL, HOSTREG__EREG_AXS__WRITE); // Signal an ERA-write to Pinnacle
+    RAP_Write(device_address, HOSTREG__EXT_REG_AXS_CTRL, HOSTREG__EREG_AXS__WRITE); // Signal an ERA-write to Pinnacle
 
     // Wait for status register 0x1E to clear
     timeout_timer = timer_read();
     do {
-        RAP_ReadBytes(HOSTREG__EXT_REG_AXS_CTRL, &ERAControlValue, 1);
+        RAP_ReadBytes(device_address, HOSTREG__EXT_REG_AXS_CTRL, &ERAControlValue, 1);
     } while ((ERAControlValue != 0x00) && (timer_elapsed(timeout_timer) <= CIRQUE_PINNACLE_TIMEOUT));
 
-    cirque_pinnacle_clear_flags();
+    cirque_pinnacle_clear_flags(device_address);
 }
 
-bool cirque_pinnacle_set_adc_attenuation(uint8_t adcGain) {
+bool cirque_pinnacle_set_adc_attenuation(uint8_t device_address, uint8_t adcGain) {
     uint8_t adcconfig = 0x00;
 
-    ERA_ReadBytes(EXTREG__TRACK_ADCCONFIG, &adcconfig, 1);
+    ERA_ReadBytes(device_address, EXTREG__TRACK_ADCCONFIG, &adcconfig, 1);
     adcGain &= EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_MASK;
     if (adcGain == (adcconfig & EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_MASK)) {
         return false;
     }
     adcconfig &= ~EXTREG__TRACK_ADCCONFIG__ADC_ATTENUATE_MASK;
     adcconfig |= adcGain;
-    ERA_WriteByte(EXTREG__TRACK_ADCCONFIG, adcconfig);
-    ERA_ReadBytes(EXTREG__TRACK_ADCCONFIG, &adcconfig, 1);
+    ERA_WriteByte(device_address, EXTREG__TRACK_ADCCONFIG, adcconfig);
+    ERA_ReadBytes(device_address, EXTREG__TRACK_ADCCONFIG, &adcconfig, 1);
 
     return true;
 }
 
 // Changes thresholds to improve detection of fingers
 // Not needed for flat overlay?
-void cirque_pinnacle_tune_edge_sensitivity(void) {
+void cirque_pinnacle_tune_edge_sensitivity(uint8_t device_address) {
     uint8_t widezmin = 0x00;
 
-    ERA_ReadBytes(EXTREG__XAXIS_WIDEZMIN, &widezmin, 1);
-    ERA_WriteByte(EXTREG__XAXIS_WIDEZMIN, 0x04); // magic number from Cirque sample code
-    ERA_ReadBytes(EXTREG__XAXIS_WIDEZMIN, &widezmin, 1);
+    ERA_ReadBytes(device_address, EXTREG__XAXIS_WIDEZMIN, &widezmin, 1);
+    ERA_WriteByte(device_address, EXTREG__XAXIS_WIDEZMIN, 0x04); // magic number from Cirque sample code
+    ERA_ReadBytes(device_address, EXTREG__XAXIS_WIDEZMIN, &widezmin, 1);
 
-    ERA_ReadBytes(EXTREG__YAXIS_WIDEZMIN, &widezmin, 1);
-    ERA_WriteByte(EXTREG__YAXIS_WIDEZMIN, 0x03); // magic number from Cirque sample code
-    ERA_ReadBytes(EXTREG__YAXIS_WIDEZMIN, &widezmin, 1);
+    ERA_ReadBytes(device_address, EXTREG__YAXIS_WIDEZMIN, &widezmin, 1);
+    ERA_WriteByte(device_address, EXTREG__YAXIS_WIDEZMIN, 0x03); // magic number from Cirque sample code
+    ERA_ReadBytes(device_address, EXTREG__YAXIS_WIDEZMIN, &widezmin, 1);
 }
 
 // Perform calibration
+#ifndef CIRQUE_PINNACLE_CUSTOM
 void cirque_pinnacle_calibrate(void) {
+    cirque_pinnacle_calibrate_device(CIRQUE_PINNACLE_ADDR);
+}
+#endif
+
+void cirque_pinnacle_calibrate_device(uint8_t device_address) {
     uint8_t  calconfig;
     uint16_t timeout_timer;
 
-    RAP_ReadBytes(HOSTREG__CALCONFIG1, &calconfig, 1);
+    RAP_ReadBytes(device_address, HOSTREG__CALCONFIG1, &calconfig, 1);
     calconfig |= HOSTREG__CALCONFIG1__CALIBRATE;
-    RAP_Write(HOSTREG__CALCONFIG1, calconfig);
+    RAP_Write(device_address, HOSTREG__CALCONFIG1, calconfig);
 
     // Calibration takes ~100ms according to GT-AN-090624, doubling the timeout just to be safe
     timeout_timer = timer_read();
     do {
-        RAP_ReadBytes(HOSTREG__CALCONFIG1, &calconfig, 1);
+        RAP_ReadBytes(device_address, HOSTREG__CALCONFIG1, &calconfig, 1);
     } while ((calconfig & HOSTREG__CALCONFIG1__CALIBRATE) && (timer_elapsed(timeout_timer) <= 200));
 
-    cirque_pinnacle_clear_flags();
+    cirque_pinnacle_clear_flags(device_address);
 }
 
 // Enable/disable cursor smoothing, smoothing is enabled by default
+#ifndef CIRQUE_PINNACLE_CUSTOM
 void cirque_pinnacle_cursor_smoothing(bool enable) {
+    cirque_pinnacle_cursor_smoothing_device(CIRQUE_PINNACLE_ADDR, enable);
+}
+#endif
+
+void cirque_pinnacle_cursor_smoothing_device(uint8_t device_address, bool enable) {
     uint8_t feedconfig3;
 
-    RAP_ReadBytes(HOSTREG__FEEDCONFIG3, &feedconfig3, 1);
+    RAP_ReadBytes(device_address, HOSTREG__FEEDCONFIG3, &feedconfig3, 1);
     if (enable) {
         feedconfig3 &= ~HOSTREG__FEEDCONFIG3__DISABLE_CROSS_RATE_SMOOTHING;
     } else {
         feedconfig3 |= HOSTREG__FEEDCONFIG3__DISABLE_CROSS_RATE_SMOOTHING;
     }
-    RAP_Write(HOSTREG__FEEDCONFIG3, feedconfig3);
+    RAP_Write(device_address, HOSTREG__FEEDCONFIG3, feedconfig3);
 }
 
 // Check sensor is connected
-bool cirque_pinnacle_connected(void) {
+bool cirque_pinnacle_connected(uint8_t device_address) {
     uint8_t current_zidle = 0;
     uint8_t temp_zidle    = 0;
-    RAP_ReadBytes(HOSTREG__ZIDLE, &current_zidle, 1);
-    RAP_Write(HOSTREG__ZIDLE, HOSTREG__ZIDLE_DEFVAL);
-    RAP_ReadBytes(HOSTREG__ZIDLE, &temp_zidle, 1);
+    RAP_ReadBytes(device_address, HOSTREG__ZIDLE, &current_zidle, 1);
+    RAP_Write(device_address, HOSTREG__ZIDLE, HOSTREG__ZIDLE_DEFVAL);
+    RAP_ReadBytes(device_address, HOSTREG__ZIDLE, &temp_zidle, 1);
     if (temp_zidle == HOSTREG__ZIDLE_DEFVAL) {
-        RAP_Write(HOSTREG__ZIDLE, current_zidle);
+        RAP_Write(device_address, HOSTREG__ZIDLE, current_zidle);
         return true;
     }
     return false;
 }
 
 /*  Pinnacle-based TM040040/TM035035/TM023023 Functions  */
+#ifndef CIRQUE_PINNACLE_CUSTOM
 void cirque_pinnacle_init(void) {
+    cirque_pinnacle_init_device(CIRQUE_PINNACLE_ADDR);
+}
+#endif
+
+void cirque_pinnacle_init_device(uint8_t device_address) {
 #if defined(POINTING_DEVICE_DRIVER_cirque_pinnacle_spi)
     spi_init();
 #elif defined(POINTING_DEVICE_DRIVER_cirque_pinnacle_i2c)
@@ -242,16 +260,16 @@ void cirque_pinnacle_init(void) {
     touchpad_init = true;
 
     // send a RESET command now, in case QMK had a soft-reset without a power cycle
-    RAP_Write(HOSTREG__SYSCONFIG1, HOSTREG__SYSCONFIG1__RESET);
+    RAP_Write(device_address, HOSTREG__SYSCONFIG1, HOSTREG__SYSCONFIG1__RESET);
     wait_ms(30); // Pinnacle needs 10-15ms to boot, so wait long enough before configuring
-    RAP_Write(HOSTREG__SYSCONFIG1, HOSTREG__SYSCONFIG1_DEFVAL);
+    RAP_Write(device_address, HOSTREG__SYSCONFIG1, HOSTREG__SYSCONFIG1_DEFVAL);
     wait_us(50);
 
     // Host clears SW_CC flag
-    cirque_pinnacle_clear_flags();
+    cirque_pinnacle_clear_flags(device_address);
 
 #if CIRQUE_PINNACLE_POSITION_MODE
-    RAP_Write(HOSTREG__FEEDCONFIG2, HOSTREG__FEEDCONFIG2_DEFVAL);
+    RAP_Write(device_address, HOSTREG__FEEDCONFIG2, HOSTREG__FEEDCONFIG2_DEFVAL);
 #else
     // FeedConfig2 (Feature flags for Relative Mode Only)
     uint8_t feedconfig2 = HOSTREG__FEEDCONFIG2__GLIDE_EXTEND_DISABLE | HOSTREG__FEEDCONFIG2__INTELLIMOUSE_MODE;
@@ -266,18 +284,18 @@ void cirque_pinnacle_init(void) {
 #    if !defined(CIRQUE_PINNACLE_SIDE_SCROLL_ENABLE)
     feedconfig2 |= HOSTREG__FEEDCONFIG2__SCROLL_DISABLE;
 #    endif
-    RAP_Write(HOSTREG__FEEDCONFIG2, feedconfig2);
+    RAP_Write(device_address, HOSTREG__FEEDCONFIG2, feedconfig2);
 #endif
 
     // FeedConfig1 (Data Output Flags)
-    RAP_Write(HOSTREG__FEEDCONFIG1, CIRQUE_PINNACLE_POSITION_MODE ? HOSTREG__FEEDCONFIG1__DATA_TYPE__REL0_ABS1 : HOSTREG__FEEDCONFIG1_DEFVAL);
+    RAP_Write(device_address, HOSTREG__FEEDCONFIG1, CIRQUE_PINNACLE_POSITION_MODE ? HOSTREG__FEEDCONFIG1__DATA_TYPE__REL0_ABS1 : HOSTREG__FEEDCONFIG1_DEFVAL);
 
 #if CIRQUE_PINNACLE_POSITION_MODE
     // Host sets z-idle packet count to 5 (default is 0x1E/30)
-    RAP_Write(HOSTREG__ZIDLE, 5);
+    RAP_Write(device_address, HOSTREG__ZIDLE, 5);
 #endif
 
-    bool calibrate = cirque_pinnacle_set_adc_attenuation(CIRQUE_PINNACLE_ATTENUATION);
+    bool calibrate = cirque_pinnacle_set_adc_attenuation(device_address, CIRQUE_PINNACLE_ATTENUATION);
 
 #ifdef CIRQUE_PINNACLE_CURVED_OVERLAY
     cirque_pinnacle_tune_edge_sensitivity();
@@ -285,23 +303,29 @@ void cirque_pinnacle_init(void) {
 #endif
     if (calibrate) {
         // Force a calibration after setting ADC attenuation
-        cirque_pinnacle_calibrate();
+        cirque_pinnacle_calibrate_device(device_address);
     }
 
-    cirque_pinnacle_enable_feed(true);
+    cirque_pinnacle_enable_feed(device_address, true);
 
 #ifndef CIRQUE_PINNACLE_SKIP_SENSOR_CHECK
-    touchpad_init = cirque_pinnacle_connected();
+    touchpad_init = cirque_pinnacle_connected(device_address);
 #endif
 }
 
+#ifndef CIRQUE_PINNACLE_CUSTOM
 pinnacle_data_t cirque_pinnacle_read_data(void) {
+    return cirque_pinnacle_read_device_data(CIRQUE_PINNACLE_ADDR);
+}
+#endif
+
+pinnacle_data_t cirque_pinnacle_read_device_data(uint8_t device_address) {
     uint8_t         data_ready = 0;
     uint8_t         data[6]    = {0};
     pinnacle_data_t result     = {0};
 
     // Check if there is valid data available
-    RAP_ReadBytes(HOSTREG__STATUS1, &data_ready, 1);
+    RAP_ReadBytes(device_address, HOSTREG__STATUS1, &data_ready, 1);
     if ((data_ready & HOSTREG__STATUS1__DATA_READY) == 0) {
         // no data available yet
         result.valid = false; // be explicit
@@ -309,10 +333,10 @@ pinnacle_data_t cirque_pinnacle_read_data(void) {
     }
 
     // Read all data bytes
-    RAP_ReadBytes(HOSTREG__PACKETBYTE_0, data, 6);
+    RAP_ReadBytes(device_address, HOSTREG__PACKETBYTE_0, data, 6);
 
     // Get ready for the next data sample
-    cirque_pinnacle_clear_flags();
+    cirque_pinnacle_clear_flags(device_address);
 
 #if CIRQUE_PINNACLE_POSITION_MODE
     // Decode data for absolute mode
@@ -370,6 +394,12 @@ void cirque_pinnacle_configure_cursor_glide(float trigger_px) {
 }
 #endif
 
+#ifndef CIRQUE_PINNACLE_CUSTOM
+report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
+    return cirque_pinnacle_get_device_report(CIRQUE_PINNACLE_ADDR, mouse_report);
+}
+#endif
+
 #if CIRQUE_PINNACLE_POSITION_MODE
 
 #    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
@@ -380,9 +410,9 @@ bool auto_mouse_activation(report_mouse_t mouse_report) {
 }
 #    endif
 
-report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
+report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
     uint16_t          scale     = cirque_pinnacle_get_scale();
-    pinnacle_data_t   touchData = cirque_pinnacle_read_data();
+    pinnacle_data_t   touchData = cirque_pinnacle_read_device_data(device_address);
     mouse_xy_report_t report_x = 0, report_y = 0;
     static uint16_t   x = 0, y = 0, last_scale = 0;
 
@@ -468,8 +498,9 @@ const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
 };
 // clang-format on
 #else
-report_mouse_t cirque_pinnacle_get_report(report_mouse_t mouse_report) {
-    pinnacle_data_t touchData = cirque_pinnacle_read_data();
+
+report_mouse_t cirque_pinnacle_get_device_report(report_mouse_t mouse_report) {
+    pinnacle_data_t touchData = cirque_pinnacle_read_device_data(device_address);
 
     // Scale coordinates to arbitrary X, Y resolution
     cirque_pinnacle_scale_data(&touchData, cirque_pinnacle_get_scale(), cirque_pinnacle_get_scale());

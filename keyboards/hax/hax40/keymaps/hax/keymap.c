@@ -486,6 +486,11 @@ bool oled_task_user(void)
 #endif
 
 #if defined(POINTING_DEVICE_ENABLE)
+void           pointing_device_driver_init(void) {}
+report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) { return mouse_report; }
+uint16_t       pointing_device_driver_get_cpi(void) { return 0; }
+void           pointing_device_driver_set_cpi(uint16_t cpi) {}
+
 static uint8_t pointing_device_dpi = POINTING_DEVICE_DEFAULT_DPI;
 static const uint16_t pointing_device_js_dpi = POINTING_DEVICE_DEFAULT_JS_DPI;
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
