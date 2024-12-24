@@ -3,7 +3,7 @@ BOOTLOADER = rp2040
 COMBO_ENABLE = yes
 CONSOLE_ENABLE = yes
 DYNAMIC_MACRO_ENABLE = yes
-ENCODER_ENABLE = yes
+ENCODER_ENABLE = no
 JOYSTICK_DRIVER = analog
 JOYSTICK_ENABLE = yes
 KEY_OVERRIDE_ENABLE = yes
@@ -14,3 +14,9 @@ POINTING_DEVICE_DRIVER = cirque_pinnacle_i2c
 POINTING_DEVICE_ENABLE = yes
 TAP_DANCE_ENABLE = yes
 TRI_LAYER_ENABLE = yes
+
+SRC +=  display.c \
+		dual_cirque_pointing.c \
+		../../../joysticks.c \
+		../../../pointing_dpi.c \
+		../../../tap_dance_quad.c

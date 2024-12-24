@@ -136,14 +136,17 @@ void            cirque_pinnacle_calibrate_device(uint8_t device_address);
 void            cirque_pinnacle_cursor_smoothing_device(uint8_t device_address, bool enable);
 pinnacle_absolute_data_t cirque_pinnacle_read_absolute_device_data(uint8_t device_address);
 pinnacle_relative_data_t cirque_pinnacle_read_relative_device_data(uint8_t device_address);
-void            cirque_pinnacle_scale_absolute_data(pinnacle_absolute_data_t* coordinates, uint16_t xResolution, uint16_t yResolution);
-report_mouse_t  cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report);
+uint16_t        cirque_pinnacle_scale_absolute_x(uint16_t value, uint16_t resolution);
+uint16_t        cirque_pinnacle_scale_absolute_y(uint16_t value, uint16_t resolution);
+report_mouse_t  cirque_pinnacle_absolute_data_to_mouse_report(pinnacle_absolute_data_t data, report_mouse_t mouse_report);
+report_mouse_t  cirque_pinnacle_relative_data_to_mouse_report(pinnacle_relative_data_t data, report_mouse_t mouse_report);
 
 #ifndef CIRQUE_PINNACLE_CUSTOM
 void            cirque_pinnacle_init(void);
 void            cirque_pinnacle_calibrate(void);
 void            cirque_pinnacle_cursor_smoothing(bool enable);
 report_mouse_t  cirque_pinnacle_get_report(report_mouse_t mouse_report);
+report_mouse_t  cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report);
 #endif
 
 pinnacle_data_t cirque_pinnacle_read_data(void);

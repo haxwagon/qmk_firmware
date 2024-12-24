@@ -1,22 +1,13 @@
 #include QMK_KEYBOARD_H
-#include "analog.h"
+#include "joysticks.h"
+#include "layers.h"
+#include "pointing_dpi.h"
+#include "tap_dance_quad.h"
 #include "print.h"
 
-enum LAYERS {
-    LAYER_QWERTY, // default
-    LAYER_NUMSYMS, // upper
-    LAYER_FUNC, // lower
-    LAYER_MOVE,
-    LAYER_GAMEPAD,
-    LAYER_GAMEPAD2,
-    LAYER_JOYSTICK,
-    LAYER_JOYSTICK2,
-    LAYER_MEDIA,
-    LAYER_NUMPAD,
-};
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
-const static char* LAYER_MAPS[] = {
+const char* LAYER_MAPS[] = {
     [LAYER_QWERTY] = "\
  Q  W  E  R  T      \n\
        Y  U  I  O  P\n\
@@ -83,7 +74,7 @@ M7 M6 M5 M4 M3      \n\
 ",
     [LAYER_NUMPAD] = "\
                     \n\
-     * /  7  8  9 <-\n\
+      */  6  8  9 <-\n\
                     \n\
       +-  4  5  6 EN\n\
                     \n\
@@ -99,7 +90,7 @@ F1 F2 F3 F4 F5      \n\
 ",
 };
 
-const static char* LAYER_NAMES[] = {
+const char* LAYER_NAMES[] = {
     [LAYER_QWERTY] = "Default",
     [LAYER_FUNC] = "Functions",
     [LAYER_GAMEPAD] = "Gamepad",
@@ -148,127 +139,6 @@ const key_override_t* key_overrides[] = {
 #endif
 
 #if defined(TAP_DANCE_ENABLE)
-
-#if defined(TAP_DANCE_QUAD_SUPPORT)
-// #region Tap Dance Quad Support
-typedef enum {
-    TD_NONE,
-    TD_UNKNOWN,
-    TD_SINGLE_TAP,
-    TD_SINGLE_HOLD,
-    TD_DOUBLE_TAP,
-    TD_DOUBLE_HOLD,
-    TD_DOUBLE_SINGLE_TAP, // Send two single taps
-    TD_TRIPLE_TAP,
-    TD_TRIPLE_HOLD
-} td_quad_state_t;
-
-typedef struct
-{
-    uint16_t kc_tap;
-    uint16_t kc_hold;
-    uint16_t kc_double_tap;
-    uint16_t kc_double_tap_hold;
-} td_quad_keycodes_t;
-
-td_quad_state_t current_dance_quad_state(tap_dance_state_t* state)
-{
-    switch (state->count) {
-    case 1:
-        if (state->interrupted || !state->pressed)
-            return TD_SINGLE_TAP;
-        return TD_SINGLE_HOLD;
-    case 2:
-        if (state->interrupted)
-            return TD_DOUBLE_SINGLE_TAP;
-        else if (state->pressed)
-            return TD_DOUBLE_HOLD;
-        return TD_DOUBLE_TAP;
-    case 3:
-        if (state->interrupted || !state->pressed)
-            return TD_TRIPLE_TAP;
-        return TD_TRIPLE_HOLD;
-    default:
-        return TD_UNKNOWN;
-    }
-}
-
-void td_quad_finished(tap_dance_state_t* state, void* user_data)
-{
-    td_quad_keycodes_t* kcs = (td_quad_keycodes_t*)user_data;
-    switch (current_dance_quad_state(state)) {
-    case TD_SINGLE_TAP:
-        if (kcs->kc_tap) {
-            register_code(kcs->kc_tap);
-        }
-        break;
-    case TD_SINGLE_HOLD:
-        if (kcs->kc_hold) {
-            register_code(kcs->kc_hold);
-        }
-        break;
-    case TD_DOUBLE_TAP:
-        if (kcs->kc_double_tap) {
-            register_code(kcs->kc_double_tap);
-        }
-        break;
-    case TD_DOUBLE_HOLD:
-        if (kcs->kc_double_tap_hold) {
-            register_code(kcs->kc_double_tap_hold);
-        }
-        break;
-    case TD_DOUBLE_SINGLE_TAP:
-        if (kcs->kc_tap) {
-            tap_code(kcs->kc_tap);
-            register_code(kcs->kc_tap);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
-void td_quad_reset(tap_dance_state_t* state, void* user_data)
-{
-    td_quad_keycodes_t* kcs = (td_quad_keycodes_t*)user_data;
-    switch (current_dance_quad_state(state)) {
-    case TD_SINGLE_TAP:
-        if (kcs->kc_tap) {
-            unregister_code(kcs->kc_tap);
-        }
-        break;
-    case TD_SINGLE_HOLD:
-        if (kcs->kc_hold) {
-            unregister_code(kcs->kc_hold);
-        }
-        break;
-    case TD_DOUBLE_TAP:
-        if (kcs->kc_double_tap) {
-            unregister_code(kcs->kc_double_tap);
-        }
-        break;
-    case TD_DOUBLE_HOLD:
-        if (kcs->kc_double_tap_hold) {
-            unregister_code(kcs->kc_double_tap_hold);
-        }
-        break;
-    case TD_DOUBLE_SINGLE_TAP:
-        if (kcs->kc_tap) {
-            unregister_code(kcs->kc_tap);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
-#define ACTION_TAP_DANCE_QUAD(kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold)                           \
-    {                                                                                                       \
-        .fn = { NULL, td_quad_finished, td_quad_reset, NULL },                                              \
-        .user_data = (void*)&((td_quad_keycodes_t) { kc_tap, kc_hold, kc_double_tap, kc_double_tap_hold }), \
-    }
-#endif
-
 enum {
     TD_ANGLES,
     TD_BRACES,
@@ -327,268 +197,19 @@ combo_t key_combos[] = {
 };
 #endif
 
-#if defined(JOYSTICK_ENABLE)
-static const int16_t js_maxvalue = 512;
-static const uint8_t js_precisions[2][3] = { { 10, 10, 10 }, { 10, 10, 10 } };
-static uint16_t js_values[2][3] = { { 0, 0, 0 }, { 0, 0, 0 } };
+#if defined(DYNAMIC_MACRO_ENABLE)
+uint8_t dynamic_macro_recording = 0;
+#endif
 
+#if defined(JOYSTICK_ENABLE)
 joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    JOYSTICK_AXIS_IN(GP27, 0, 200, 512),
+    JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
     JOYSTICK_AXIS_VIRTUAL,
 };
-
-enum JS_AXES {
-    JS_AXIS_0_X,
-    JS_AXIS_0_Y,
-    JS_AXIS_0_Z,
-    JS_AXIS_1_X,
-    JS_AXIS_1_Y,
-    JS_AXIS_1_Z,
-};
-enum JS_XINPUT_BUTTONS { // xinput order
-    JS_XINPUT_BUTTON_A,
-    JS_XINPUT_BUTTON_B,
-    JS_XINPUT_BUTTON_X,
-    JS_XINPUT_BUTTON_Y,
-    JS_XINPUT_BUTTON_LB,
-    JS_XINPUT_BUTTON_RB,
-    JS_XINPUT_BUTTON_SELECT,
-    JS_XINPUT_BUTTON_START,
-    JS_XINPUT_BUTTON_L3,
-    JS_XINPUT_BUTTON_R3,
-};
-uint8_t joystick_axis(uint8_t joystick, uint8_t axis)
-{
-    switch (joystick) {
-    case 0:
-        switch (axis) {
-        case 0:
-            return JS_AXIS_0_X;
-        case 1:
-            return JS_AXIS_0_Y;
-        case 2:
-            return JS_AXIS_0_Z;
-        default:
-            break;
-        }
-        break;
-    case 1:
-        switch (axis) {
-        case 0:
-            return JS_AXIS_1_X;
-        case 1:
-            return JS_AXIS_1_Y;
-        case 2:
-            return JS_AXIS_1_Z;
-        default:
-            break;
-        }
-        break;
-    default:
-        break;
-    }
-    return 0;
-}
-void set_joystick_axis(uint8_t joystick, uint8_t axis, int16_t value)
-{
-    dprintf("Setting joystick %d axis %d to %d\n", joystick, axis, value);
-
-    js_values[joystick][axis] = value;
-    joystick_set_axis(joystick_axis(joystick, axis), js_values[joystick][axis]);
-}
-void update_joystick_axis(uint8_t joystick, uint8_t axis, int16_t delta)
-{
-    int16_t value = js_values[joystick][axis];
-    value += delta;
-    if (value > js_maxvalue) {
-        value = js_maxvalue;
-    }
-    if (value < -js_maxvalue) {
-        value = -js_maxvalue;
-    }
-    set_joystick_axis(joystick, axis, value);
-}
-#endif
-
-#if defined(DYNAMIC_MACRO_ENABLE)
-static uint8_t dynamic_macro_recording = 0;
-#endif
-
-#if defined(ENCODER_ENABLE)
-bool encoder_update_user(uint8_t encoder, bool clockwise)
-{
-    dprintf("Encoder: %d, Clockwise: %d", encoder, clockwise);
-    switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
-    case LAYER_JOYSTICK:
-        uint8_t delta = clockwise ? js_precisions[encoder][2] : -js_precisions[encoder][2];
-        update_joystick_axis(encoder, 2, delta);
-        break;
-#endif
-    default:
-        switch (encoder) {
-        case 0:
-            clockwise ? tap_code(MS_WHLD) : tap_code(MS_WHLU);
-            break;
-        case 1:
-            clockwise ? tap_code(KC_VOLD) : tap_code(KC_VOLU);
-            break;
-        default:
-            break;
-        }
-        break;
-    }
-    return false;
-}
-#endif
-
-#if defined(OLED_ENABLE)
-oled_rotation_t oled_init_user(oled_rotation_t rotation)
-{
-    return OLED_ROTATION_0;
-}
-
-bool oled_task_user(void)
-{
-    oled_write_P(PSTR(LAYER_NAMES[get_highest_layer(layer_state)]), false);
-    oled_write_P(PSTR("\n"), false);
-
-#if defined(DYNAMIC_MACRO_ENABLE)
-    switch (dynamic_macro_recording) {
-    case 1:
-        oled_write_P(PSTR("REC1 "), false);
-        break;
-    case 2:
-        oled_write_P(PSTR("REC2 "), false);
-        break;
-    default:
-        oled_write_P(PSTR("     "), false);
-        break;
-    }
-#endif
-    // Host Keyboard LED Status
-    led_t led_state = host_keyboard_led_state();
-    oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
-    oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
-    oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
-
-    oled_write_P(PSTR("\n"), false);
-
-    // display keyboard map
-    oled_write_P(PSTR(LAYER_MAPS[get_highest_layer(layer_state)]), false);
-
-    return false;
-}
-#endif
-
-#if defined(POINTING_DEVICE_ENABLE)
-
-
-static uint8_t left_cirque_address = 0x2A;
-static uint8_t right_cirque_address = 0x2C; // solder 470kohm resistor on ADR
-
-void dual_cirque_pinnacle_init(void) {
-    cirque_pinnacle_init_device(left_cirque_address, false);
-    cirque_pinnacle_init_device(right_cirque_address, false);
-}
-
-report_mouse_t dual_cirque_pinnacle_get_report(report_mouse_t mouse_report) {
-    pinnacle_relative_data_t   left_data = cirque_pinnacle_read_relative_device_data(left_cirque_address);
-    pinnacle_relative_data_t   right_data = cirque_pinnacle_read_relative_device_data(right_cirque_address);
-
-    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
-
-    if (!left_data.valid || !right_data.valid) {
-        return mouse_report;
-    }
-
-    mouse_report.buttons = left_data.buttonFlags;
-    mouse_report.x = CONSTRAIN_HID_XY(left_data.xDelta);
-    mouse_report.y = CONSTRAIN_HID_XY(left_data.yDelta);
-    mouse_report.v = left_data.scrollWheelCount;
-
-    return mouse_report;
-}
-
-uint16_t dual_cirque_pinnacle_get_cpi(void) {
-    return cirque_pinnacle_get_cpi();
-}
-
-void dual_cirque_pinnacle_set_cpi(uint16_t cpi) {
-    cirque_pinnacle_set_cpi(cpi);
-}
-
-const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
-    .init       = dual_cirque_pinnacle_init,
-    .get_report = dual_cirque_pinnacle_get_report,
-    .get_cpi    = dual_cirque_pinnacle_get_cpi,
-    .set_cpi    = dual_cirque_pinnacle_set_cpi,
-};
-
-static uint8_t pointing_device_dpi = POINTING_DEVICE_DEFAULT_DPI;
-static const uint16_t pointing_device_js_dpi = POINTING_DEVICE_DEFAULT_JS_DPI;
-report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
-{
-    if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
-        dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
-    }
-    switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
-    case LAYER_JOYSTICK:
-        update_joystick_axis(1, 0, mouse_report.x * pointing_device_js_dpi);
-        update_joystick_axis(1, 1, mouse_report.y * pointing_device_js_dpi);
-        mouse_report.x = 0;
-        mouse_report.y = 0;
-        if (mouse_report.buttons > 0) {
-            register_joystick_button(JS_XINPUT_BUTTON_R3);
-            mouse_report.buttons = 0;
-        }
-        break;
-    case LAYER_JOYSTICK2:
-        update_joystick_axis(0, 2, mouse_report.y * pointing_device_js_dpi);
-        mouse_report.x = 0;
-        mouse_report.y = 0;
-        if (mouse_report.buttons > 0) {
-            register_joystick_button(JS_XINPUT_BUTTON_R3);
-            mouse_report.buttons = 0;
-        }
-        break;
-#endif
-    case LAYER_MOVE:
-        if (abs(mouse_report.y) > abs(mouse_report.x)) {
-            // scrolling vertically
-            if (mouse_report.y > 0) {
-                tap_code(MS_WHLD);
-                mouse_report.x = 0;
-                mouse_report.y = 0;
-            } else if (mouse_report.y < 0) {
-                tap_code(MS_WHLU);
-                mouse_report.x = 0;
-                mouse_report.y = 0;
-            }
-        } else if (abs(mouse_report.x) > abs(mouse_report.y)) {
-            if (mouse_report.x > 0) {
-                tap_code(MS_WHLR);
-                mouse_report.x = 0;
-                mouse_report.y = 0;
-            } else if (mouse_report.x < 0) {
-                tap_code(MS_WHLL);
-                mouse_report.x = 0;
-                mouse_report.y = 0;
-            }
-        }
-        break;
-    default:
-        mouse_report.x *= pointing_device_dpi;
-        mouse_report.y *= pointing_device_dpi;
-        break;
-    }
-    return mouse_report;
-}
 #endif
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -645,6 +266,112 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS),
 };
 
+const uint16_t PROGMEM left_cirque_keymaps[][3][3] = {
+    [LAYER_QWERTY] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_FUNC] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_GAMEPAD] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_GAMEPAD2] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_JOYSTICK] = {
+        { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
+        { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
+        { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
+    },
+    [LAYER_JOYSTICK2] = {
+        { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
+        { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
+        { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
+    },
+    [LAYER_MEDIA] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_MOVE] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_NUMPAD] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_NUMSYMS] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+};
+
+const uint16_t PROGMEM right_cirque_keymaps[][3][3] = {
+    [LAYER_QWERTY] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_FUNC] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_GAMEPAD] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_GAMEPAD2] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_JOYSTICK] = {
+        { KC_NO, JS_3, KC_NO },
+        { JS_2, JS_9, JS_1 },
+        { KC_NO, JS_0, KC_NO },
+    },
+    [LAYER_JOYSTICK2] = {
+        { KC_NO, JS_3, KC_NO },
+        { JS_2, JS_9, JS_1 },
+        { KC_NO, JS_0, KC_NO },
+    },
+    [LAYER_MEDIA] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_MOVE] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_NUMPAD] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+    [LAYER_NUMSYMS] = {
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+        { KC_NO, KC_NO, KC_NO },
+    },
+};
+
 void keyboard_post_init_user(void)
 {
 #if defined(CONSOLE_ENABLE)
@@ -658,8 +385,6 @@ void keyboard_post_init_user(void)
 bool process_record_user(uint16_t keycode, keyrecord_t* record)
 {
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
-
-    dprintf("GP26: %d, GP27: %d\n", analogReadPin(GP26), analogReadPin(GP27));
 
     switch (keycode) {
 #if defined(DYNAMIC_MACRO_ENABLE)
@@ -690,16 +415,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
 #endif
 #if defined(POINTING_DEVICE_ENABLE)
     case CKC_POINTING_DEVICE_DEC_DPI:
-        if (pointing_device_dpi > POINTING_DEVICE_MIN_DPI) {
-            pointing_device_dpi--;
-            dprintf("DPI: %d\n", pointing_device_dpi);
-        }
+        increase_pointing_dpi(-1);
         break;
     case CKC_POINTING_DEVICE_INC_DPI:
-        if (pointing_device_dpi < POINTING_DEVICE_MAX_DPI) {
-            pointing_device_dpi++;
-            dprintf("DPI: %d\n", pointing_device_dpi);
-        }
+        increase_pointing_dpi(1);
         break;
 #endif
 #if defined(JOYSTICK_ENABLE)

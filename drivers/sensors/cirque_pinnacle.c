@@ -44,32 +44,31 @@ void cirque_pinnacle_set_scale(uint16_t scale) {
     scale_data = scale;
 }
 
-// Scales data to desired X & Y resolution
+// scale to [0, resolution - 1]
+uint16_t cirque_pinnacle_scale_absolute_x(uint16_t value, uint16_t resolution) {
+    if (value < CIRQUE_PINNACLE_X_LOWER) {
+        value = CIRQUE_PINNACLE_X_LOWER;
+    } else if (value > CIRQUE_PINNACLE_X_UPPER) {
+        value = CIRQUE_PINNACLE_X_UPPER;
+    }
+    value -= CIRQUE_PINNACLE_X_LOWER;
+    return (uint16_t)(value * (resolution - 1) / CIRQUE_PINNACLE_X_RANGE);
+}
+
+uint16_t cirque_pinnacle_scale_absolute_y(uint16_t value, uint16_t resolution) {
+    if (value < CIRQUE_PINNACLE_Y_LOWER) {
+        value = CIRQUE_PINNACLE_Y_LOWER;
+    } else if (value > CIRQUE_PINNACLE_Y_UPPER) {
+        value = CIRQUE_PINNACLE_Y_UPPER;
+    }
+    value -= CIRQUE_PINNACLE_Y_LOWER;
+    return (uint16_t)(value * (resolution - 1) / CIRQUE_PINNACLE_Y_RANGE);
+}
+
+// scale coordinates to [0, xResolution - 1] x [0, yResolution - 1] range
 void cirque_pinnacle_scale_absolute_data(pinnacle_absolute_data_t* coordinates, uint16_t xResolution, uint16_t yResolution) {
-    uint32_t xTemp = 0;
-    uint32_t yTemp = 0;
-
-    if (coordinates->xValue < CIRQUE_PINNACLE_X_LOWER) {
-        coordinates->xValue = CIRQUE_PINNACLE_X_LOWER;
-    } else if (coordinates->xValue > CIRQUE_PINNACLE_X_UPPER) {
-        coordinates->xValue = CIRQUE_PINNACLE_X_UPPER;
-    }
-    if (coordinates->yValue < CIRQUE_PINNACLE_Y_LOWER) {
-        coordinates->yValue = CIRQUE_PINNACLE_Y_LOWER;
-    } else if (coordinates->yValue > CIRQUE_PINNACLE_Y_UPPER) {
-        coordinates->yValue = CIRQUE_PINNACLE_Y_UPPER;
-    }
-
-    xTemp = coordinates->xValue;
-    yTemp = coordinates->yValue;
-
-    // translate coordinates to (0, 0) reference by subtracting edge-offset
-    xTemp -= CIRQUE_PINNACLE_X_LOWER;
-    yTemp -= CIRQUE_PINNACLE_Y_LOWER;
-
-    // scale coordinates to [0, xResolution - 1] x [0, yResolution - 1] range
-    coordinates->xValue = (uint16_t)(xTemp * (xResolution - 1) / CIRQUE_PINNACLE_X_RANGE);
-    coordinates->yValue = (uint16_t)(yTemp * (yResolution - 1) / CIRQUE_PINNACLE_Y_RANGE);
+    coordinates->xValue = cirque_pinnacle_scale_absolute_x(coordinates->xValue, xResolution);
+    coordinates->yValue = cirque_pinnacle_scale_absolute_y(coordinates->yValue, yResolution);
 }
 
 void cirque_pinnacle_scale_relative_data(pinnacle_relative_data_t* coordinates, uint16_t xResolution, uint16_t yResolution) {
@@ -417,7 +416,19 @@ void cirque_pinnacle_configure_cursor_glide(float trigger_px) {
 }
 #endif
 
-#if CIRQUE_PINNACLE_POSITION_MODE
+report_mouse_t cirque_pinnacle_relative_data_to_mouse_report(pinnacle_relative_data_t data, report_mouse_t mouse_report) {
+    // Scale coordinates to arbitrary X, Y resolution
+    cirque_pinnacle_scale_relative_data(&data, cirque_pinnacle_get_scale(), cirque_pinnacle_get_scale());
+
+    if (data.valid) {
+        mouse_report.buttons = data.buttonFlags;
+        mouse_report.x = CONSTRAIN_HID_XY(data.xDelta);
+        mouse_report.y = CONSTRAIN_HID_XY(data.yDelta);
+        mouse_report.v = data.scrollWheelCount;
+    }
+    return mouse_report;
+}
+
 
 #    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
 static bool is_touch_down;
@@ -427,9 +438,8 @@ bool auto_mouse_activation(report_mouse_t mouse_report) {
 }
 #    endif
 
-report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
+report_mouse_t cirque_pinnacle_absolute_data_to_mouse_report(pinnacle_absolute_data_t data, report_mouse_t mouse_report) {
     uint16_t                 scale        = cirque_pinnacle_get_scale();
-    pinnacle_absolute_data_t touchData    = cirque_pinnacle_read_absolute_device_data(device_address);
     mouse_xy_report_t        report_x     = 0, report_y = 0;
     static                   uint16_t   x = 0, y        = 0, last_scale = 0;
 
@@ -444,7 +454,7 @@ report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_
     }
 #    endif
 
-    if (!touchData.valid) {
+    if (!data.valid) {
 #    ifdef POINTING_DEVICE_GESTURES_CURSOR_GLIDE_ENABLE
         if (cursor_glide_enable && glide_report.valid) {
             report_x = glide_report.dx;
@@ -455,30 +465,30 @@ report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_
         return mouse_report;
     }
 
-    if (touchData.touchDown) {
-        pd_dprintf("cirque_pinnacle touchData x=%4d y=%4d z=%2d\n", touchData.xValue, touchData.yValue, touchData.zValue);
+    if (data.touchDown) {
+        pd_dprintf("cirque_pinnacle touch data x=%4d y=%4d z=%2d\n", data.xValue, data.yValue, data.zValue);
     }
 
 #    ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
-    is_touch_down = touchData.touchDown;
+    is_touch_down = data.touchDown;
 #    endif
 
     // Scale coordinates to arbitrary X, Y resolution
-    cirque_pinnacle_scale_absolute_data(&touchData, scale, scale);
+    cirque_pinnacle_scale_absolute_data(&data, scale, scale);
 
-    if (!cirque_pinnacle_gestures(&mouse_report, touchData)) {
-        if (last_scale && scale == last_scale && x && y && touchData.xValue && touchData.yValue) {
-            report_x = CONSTRAIN_HID_XY((int16_t)(touchData.xValue - x));
-            report_y = CONSTRAIN_HID_XY((int16_t)(touchData.yValue - y));
+    if (!cirque_pinnacle_gestures(&mouse_report, data)) {
+        if (last_scale && scale == last_scale && x && y && data.xValue && data.yValue) {
+            report_x = CONSTRAIN_HID_XY((int16_t)(data.xValue - x));
+            report_y = CONSTRAIN_HID_XY((int16_t)(data.yValue - y));
         }
-        x          = touchData.xValue;
-        y          = touchData.yValue;
+        x          = data.xValue;
+        y          = data.yValue;
         last_scale = scale;
 
 #    ifdef POINTING_DEVICE_GESTURES_CURSOR_GLIDE_ENABLE
         if (cursor_glide_enable) {
-            if (touchData.touchDown) {
-                cursor_glide_update(&glide, report_x, report_y, touchData.zValue);
+            if (data.touchDown) {
+                cursor_glide_update(&glide, report_x, report_y, data.zValue);
             } else if (!glide_report.valid) {
                 glide_report = cursor_glide_start(&glide);
                 if (glide_report.valid) {
@@ -499,24 +509,24 @@ mouse_report_update:
     return mouse_report;
 }
 
+#if CIRQUE_PINNACLE_POSITION_MODE
+
+report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
+    pinnacle_absolute_data_t touchData = cirque_pinnacle_read_absolute_device_data(device_address);
+
+    return cirque_pinnacle_absolute_data_to_mouse_report(touchData, mouse_report);
+}
+
 #else
 
 report_mouse_t cirque_pinnacle_get_device_report(uint8_t device_address, report_mouse_t mouse_report) {
     pinnacle_relative_data_t touchData = cirque_pinnacle_read_relative_device_data(device_address);
 
-    // Scale coordinates to arbitrary X, Y resolution
-    cirque_pinnacle_scale_relative_data(&touchData, cirque_pinnacle_get_scale(), cirque_pinnacle_get_scale());
-
-    if (touchData.valid) {
-        mouse_report.buttons = touchData.buttonFlags;
-        mouse_report.x = CONSTRAIN_HID_XY(touchData.xDelta);
-        mouse_report.y = CONSTRAIN_HID_XY(touchData.yDelta);
-        mouse_report.v = touchData.scrollWheelCount;
-    }
-    return mouse_report;
+    return cirque_pinnacle_relative_data_to_mouse_report(touchData, mouse_report);
 }
 
 #endif
+
 
 
 #ifndef CIRQUE_PINNACLE_CUSTOM
