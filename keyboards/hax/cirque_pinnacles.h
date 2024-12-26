@@ -29,6 +29,8 @@ typedef struct {
     bool    flip_x;
     bool    flip_y;
     bool    swap_xy;
+    int16_t last_x;
+    int16_t last_y;
     cirque_pinnacles_state_t state;
 } cirque_pinnacles_device_t;
 

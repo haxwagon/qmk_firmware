@@ -9,7 +9,7 @@ extern bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* st
 static cirque_pinnacles_device_t devices[2];
 
 void dual_cirque_pinnacle_init(void) {
-    memset(devices, 0, sizeof(cirque_pinnacles_device_t));
+    memset(devices, 0, sizeof(devices));
     devices[0].address = 0x2A;
     devices[0].absolute = true;
     devices[1].address = 0x2C; // solder 470kohm resistor on ADR

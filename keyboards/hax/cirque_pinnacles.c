@@ -39,6 +39,12 @@ bool cirque_pinnacles_update_state(cirque_pinnacles_device_t* device) {
             device->state.y = 0;
         }
 
+        device->state.dx = device->state.x - device->last_x;
+        device->state.dy = device->state.y - device->last_y;
+
+        device->last_x = device->state.x;
+        device->last_y = device->state.y;
+
         if (data.touchDown && !data.hovering) {
             uint16_t zone_x = cirque_pinnacle_scale_absolute_x(data.xValue, CIRQUE_PINNACLES_TOUCH_ZONES_X);
             uint16_t zone_y = cirque_pinnacle_scale_absolute_y(data.yValue, CIRQUE_PINNACLES_TOUCH_ZONES_Y);
@@ -48,7 +54,19 @@ bool cirque_pinnacles_update_state(cirque_pinnacles_device_t* device) {
 
         return true;
     } else {
-        // TODO: handle relative update
+        pinnacle_relative_data_t data = cirque_pinnacle_read_relative_device_data(device->address);
+
+        if (!data.valid) {
+            return false;
+        }
+
+        memset(&(device->state), 0, sizeof(cirque_pinnacles_state_t));
+        device->state.dx = data.xDelta;
+        device->state.dy = data.yDelta;
+        if (data.buttonFlags > 0) {
+            device->state.touches[CIRQUE_PINNACLES_TOUCH_ZONES_Y / 2][CIRQUE_PINNACLES_TOUCH_ZONES_X / 2] = 1;
+        }
+        return true;
     }
 
     return false;
