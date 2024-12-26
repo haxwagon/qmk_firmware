@@ -10,6 +10,10 @@
 #    define CIRQUE_PINNACLES_TOUCH_ZONES_Y 3
 #endif
 
+#ifndef CIRQUE_PINNACLES_DEADZONE
+#    define CIRQUE_PINNACLES_DEADZONE 4
+#endif
+
 typedef uint8_t cirque_pinnacles_touches_t[CIRQUE_PINNACLES_TOUCH_ZONES_Y][CIRQUE_PINNACLES_TOUCH_ZONES_X];
 
 typedef struct {

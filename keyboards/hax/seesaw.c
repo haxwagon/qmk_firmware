@@ -202,7 +202,7 @@ uint16_t seesaw_analog_read(seesaw_device_t device, uint8_t pin) {
         return 0;
     }
 
-    seesaw_read_delay(device, SEESAW_ADC_BASE, SEESAW_ADC_CHANNEL_OFFSET + p, buf, 2, 500);
+    seesaw_read_delay(device, SEESAW_ADC_BASE, SEESAW_ADC_CHANNEL_OFFSET + p, buf, 2, 50);
     uint16_t ret = ((uint16_t)buf[0] << 8) | buf[1];
     return ret;
 }
@@ -216,7 +216,7 @@ bool seesaw_begin(seesaw_device_t *device, bool reset) {
         if (found) {
             break;
         }
-        chThdSleepMicroseconds(10000);
+        chThdSleepMicroseconds(50000);
     }
 
     if (!found) {
