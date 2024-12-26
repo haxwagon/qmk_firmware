@@ -462,6 +462,7 @@ void keyboard_post_init_user(void)
     debug_keyboard = false;
     debug_mouse = true;
 #endif
+    dprintf("keyboard initialized.");
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record)
@@ -519,4 +520,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
         break;
     }
     return true;
+}
+
+
+report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
+{
+    if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
+        dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
+    }
+
+    // mouse_report.x *= get_pointing_dpi();
+    // mouse_report.y *= get_pointing_dpi();
+
+    return mouse_report;
 }

@@ -1,3 +1,7 @@
+#pragma once
+
+#include "seesaw.h"
+
 #ifndef GAMEPAD_QTS_COUNT
 #    define GAMEPAD_QTS_COUNT 1
 #endif
@@ -24,7 +28,7 @@ typedef struct {
 } gamepad_qt_state_t;
 
 typedef struct {
-    uint8_t address;
+    seesaw_device_t seesaw;
     uint16_t last_x;
     uint16_t last_y;
     gamepad_qt_state_t state;

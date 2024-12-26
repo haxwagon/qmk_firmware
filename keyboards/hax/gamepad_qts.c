@@ -235,12 +235,11 @@ void gamepad_qts_init(gamepad_qt_device_t* devices, uint8_t count) {
 // #endif
 // }
     for (uint8_t i = 0; i < count; i++) {
-        seesaw_begin(devices->address, true);
+        seesaw_begin(&(devices[i].seesaw), true);
     }
 }
 
 bool gamepad_qts_update_state(gamepad_qt_device_t* device) {
-    dprintf("Updating device 0x%04x", device->address);
     return false;
 }
 

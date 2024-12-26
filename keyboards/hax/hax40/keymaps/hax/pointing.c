@@ -16,7 +16,7 @@ static gamepad_qt_device_t       gamepad_qt_devices[NUM_GAMEPAD_QTS];
 static uint16_t _cpi;
 
 void pointing_device_driver_init(void) {
-    dprint("Initializing pointing devices...");
+    dprint("Initializing pointing devices...\n");
     memset(cirque_pinnacle_devices, 0, sizeof(cirque_pinnacle_devices));
     cirque_pinnacle_devices[0].address = 0x2A;
     cirque_pinnacle_devices[0].absolute = true;
@@ -25,9 +25,9 @@ void pointing_device_driver_init(void) {
     cirque_pinnacles_init(cirque_pinnacle_devices, 2);
 
     memset(gamepad_qt_devices, 0, sizeof(gamepad_qt_devices));
-    gamepad_qt_devices[0].address = 0x50;
+    gamepad_qt_devices[0].seesaw.address = 0x50;
     gamepad_qts_init(gamepad_qt_devices, 1);
-    dprint("Done initializing pointing devices.");
+    dprint("Done initializing pointing devices.\n");
 }
 
 uint16_t pointing_device_driver_get_cpi(void) {
@@ -39,7 +39,6 @@ void pointing_device_driver_set_cpi(uint16_t cpi) {
 }
 
 report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
-    dprintf("Looking for custom mouse report");
     bool updated = false;
 
     updated = cirque_pinnacles_update_states(cirque_pinnacle_devices, NUM_CIRQUE_PINNACLES) || updated;
@@ -80,17 +79,5 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
     if (handled) {
         memset(&mouse_report, 0, sizeof(mouse_report));
     }
-    return mouse_report;
-}
-
-report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
-{
-    if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
-        dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
-    }
-
-    // mouse_report.x *= get_pointing_dpi();
-    // mouse_report.y *= get_pointing_dpi();
-
     return mouse_report;
 }
