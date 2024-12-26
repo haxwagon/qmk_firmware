@@ -202,7 +202,7 @@ uint16_t seesaw_analog_read(seesaw_device_t device, uint8_t pin) {
         return 0;
     }
 
-    seesaw_read_timeout(device, SEESAW_ADC_BASE, SEESAW_ADC_CHANNEL_OFFSET + p, buf, 2, 500);
+    seesaw_read_delay(device, SEESAW_ADC_BASE, SEESAW_ADC_CHANNEL_OFFSET + p, buf, 2, 500);
     uint16_t ret = ((uint16_t)buf[0] << 8) | buf[1];
     return ret;
 }
@@ -354,10 +354,14 @@ uint32_t seesaw_digital_read_bulk_b(seesaw_device_t device, uint32_t pins) {
 //  *  @returns    True on I2C read success
 //  *****************************************************************************************
 bool seesaw_read(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num) {
-    return seesaw_read_timeout(device, regHigh, regLow, buf, num, SEESAW_DEFAULT_I2C_TIMEOUT_MS);
+    return seesaw_read_delay(device, regHigh, regLow, buf, num, 250);
 }
 
-bool seesaw_read_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t timeout_ms) {
+bool seesaw_read_delay(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t delay_ms) {
+    return seesaw_read_delay_timeout(device, regHigh, regLow, buf, num, delay_ms, SEESAW_DEFAULT_I2C_TIMEOUT_MS);
+}
+
+bool seesaw_read_delay_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t delay_ms, uint16_t timeout_ms) {
     uint16_t reg = ((uint16_t)regHigh << 8) | regLow;
     uint8_t  pos = 0;
 
@@ -368,6 +372,8 @@ bool seesaw_read_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow
         if (!seesaw_write_timeout(device, regHigh, regLow, NULL, 0, timeout_ms)) {
             return false;
         }
+
+        chThdSleepMicroseconds(delay_ms * 1000);
 
         if (i2c_read_register16(device.address, reg, buf + pos, read_now, timeout_ms) != I2C_STATUS_SUCCESS) {
             return false;
@@ -411,86 +417,3 @@ bool seesaw_write_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLo
     return i2c_write_register16(device.address, reg, buf, num, timeout_ms) == I2C_STATUS_SUCCESS;
 }
 
-//  *    @brief  Write a buffer or two to the I2C device. Cannot be more than
-//  * maxBufferSize() bytes.
-//  *    @param  buffer Pointer to buffer of data to write. This is const to
-//  *            ensure the content of this buffer doesn't change.
-//  *    @param  len Number of bytes from buffer to write
-//  *    @param  prefix_buffer Pointer to optional array of data to write before
-//  * buffer. Cannot be more than maxBufferSize() bytes. This is const to
-//  *            ensure the content of this buffer doesn't change.
-//  *    @param  prefix_len Number of bytes from prefix buffer to write
-//  *    @param  stop Whether to send an I2C STOP signal on write
-//  *    @return True if write was successful, otherwise false.
-// bool Adafruit_I2CDevice::write(const uint8_t *buffer, size_t len, bool stop,
-//                                const uint8_t *prefix_buffer,
-//                                size_t prefix_len) {
-//   if ((len + prefix_len) > maxBufferSize()) {
-//     // currently not guaranteed to work if more than 32 bytes!
-//     // we will need to find out if some platforms have larger
-//     // I2C buffer sizes :/
-// #ifdef DEBUG_SERIAL
-//     DEBUG_SERIAL.println(F("\tI2CDevice could not write such a large buffer"));
-// #endif
-//     return false;
-//   }
-
-//   _wire->beginTransmission(_addr);
-
-//   // Write the prefix data (usually an address)
-//   if ((prefix_len != 0) && (prefix_buffer != nullptr)) {
-//     if (_wire->write(prefix_buffer, prefix_len) != prefix_len) {
-// #ifdef DEBUG_SERIAL
-//       DEBUG_SERIAL.println(F("\tI2CDevice failed to write"));
-// #endif
-//       return false;
-//     }
-//   }
-
-//   // Write the data itself
-//   if (_wire->write(buffer, len) != len) {
-// #ifdef DEBUG_SERIAL
-//     DEBUG_SERIAL.println(F("\tI2CDevice failed to write"));
-// #endif
-//     return false;
-//   }
-
-// #ifdef DEBUG_SERIAL
-
-//   DEBUG_SERIAL.print(F("\tI2CWRITE @ 0x"));
-//   DEBUG_SERIAL.print(_addr, HEX);
-//   DEBUG_SERIAL.print(F(" :: "));
-//   if ((prefix_len != 0) && (prefix_buffer != nullptr)) {
-//     for (uint16_t i = 0; i < prefix_len; i++) {
-//       DEBUG_SERIAL.print(F("0x"));
-//       DEBUG_SERIAL.print(prefix_buffer[i], HEX);
-//       DEBUG_SERIAL.print(F(", "));
-//     }
-//   }
-//   for (uint16_t i = 0; i < len; i++) {
-//     DEBUG_SERIAL.print(F("0x"));
-//     DEBUG_SERIAL.print(buffer[i], HEX);
-//     DEBUG_SERIAL.print(F(", "));
-//     if (i % 32 == 31) {
-//       DEBUG_SERIAL.println();
-//     }
-//   }
-
-//   if (stop) {
-//     DEBUG_SERIAL.print("\tSTOP");
-//   }
-// #endif
-
-//   if (_wire->endTransmission(stop) == 0) {
-// #ifdef DEBUG_SERIAL
-//     DEBUG_SERIAL.println();
-//     // DEBUG_SERIAL.println("Sent!");
-// #endif
-//     return true;
-//   } else {
-// #ifdef DEBUG_SERIAL
-//     DEBUG_SERIAL.println("\tFailed to send!");
-// #endif
-//     return false;
-//   }
-// }
