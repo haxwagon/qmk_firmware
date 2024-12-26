@@ -1,9 +1,22 @@
 #include QMK_KEYBOARD_H
+#include "../../../cirque_pinnacles.h"
 #include "joysticks.h"
-#include "layers.h"
 #include "pointing_dpi.h"
 #include "tap_dance_quad.h"
 #include "print.h"
+
+enum LAYERS {
+    LAYER_QWERTY, // default
+    LAYER_NUMSYMS, // upper
+    LAYER_FUNC, // lower
+    LAYER_MOVE,
+    LAYER_GAMEPAD,
+    LAYER_GAMEPAD2,
+    LAYER_JOYSTICK,
+    LAYER_JOYSTICK2,
+    LAYER_MEDIA,
+    LAYER_NUMPAD,
+};
 
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
@@ -266,111 +279,180 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS),
 };
 
-const uint16_t PROGMEM left_cirque_keymaps[][3][3] = {
+const uint16_t PROGMEM cirque_pinnacles_keymaps[][CIRQUE_PINNACLES_COUNT][CIRQUE_PINNACLES_TOUCH_ZONES_Y][CIRQUE_PINNACLES_TOUCH_ZONES_X] = {
     [LAYER_QWERTY] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_FUNC] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_GAMEPAD] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_GAMEPAD2] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_JOYSTICK] = {
-        { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
-        { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
-        { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
+        {
+            { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
+            { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
+            { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
+        },
+        {
+            { KC_NO, JS_3, KC_NO },
+            { JS_2, JS_9, JS_1 },
+            { KC_NO, JS_0, KC_NO },
+        },
     },
     [LAYER_JOYSTICK2] = {
-        { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
-        { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
-        { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
+        {
+            { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
+            { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
+            { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
+        },
+        {
+            { KC_NO, JS_3, KC_NO },
+            { JS_2, JS_9, JS_1 },
+            { KC_NO, JS_0, KC_NO },
+        },
     },
     [LAYER_MEDIA] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_MOVE] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_NUMPAD] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
     [LAYER_NUMSYMS] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
+        {
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+            { KC_NO, KC_NO, KC_NO },
+        },
     },
 };
 
-const uint16_t PROGMEM right_cirque_keymaps[][3][3] = {
-    [LAYER_QWERTY] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_FUNC] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_GAMEPAD] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_GAMEPAD2] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_JOYSTICK] = {
-        { KC_NO, JS_3, KC_NO },
-        { JS_2, JS_9, JS_1 },
-        { KC_NO, JS_0, KC_NO },
-    },
-    [LAYER_JOYSTICK2] = {
-        { KC_NO, JS_3, KC_NO },
-        { JS_2, JS_9, JS_1 },
-        { KC_NO, JS_0, KC_NO },
-    },
-    [LAYER_MEDIA] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_MOVE] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_NUMPAD] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-    [LAYER_NUMSYMS] = {
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-        { KC_NO, KC_NO, KC_NO },
-    },
-};
+bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* state) {
+    switch (index) {
+    case 0: // left pad
+        switch (get_highest_layer(layer_state)) {
+#if defined(JOYSTICK_ENABLE)
+        case LAYER_JOYSTICK:
+        case LAYER_JOYSTICK2:
+            set_joystick_axis(-1, 0, state->x);
+            set_joystick_axis(-1, 1, state->y);
+            return true;
+#endif
+        default:
+            break;
+        }
+        break;
+    case 1: // right pad
+        switch (get_highest_layer(layer_state)) {
+#if defined(JOYSTICK_ENABLE)
+        case LAYER_JOYSTICK:
+            set_joystick_axis(0, 0, state->x);
+            set_joystick_axis(0, 1, state->y);
+            return true;
+        case LAYER_JOYSTICK2:
+            move_joystick_axis(-1, 2, state->y / 10);
+            return true;
+#endif
+        case LAYER_MOVE:
+            if (abs(state->y) > abs(state->x)) {
+                // scrolling vertically
+                if (state->y > -1) {
+                    tap_code(MS_WHLD);
+                    return true;
+                } else if (state->y < -1) {
+                    tap_code(MS_WHLU);
+                    return true;
+                }
+            } else if (abs(state->x) > abs(state->y)) {
+                // scrolling horizontally
+                if (state->x > -1) {
+                    tap_code(MS_WHLR);
+                    return true;
+                } else if (state->x < -1) {
+                    tap_code(MS_WHLL);
+                    return true;
+                }
+            }
+            break;
+        }
+    }
+    return false;
+}
 
 void keyboard_post_init_user(void)
 {

@@ -16,7 +16,9 @@ TAP_DANCE_ENABLE = yes
 TRI_LAYER_ENABLE = yes
 
 SRC +=  display.c \
-		dual_cirque_pointing.c \
+		pointing.c \
+		../../../cirque_pinnacles.c \
+		../../../gamepad_qt.c \
 		../../../joysticks.c \
 		../../../pointing_dpi.c \
 		../../../tap_dance_quad.c
