@@ -85,6 +85,7 @@ static bool           pointing_device_force_send = false;
 #ifdef POINTING_DEVICE_DRIVER_custom
 __attribute__((weak)) void           pointing_device_driver_init(void) {}
 __attribute__((weak)) report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
+    mouse_report.x = 100;
     return mouse_report;
 }
 __attribute__((weak)) uint16_t pointing_device_driver_get_cpi(void) {
