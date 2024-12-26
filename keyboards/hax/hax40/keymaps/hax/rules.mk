@@ -10,7 +10,7 @@ KEY_OVERRIDE_ENABLE = yes
 OLED_DRIVER = ssd1306
 OLED_ENABLE = yes
 OLED_TRANSPORT = i2c
-POINTING_DEVICE_DRIVER = cirque_pinnacle_i2c
+POINTING_DEVICE_DRIVER = custom
 POINTING_DEVICE_ENABLE = yes
 TAP_DANCE_ENABLE = yes
 TRI_LAYER_ENABLE = yes
@@ -18,7 +18,10 @@ TRI_LAYER_ENABLE = yes
 SRC +=  display.c \
 		pointing.c \
 		../../../cirque_pinnacles.c \
-		../../../gamepad_qt.c \
+		../../../gamepad_qts.c \
 		../../../joysticks.c \
 		../../../pointing_dpi.c \
-		../../../tap_dance_quad.c
+		../../../seesaw.c \
+		../../../tap_dance_quad.c \
+		drivers/sensors/cirque_pinnacle_i2c.c \
+		drivers/sensors/cirque_pinnacle.c

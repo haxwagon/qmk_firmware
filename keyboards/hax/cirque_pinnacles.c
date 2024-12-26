@@ -1,10 +1,8 @@
 #include QMK_KEYBOARD_H
 #include "cirque_pinnacles.h"
 
-#include "drivers/sensors/cirque_pinnacle.h"
-
-void cirque_pinnacles_init(cirque_pinnacles_device_t devices[CIRQUE_PINNACLES_COUNT]) {
-    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+void cirque_pinnacles_init(cirque_pinnacles_device_t* devices, uint8_t count) {
+    for (uint8_t i = 0; i < count; i++) {
         cirque_pinnacle_init_device(devices[i].address, devices[i].absolute);
     }
 }
@@ -39,9 +37,11 @@ bool cirque_pinnacles_update_state(cirque_pinnacles_device_t* device) {
             device->state.y = 0;
         }
 
+        // calculate deltas
         device->state.dx = device->state.x - device->last_x;
         device->state.dy = device->state.y - device->last_y;
 
+        // save off position for next delta calculation
         device->last_x = device->state.x;
         device->last_y = device->state.y;
 
@@ -72,9 +72,9 @@ bool cirque_pinnacles_update_state(cirque_pinnacles_device_t* device) {
     return false;
 }
 
-bool cirque_pinnacles_update_states(cirque_pinnacles_device_t devices[CIRQUE_PINNACLES_COUNT]) {
+bool cirque_pinnacles_update_states(cirque_pinnacles_device_t* devices, uint8_t count) {
     bool updated = false;
-    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+    for (uint8_t i = 0; i < count; i++) {
         updated = cirque_pinnacles_update_state(&(devices[i])) || updated;
     }
     return updated;

@@ -1,8 +1,6 @@
 #pragma once
 
-#ifndef CIRQUE_PINNACLES_COUNT
-#   define CIRQUE_PINNACLES_COUNT 1
-#endif
+#include "drivers/sensors/cirque_pinnacle.h"
 
 #ifndef CIRQUE_PINNACLES_TOUCH_ZONES_X
 #    define CIRQUE_PINNACLES_TOUCH_ZONES_X 3
@@ -34,6 +32,6 @@ typedef struct {
     cirque_pinnacles_state_t state;
 } cirque_pinnacles_device_t;
 
-void cirque_pinnacles_init(cirque_pinnacles_device_t devices[CIRQUE_PINNACLES_COUNT]);
+void cirque_pinnacles_init(cirque_pinnacles_device_t* devices, uint8_t count);
 bool cirque_pinnacles_update_state(cirque_pinnacles_device_t* device);
-bool cirque_pinnacles_update_states(cirque_pinnacles_device_t device[CIRQUE_PINNACLES_COUNT]);
+bool cirque_pinnacles_update_states(cirque_pinnacles_device_t* devices, uint8_t count);
