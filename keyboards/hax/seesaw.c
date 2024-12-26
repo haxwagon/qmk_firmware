@@ -166,7 +166,6 @@ enum {
 #define SEESAW_HW_ID_CODE_TINY1617 0x89 ///< seesaw HW ID code for ATtiny1617
 // clang-format on
 
-
 //  ****************************************************************
 //  *  @brief      read the analog value on an ADC-enabled pin.
 //  *
@@ -177,45 +176,38 @@ enum {
 //  *  @return     the analog value. This is an integer between 0 and 1023
 //  ******************************************************************
 uint16_t seesaw_analog_read(seesaw_device_t device, uint8_t pin) {
-    return 0;
-//   uint8_t buf[2];
-//   uint8_t p = 0;
+    uint8_t buf[2];
+    uint8_t p = 0;
 
-//   if (_hardwaretype == SEESAW_HW_ID_CODE_SAMD09) {
-//     switch (pin) {
-//     case ADC_INPUT_0_PIN:
-//       p = 0;
-//       break;
-//     case ADC_INPUT_1_PIN:
-//       p = 1;
-//       break;
-//     case ADC_INPUT_2_PIN:
-//       p = 2;
-//       break;
-//     case ADC_INPUT_3_PIN:
-//       p = 3;
-//       break;
-//     default:
-//       return 0;
-//     }
-//   } else if ((_hardwaretype == SEESAW_HW_ID_CODE_TINY807) ||
-//              (_hardwaretype == SEESAW_HW_ID_CODE_TINY817) ||
-//              (_hardwaretype == SEESAW_HW_ID_CODE_TINY816) ||
-//              (_hardwaretype == SEESAW_HW_ID_CODE_TINY806) ||
-//              (_hardwaretype == SEESAW_HW_ID_CODE_TINY1616) ||
-//              (_hardwaretype == SEESAW_HW_ID_CODE_TINY1617)) {
-//     p = pin;
-//   } else {
-//     return 0;
-//   }
+    if (device.hardware_type == SEESAW_HW_ID_CODE_SAMD09) {
+        switch (pin) {
+            case ADC_INPUT_0_PIN:
+                p = 0;
+                break;
+            case ADC_INPUT_1_PIN:
+                p = 1;
+                break;
+            case ADC_INPUT_2_PIN:
+                p = 2;
+                break;
+            case ADC_INPUT_3_PIN:
+                p = 3;
+                break;
+            default:
+                return 0;
+        }
+    } else if ((device.hardware_type == SEESAW_HW_ID_CODE_TINY807) || (device.hardware_type == SEESAW_HW_ID_CODE_TINY817) || (device.hardware_type == SEESAW_HW_ID_CODE_TINY816) || (device.hardware_type == SEESAW_HW_ID_CODE_TINY806) || (device.hardware_type == SEESAW_HW_ID_CODE_TINY1616) || (device.hardware_type == SEESAW_HW_ID_CODE_TINY1617)) {
+        p = pin;
+    } else {
+        return 0;
+    }
 
-//   this->read(SEESAW_ADC_BASE, SEESAW_ADC_CHANNEL_OFFSET + p, buf, 2, 500);
-//   uint16_t ret = ((uint16_t)buf[0] << 8) | buf[1];
-//   delay(1);
-//   return ret;
+    seesaw_read_timeout(device, SEESAW_ADC_BASE, SEESAW_ADC_CHANNEL_OFFSET + p, buf, 2, 500);
+    uint16_t ret = ((uint16_t)buf[0] << 8) | buf[1];
+    return ret;
 }
 
-bool seesaw_begin(seesaw_device_t* device, bool reset) {
+bool seesaw_begin(seesaw_device_t *device, bool reset) {
     i2c_init();
 
     bool found = false;
@@ -252,13 +244,7 @@ bool seesaw_begin(seesaw_device_t* device, bool reset) {
     uint8_t hw = 0;
     for (int retries = 0; !found && retries < 10; retries++) {
         seesaw_read(*device, SEESAW_STATUS_BASE, SEESAW_STATUS_HW_ID, &hw, 1);
-        if ((hw == SEESAW_HW_ID_CODE_SAMD09) ||
-            (hw == SEESAW_HW_ID_CODE_TINY817) ||
-            (hw == SEESAW_HW_ID_CODE_TINY807) ||
-            (hw == SEESAW_HW_ID_CODE_TINY816) ||
-            (hw == SEESAW_HW_ID_CODE_TINY806) ||
-            (hw == SEESAW_HW_ID_CODE_TINY1616) ||
-            (hw == SEESAW_HW_ID_CODE_TINY1617)) {
+        if ((hw == SEESAW_HW_ID_CODE_SAMD09) || (hw == SEESAW_HW_ID_CODE_TINY817) || (hw == SEESAW_HW_ID_CODE_TINY807) || (hw == SEESAW_HW_ID_CODE_TINY816) || (hw == SEESAW_HW_ID_CODE_TINY806) || (hw == SEESAW_HW_ID_CODE_TINY1616) || (hw == SEESAW_HW_ID_CODE_TINY1617)) {
             device->hardware_type = hw;
             dprintf("Device 0x%04x has hardware type: %d\n", device->address, hw);
             return true;
@@ -272,7 +258,6 @@ bool seesaw_begin(seesaw_device_t* device, bool reset) {
 
 bool seesaw_detected(seesaw_device_t device) {
     return seesaw_write(device, 0, 0, NULL, 0);
-
 }
 
 //  ****************************************************************************
@@ -284,11 +269,11 @@ bool seesaw_detected(seesaw_device_t device) {
 //  *  @return     the status of the pin. HIGH or LOW (1 or 0).
 //  ****************************************************************************
 bool seesaw_digital_read(seesaw_device_t device, uint8_t pin) {
-  if (pin >= 32) {
-    return seesaw_digital_read_bulk_b(device, (1ul << (pin - 32))) != 0;
-  } else {
-    return seesaw_digital_read_bulk(device, (1ul << pin)) != 0;
-  }
+    if (pin >= 32) {
+        return seesaw_digital_read_bulk_b(device, (1ul << (pin - 32))) != 0;
+    } else {
+        return seesaw_digital_read_bulk(device, (1ul << pin)) != 0;
+    }
 }
 
 //  ****************************************************************************
@@ -302,11 +287,10 @@ bool seesaw_digital_read(seesaw_device_t device, uint8_t pin) {
 //  *high and pin 3 is low, 0b0010 (decimal number 2) will be returned.
 //  ****************************************************************************
 uint32_t seesaw_digital_read_bulk(seesaw_device_t device, uint32_t pins) {
-  uint8_t buf[4];
-  seesaw_read(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK, buf, 4);
-  uint32_t ret = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) |
-                 ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
-  return ret & pins;
+    uint8_t buf[4];
+    seesaw_read(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK, buf, 4);
+    uint32_t ret = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
+    return ret & pins;
 }
 
 //  **************************************************************************
@@ -318,11 +302,10 @@ uint32_t seesaw_digital_read_bulk(seesaw_device_t device, uint32_t pins) {
 //  *high and pin 3 is low, 0b0010 (decimal number 2) will be returned.
 //  ***************************************************************************
 uint32_t seesaw_digital_read_bulk_b(seesaw_device_t device, uint32_t pins) {
-  uint8_t buf[8];
-  seesaw_read(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK, buf, 8);
-  uint32_t ret = ((uint32_t)buf[4] << 24) | ((uint32_t)buf[5] << 16) |
-                 ((uint32_t)buf[6] << 8) | (uint32_t)buf[7];
-  return ret & pins;
+    uint8_t buf[8];
+    seesaw_read(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK, buf, 8);
+    uint32_t ret = ((uint32_t)buf[4] << 24) | ((uint32_t)buf[5] << 16) | ((uint32_t)buf[6] << 8) | (uint32_t)buf[7];
+    return ret & pins;
 }
 
 // //  ***************************************************************************
@@ -371,24 +354,28 @@ uint32_t seesaw_digital_read_bulk_b(seesaw_device_t device, uint32_t pins) {
 //  *  @returns    True on I2C read success
 //  *****************************************************************************************
 bool seesaw_read(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num) {
-    uint8_t pos = 0;
+    return seesaw_read_timeout(device, regHigh, regLow, buf, num, SEESAW_DEFAULT_I2C_TIMEOUT_MS);
+}
+
+bool seesaw_read_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t timeout_ms) {
+    uint16_t reg = ((uint16_t)regHigh << 8) | regLow;
+    uint8_t  pos = 0;
 
     // on arduino we need to read in 32 byte chunks
     while (pos < num) {
         uint8_t read_now = MIN(32, num - pos);
 
-        if (!seesaw_write(device, regHigh, regLow, NULL, 0)) {
+        if (!seesaw_write_timeout(device, regHigh, regLow, NULL, 0, timeout_ms)) {
             return false;
         }
 
-        if (!seesaw_read(device, regHigh, regLow, buf + pos, read_now)) {
+        if (i2c_read_register16(device.address, reg, buf + pos, read_now, timeout_ms) != I2C_STATUS_SUCCESS) {
             return false;
         }
         pos += read_now;
     }
     return true;
 }
-
 
 //  *******************************************************************
 //  *  @brief      perform a software reset. This resets all seesaw registers to
@@ -398,8 +385,7 @@ bool seesaw_read(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_
 //  * @returns  True on I2C write success, false otherwise
 //  *******************************************************************
 bool seesaw_reset(seesaw_device_t device) {
-  return seesaw_write_byte(device, SEESAW_STATUS_BASE, SEESAW_STATUS_SWRST, 0xFF);
-
+    return seesaw_write_byte(device, SEESAW_STATUS_BASE, SEESAW_STATUS_SWRST, 0xFF);
 }
 
 //  *****************************************************************************************
@@ -412,33 +398,18 @@ bool seesaw_reset(seesaw_device_t device) {
 //  *  @returns    True on I2C write success
 //  *****************************************************************************************
 bool seesaw_write(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num) {
-    return seesaw_write_timeout(device, regHigh, regLow, buf, num, SEESAW_DEFAULT_WRITE_TIMEOUT);
+    return seesaw_write_timeout(device, regHigh, regLow, buf, num, SEESAW_DEFAULT_I2C_TIMEOUT_MS);
 }
 
 bool seesaw_write_byte(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t byte) {
     return seesaw_write(device, regHigh, regLow, &byte, 1);
 }
 
-bool seesaw_write_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t timeout) {
-    uint16_t register;
-    register = regHigh << 8;
-    register = register | regLow;
-
-
-// void RAP_Write(seesaw_device_t device, uint8_t address, uint8_t data) {
-//     uint8_t cmdByte = WRITE_MASK | address; // Form the WRITE command byte
-
-//     if (touchpad_init) {
-//         if (i2c_write_register(device << 1, cmdByte, &data, sizeof(data), CIRQUE_PINNACLE_TIMEOUT) != I2C_STATUS_SUCCESS) {
-//             pd_dprintf("error cirque_pinnacle i2c_write_register\n");
-//             touchpad_init = false;
-//         }
-//     }
-// }
+bool seesaw_write_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t timeout_ms) {
+    uint16_t reg = ((uint16_t)regHigh << 8) | regLow;
     // return i2c_write_register16(device.address << 1, address, buf, num, timeout) == I2C_STATUS_SUCCESS;
-    return i2c_write_register16(device.address, register, buf, num, timeout) == I2C_STATUS_SUCCESS;
+    return i2c_write_register16(device.address, reg, buf, num, timeout_ms) == I2C_STATUS_SUCCESS;
 }
-
 
 //  *    @brief  Write a buffer or two to the I2C device. Cannot be more than
 //  * maxBufferSize() bytes.
