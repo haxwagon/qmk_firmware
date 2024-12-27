@@ -430,38 +430,6 @@ void seesaw_pin_mode_bulk_double(seesaw_device_t device, uint32_t pinsa, uint32_
   }
 }
 
-// //  ***************************************************************************
-// //  *  @brief      set the mode of multiple GPIO pins at once.
-// //  *
-// //  *  @param      pins a bitmask of the pins to write. On the SAMD09 breakout,
-// //  *this corresponds to the number on the silkscreen. For example, passing 0b0110
-// //  *will set the mode of pins 2 and 3.
-// //  *	@param		mode the mode to set the pins to. One of INPUT, OUTPUT,
-// //  *or INPUT_PULLUP.
-// //  ****************************************************************************
-// void pin_mode_bulk(uint32_t pins, uint8_t mode) {
-//   uint8_t cmd[] = {(uint8_t)(pins >> 24), (uint8_t)(pins >> 16),
-//                    (uint8_t)(pins >> 8), (uint8_t)pins};
-//   switch (mode) {
-//   case OUTPUT:
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_DIRSET_BULK, cmd, 4);
-//     break;
-//   case INPUT:
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 4);
-//     break;
-//   case INPUT_PULLUP:
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 4);
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_PULLENSET, cmd, 4);
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_BULK_SET, cmd, 4);
-//     break;
-//   case INPUT_PULLDOWN:
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 4);
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_PULLENSET, cmd, 4);
-//     seesaw_write(SEESAW_GPIO_BASE, SEESAW_GPIO_BULK_CLR, cmd, 4);
-//     break;
-//   }
-// }
-
 //  *****************************************************************************************
 //  *  @brief      Read a specified number of bytes into a buffer from the seesaw.
 //  *
