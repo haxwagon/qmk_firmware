@@ -235,6 +235,7 @@ void gamepad_qts_init(gamepad_qt_device_t* devices, uint8_t count) {
 // #endif
 // }
     for (uint8_t i = 0; i < count; i++) {
+        printf("initializing seesaw %d\n", i);
         seesaw_begin(&(devices[i].seesaw), true);
     }
 }

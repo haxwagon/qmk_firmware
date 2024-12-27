@@ -210,54 +210,57 @@ uint16_t seesaw_analog_read(seesaw_device_t device, uint8_t pin) {
 bool seesaw_begin(seesaw_device_t *device, bool reset) {
     i2c_init();
 
+    chThdSleepSeconds(5);
+    printf("Looking for seesaw device 0x%02x...\n", device->address);
+
     bool found = false;
-    for (int retries = 0; retries < 10; retries++) {
-        found = seesaw_detected(*device);
-        if (found) {
-            break;
-        }
-        chThdSleepMicroseconds(50000);
-    }
+    // for (int retries = 0; retries < 10; retries++) {
+    //     printf("Device 0x%02x detection attempt %d\n", device->address, retries);
+    //     found = seesaw_detected(*device);
+    //     if (found) {
+    //         break;
+    //     }
+    //     chThdSleepMilliseconds(50);
+    // }
 
-    if (!found) {
-        dprintf("Device 0x%04x not found\n", device->address);
-        return false;
-    }
+    // if (!found) {
+    //     printf("Device 0x%02x not found\n", device->address);
+    //     return false;
+    // }
 
-    if (reset) {
-        found = false;
-        seesaw_reset(*device);
-        for (int retries = 0; retries < 10; retries++) {
-            found = seesaw_detected(*device);
-            if (found) {
-                break;
-            }
-            chThdSleepMicroseconds(10000);
-        }
-    }
+    // if (reset) {
+    //     found = false;
+    //     seesaw_reset(*device);
+    //     for (int retries = 0; !found && retries < 10; retries++) {
+    //         found = seesaw_detected(*device);
+    //         chThdSleepMilliseconds(10);
+    //     }
+    // }
 
-    if (!found) {
-        dprintf("Device 0x%04x failed to reset\n", device->address);
-        return false;
-    }
+    // if (!found) {
+    //     printf("Device 0x%02x failed to reset\n", device->address);
+    //     return false;
+    // }
 
     uint8_t hw = 0;
     for (int retries = 0; !found && retries < 10; retries++) {
-        seesaw_read(*device, SEESAW_STATUS_BASE, SEESAW_STATUS_HW_ID, &hw, 1);
+        bool read = seesaw_read(*device, SEESAW_STATUS_BASE, SEESAW_STATUS_HW_ID, &hw, 1);
+        printf("Device 0x%02x hardware check %d: %d\n", device->address, retries, read ? 1 : 0);
+
         if ((hw == SEESAW_HW_ID_CODE_SAMD09) || (hw == SEESAW_HW_ID_CODE_TINY817) || (hw == SEESAW_HW_ID_CODE_TINY807) || (hw == SEESAW_HW_ID_CODE_TINY816) || (hw == SEESAW_HW_ID_CODE_TINY806) || (hw == SEESAW_HW_ID_CODE_TINY1616) || (hw == SEESAW_HW_ID_CODE_TINY1617)) {
             device->hardware_type = hw;
-            dprintf("Device 0x%04x has hardware type: %d\n", device->address, hw);
+            printf("Device 0x%02x has hardware type: %d\n", device->address, hw);
             return true;
         }
 
-        chThdSleepMicroseconds(10000);
+        chThdSleepMilliseconds(10);
     }
 
     return false;
 }
 
 bool seesaw_detected(seesaw_device_t device) {
-    return seesaw_write(device, 0, 0, NULL, 0);
+    return i2c_ping_address(device.address, 1000) == I2C_STATUS_SUCCESS;
 }
 
 //  ****************************************************************************
@@ -373,7 +376,7 @@ bool seesaw_read_delay_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t 
             return false;
         }
 
-        chThdSleepMicroseconds(delay_ms * 1000);
+        chThdSleepMilliseconds(delay_ms);
 
         if (i2c_read_register16(device.address, reg, buf + pos, read_now, timeout_ms) != I2C_STATUS_SUCCESS) {
             return false;

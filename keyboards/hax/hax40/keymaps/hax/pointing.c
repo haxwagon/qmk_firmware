@@ -16,7 +16,7 @@ static gamepad_qt_device_t       gamepad_qt_devices[NUM_GAMEPAD_QTS];
 static uint16_t _cpi;
 
 void pointing_device_driver_init(void) {
-    dprint("Initializing pointing devices...\n");
+    print("Initializing pointing devices...\n");
     memset(cirque_pinnacle_devices, 0, sizeof(cirque_pinnacle_devices));
     cirque_pinnacle_devices[0].address = 0x2A;
     cirque_pinnacle_devices[0].absolute = true;
@@ -27,7 +27,7 @@ void pointing_device_driver_init(void) {
     memset(gamepad_qt_devices, 0, sizeof(gamepad_qt_devices));
     gamepad_qt_devices[0].seesaw.address = 0x50;
     gamepad_qts_init(gamepad_qt_devices, 1);
-    dprint("Done initializing pointing devices.\n");
+    printf("Done initializing pointing devices.\n");
 }
 
 uint16_t pointing_device_driver_get_cpi(void) {
@@ -43,6 +43,10 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
 
     updated = cirque_pinnacles_update_states(cirque_pinnacle_devices, NUM_CIRQUE_PINNACLES) || updated;
     updated = gamepad_qts_update_states(gamepad_qt_devices, NUM_GAMEPAD_QTS) || updated;
+
+    if (gamepad_qt_devices[0].state.x != 0 || gamepad_qt_devices[0].state.y != 0) {
+        // dprintf("Gamepad QT %d %d (%d, %d)\n", gamepad_qt_devices[0].seesaw.address, gamepad_qt_devices[0].seesaw.hardware_type, gamepad_qt_devices[0].state.x, gamepad_qt_devices[0].state.y);
+    }
 
     if (!updated) {
         return mouse_report;
