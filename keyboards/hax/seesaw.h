@@ -16,6 +16,8 @@ bool seesaw_detected(seesaw_device_t device);
 bool seesaw_digital_read(seesaw_device_t device, uint8_t pin);
 uint32_t seesaw_digital_read_bulk(seesaw_device_t device, uint32_t pins);
 uint32_t seesaw_digital_read_bulk_b(seesaw_device_t device, uint32_t pins);
+uint32_t seesaw_get_options(seesaw_device_t device);
+uint32_t seesaw_get_version(seesaw_device_t device);
 void seesaw_pin_mode(seesaw_device_t device, uint8_t pin, uint8_t mode);
 void seesaw_pin_mode_bulk(seesaw_device_t device, uint32_t pins, uint8_t mode);
 void seesaw_pin_mode_bulk_double(seesaw_device_t device, uint32_t pinsa, uint32_t pinsb, uint8_t mode);

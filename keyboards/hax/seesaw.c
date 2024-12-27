@@ -320,6 +320,33 @@ uint32_t seesaw_digital_read_bulk_b(seesaw_device_t device, uint32_t pins) {
 }
 
 //  **************************************************************************
+//  *  @brief      Returns the available options compiled into the seesaw firmware.
+//  *  @return     the available options compiled into the seesaw firmware. If the
+//  *option is included, the corresponding bit is set. For example, if the ADC
+//  *module is compiled in then (ss.getOptions() & (1UL << SEESAW_ADC_BASE)) > 0
+//  **************************************************************************
+uint32_t seesaw_get_options(seesaw_device_t device) {
+  uint8_t buf[4];
+  seesaw_read(device, SEESAW_STATUS_BASE, SEESAW_STATUS_OPTIONS, buf, 4);
+  uint32_t ret = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) |
+                 ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
+  return ret;
+}
+
+//  *********************************************************************
+//  *  @brief      Returns the version of the seesaw
+//  *  @return     The version code. Bits [31:16] will be a date code, [15:0] will
+//  *be the product id.
+//  *********************************************************************
+uint32_t seesaw_get_version(seesaw_device_t device) {
+  uint8_t buf[4];
+  seesaw_read(device, SEESAW_STATUS_BASE, SEESAW_STATUS_VERSION, buf, 4);
+  uint32_t ret = ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) |
+                 ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
+  return ret;
+}
+
+//  **************************************************************************
 //  *  @brief      Set the mode of a GPIO pin.
 //  *
 //  *  @param      pin the pin number. On the SAMD09 breakout, this corresponds to
