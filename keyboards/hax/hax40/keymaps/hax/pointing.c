@@ -26,6 +26,7 @@ void pointing_device_driver_init(void) {
 
     memset(gamepad_qt_devices, 0, sizeof(gamepad_qt_devices));
     gamepad_qt_devices[0].seesaw.address = 0x50;
+    gamepad_qt_devices[0].seesaw.flow = -1;
     gamepad_qts_init(gamepad_qt_devices, 1);
     printf("Done initializing pointing devices.\n");
 }

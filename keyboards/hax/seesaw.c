@@ -139,6 +139,10 @@ enum {
     SEESAW_SPECTRUM_STATUS  = 0xFF,
 };
 
+#define INPUT 0x0
+#define OUTPUT 0x1
+#define INPUT_PULLUP 0x2
+
 #define ADC_INPUT_0_PIN 2 ///< default ADC input pin
 #define ADC_INPUT_1_PIN 3 ///< default ADC input pin
 #define ADC_INPUT_2_PIN 4 ///< default ADC input pin
@@ -210,7 +214,11 @@ uint16_t seesaw_analog_read(seesaw_device_t device, uint8_t pin) {
 bool seesaw_begin(seesaw_device_t *device, bool reset) {
     i2c_init();
 
-    chThdSleepSeconds(5);
+    if (device->flow != -1) {
+        seesaw_pin_mode(*device, device->flow, INPUT);
+    }
+
+    wait_ms(1000);
     printf("Looking for seesaw device 0x%02x...\n", device->address);
 
     bool found = false;
@@ -220,7 +228,7 @@ bool seesaw_begin(seesaw_device_t *device, bool reset) {
     //     if (found) {
     //         break;
     //     }
-    //     chThdSleepMilliseconds(50);
+    //     wait_ms(50);
     // }
 
     // if (!found) {
@@ -233,7 +241,7 @@ bool seesaw_begin(seesaw_device_t *device, bool reset) {
     //     seesaw_reset(*device);
     //     for (int retries = 0; !found && retries < 10; retries++) {
     //         found = seesaw_detected(*device);
-    //         chThdSleepMilliseconds(10);
+    //         wait_ms(10);
     //     }
     // }
 
@@ -253,7 +261,7 @@ bool seesaw_begin(seesaw_device_t *device, bool reset) {
             return true;
         }
 
-        chThdSleepMilliseconds(10);
+        wait_ms(10);
     }
 
     return false;
@@ -309,6 +317,90 @@ uint32_t seesaw_digital_read_bulk_b(seesaw_device_t device, uint32_t pins) {
     seesaw_read(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK, buf, 8);
     uint32_t ret = ((uint32_t)buf[4] << 24) | ((uint32_t)buf[5] << 16) | ((uint32_t)buf[6] << 8) | (uint32_t)buf[7];
     return ret & pins;
+}
+
+//  **************************************************************************
+//  *  @brief      Set the mode of a GPIO pin.
+//  *
+//  *  @param      pin the pin number. On the SAMD09 breakout, this corresponds to
+//  *the number on the silkscreen.
+//  *  @param		mode the mode to set the pin. One of INPUT, OUTPUT, or
+//  *INPUT_PULLUP.
+//  ************************************************************************
+void seesaw_pin_mode(seesaw_device_t device, uint8_t pin, uint8_t mode) {
+  if (pin >= 32) {
+    seesaw_pin_mode_bulk_double(device, 0, 1ul << (pin - 32), mode);
+  } else {
+    seesaw_pin_mode_bulk(device, 1ul << pin, mode);
+  }
+}
+
+//  ***************************************************************************
+//  *  @brief      set the mode of multiple GPIO pins at once.
+//  *
+//  *  @param      pins a bitmask of the pins to write. On the SAMD09 breakout,
+//  *this corresponds to the number on the silkscreen. For example, passing 0b0110
+//  *will set the mode of pins 2 and 3.
+//  *	@param		mode the mode to set the pins to. One of INPUT, OUTPUT,
+//  *or INPUT_PULLUP.
+//  ***************************************************************************
+void seesaw_pin_mode_bulk(seesaw_device_t device, uint32_t pins, uint8_t mode) {
+  uint8_t cmd[] = {(uint8_t)(pins >> 24), (uint8_t)(pins >> 16),
+                   (uint8_t)(pins >> 8), (uint8_t)pins};
+  switch (mode) {
+  case OUTPUT:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRSET_BULK, cmd, 4);
+    break;
+  case INPUT:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 4);
+    break;
+  case INPUT_PULLUP:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 4);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_PULLENSET, cmd, 4);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK_SET, cmd, 4);
+    break;
+  case INPUT_PULLDOWN:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 4);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_PULLENSET, cmd, 4);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK_CLR, cmd, 4);
+    break;
+  }
+}
+
+//  *****************************************************************************************
+//  *  @brief      set the mode of multiple GPIO pins at once. This supports both
+//  *ports A and B.
+//  *
+//  *  @param      pinsa a bitmask of the pins to write on port A. On the SAMD09
+//  *breakout, this corresponds to the number on the silkscreen. For example,
+//  *passing 0b0110 will set the mode of pins 2 and 3.
+//  *  @param      pinsb a bitmask of the pins to write on port B.
+//  *	@param		mode the mode to set the pins to. One of INPUT, OUTPUT,
+//  *or INPUT_PULLUP.
+//  ******************************************************************************************
+void seesaw_pin_mode_bulk_double(seesaw_device_t device, uint32_t pinsa, uint32_t pinsb, uint8_t mode) {
+  uint8_t cmd[] = {(uint8_t)(pinsa >> 24), (uint8_t)(pinsa >> 16),
+                   (uint8_t)(pinsa >> 8),  (uint8_t)pinsa,
+                   (uint8_t)(pinsb >> 24), (uint8_t)(pinsb >> 16),
+                   (uint8_t)(pinsb >> 8),  (uint8_t)pinsb};
+  switch (mode) {
+  case OUTPUT:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRSET_BULK, cmd, 8);
+    break;
+  case INPUT:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 8);
+    break;
+  case INPUT_PULLUP:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 8);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_PULLENSET, cmd, 8);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK_SET, cmd, 8);
+    break;
+  case INPUT_PULLDOWN:
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_DIRCLR_BULK, cmd, 8);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_PULLENSET, cmd, 8);
+    seesaw_write(device, SEESAW_GPIO_BASE, SEESAW_GPIO_BULK_CLR, cmd, 8);
+    break;
+  }
 }
 
 // //  ***************************************************************************
@@ -372,11 +464,23 @@ bool seesaw_read_delay_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t 
     while (pos < num) {
         uint8_t read_now = MIN(32, num - pos);
 
+        if (device.flow != -1) {
+            while (!seesaw_digital_read(device, device.flow)) {
+                chThdYield();
+            }
+        }
+
         if (!seesaw_write_timeout(device, regHigh, regLow, NULL, 0, timeout_ms)) {
             return false;
         }
 
-        chThdSleepMilliseconds(delay_ms);
+        wait_ms(delay_ms);
+
+        if (device.flow != -1) {
+            while (!seesaw_digital_read(device, device.flow)) {
+                chThdYield();
+            }
+        }
 
         if (i2c_read_register16(device.address, reg, buf + pos, read_now, timeout_ms) != I2C_STATUS_SUCCESS) {
             return false;
@@ -415,6 +519,12 @@ bool seesaw_write_byte(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, 
 }
 
 bool seesaw_write_timeout(seesaw_device_t device, uint8_t regHigh, uint8_t regLow, uint8_t *buf, uint8_t num, uint16_t timeout_ms) {
+    if (device.flow != -1) {
+        while (!seesaw_digital_read(device, device.flow)) {
+            chThdYield();
+        }
+    }
+
     uint16_t reg = ((uint16_t)regHigh << 8) | regLow;
     // return i2c_write_register16(device.address << 1, address, buf, num, timeout) == I2C_STATUS_SUCCESS;
     return i2c_write_register16(device.address, reg, buf, num, timeout_ms) == I2C_STATUS_SUCCESS;
