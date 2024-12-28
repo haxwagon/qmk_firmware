@@ -7,11 +7,15 @@
     "features": {
         "bootmagic": true,
         "command": false,
-        "console": false,
+        "console": true,
+        "encoder": false,
         "extrakey": true,
+        "joystick": true,
         "mousekey": true,
         "nkro": true,
-        "rgblight": true
+        "oled": true,
+        "pointing_device": true,
+        "rgblight": false
     },
     "matrix_pins": {
         "cols": ["GP9", "GP10", "GP11", "GP12", "GP13", "GP18", "GP19", "GP20", "GP21", "GP22"],
@@ -28,23 +32,7 @@
         "pin": "GP23",
         "driver": "vendor"
     },
-    "rgblight": {
-        "led_count": 5,
-        "default": {
-            "animation": "rainbow_swirl"
-        },
-        "animations": {
-            "breathing": true,
-            "rainbow_mood": true,
-            "rainbow_swirl": true,
-            "snake": true,
-            "knight": true,
-            "christmas": true,
-            "static_gradient": true,
-            "alternating": true,
-            "twinkle": true
-        }
-    },
+    "rgblight": { },
     "community_layouts": ["ortho_4x10"],
     "layouts": {
         "LAYOUT_ortho_4x10": {

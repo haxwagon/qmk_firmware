@@ -1,0 +1,3 @@
+BOOTLOADER = rp2040
+POINTING_DEVICE_DRIVER = cirque_pinnacle_spi
+SPI_DRIVER_REQUIRED = yes

@@ -211,7 +211,7 @@ combo_t key_combos[] = {
 #endif
 
 #if defined(DYNAMIC_MACRO_ENABLE)
-uint8_t dynamic_macro_recording = 0;
+static uint8_t dynamic_macro_recording = 0;
 #endif
 
 #if defined(JOYSTICK_ENABLE)
@@ -533,4 +533,14 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
     // mouse_report.y *= get_pointing_dpi();
 
     return mouse_report;
+}
+
+uint8_t oled_get_macro_recording(void) {
+    return dynamic_macro_recording;
+}
+const char* oled_get_layer_map(void) {
+    return LAYER_MAPS[get_highest_layer(layer_state)];
+}
+const char* oled_get_layer_name(void) {
+    return LAYER_NAMES[get_highest_layer(layer_state)];
 }

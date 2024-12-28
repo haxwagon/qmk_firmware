@@ -10,9 +10,10 @@ extern const uint16_t PROGMEM cirque_pinnacles_keymaps[][NUM_CIRQUE_PINNACLES][C
 
 extern bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* state);
 
+#ifdef POINTING_DEVICE_custom
+
 static cirque_pinnacles_device_t cirque_pinnacle_devices[NUM_CIRQUE_PINNACLES];
 static gamepad_qt_device_t       gamepad_qt_devices[NUM_GAMEPAD_QTS];
-
 static uint16_t _cpi;
 
 void pointing_device_driver_init(void) {
@@ -86,3 +87,4 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
     }
     return mouse_report;
 }
+#endif

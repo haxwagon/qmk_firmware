@@ -214,11 +214,13 @@ uint16_t seesaw_analog_read(seesaw_device_t device, uint8_t pin) {
 bool seesaw_begin(seesaw_device_t *device, bool reset) {
     i2c_init();
 
+    wait_ms(5000); // TODO: Remove this when connections work
+
     if (device->flow != -1) {
+        dprintf("Using flow mode for seesaw device 0x%02x on pin %d\n", device->address, device->flow);
         seesaw_pin_mode(*device, device->flow, INPUT);
     }
 
-    wait_ms(1000);
     printf("Looking for seesaw device 0x%02x...\n", device->address);
 
     bool found = false;
