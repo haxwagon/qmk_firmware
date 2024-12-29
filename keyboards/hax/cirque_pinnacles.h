@@ -1,5 +1,40 @@
 #pragma once
 
+#ifndef CIRQUE_PINNACLES_COUNT
+#    define CIRQUE_PINNACLES_COUNT 1
+#endif
+
+#ifndef CIRQUE_PINNACLES_CENTER_DEADZONE
+#    define CIRQUE_PINNACLES_CENTER_DEADZONE 0
+#endif
+
+#ifndef CIRQUE_PINNACLES_EDGE_DEADZONE
+#    define CIRQUE_PINNACLES_EDGE_DEADZONE 0
+#endif
+
+#ifndef CIRQUE_PINNACLES_BOTTOM_DEADZONE
+#    define CIRQUE_PINNACLES_BOTTOM_DEADZONE CIRQUE_PINNACLES_EDGE_DEADZONE
+#endif
+
+#ifndef CIRQUE_PINNACLES_LEFT_DEADZONE
+#    define CIRQUE_PINNACLES_LEFT_DEADZONE CIRQUE_PINNACLES_EDGE_DEADZONE
+#endif
+
+#ifndef CIRQUE_PINNACLES_RIGHT_DEADZONE
+#    define CIRQUE_PINNACLES_RIGHT_DEADZONE CIRQUE_PINNACLES_EDGE_DEADZONE
+#endif
+
+#ifndef CIRQUE_PINNACLES_TOP_DEADZONE
+#    define CIRQUE_PINNACLES_TOP_DEADZONE CIRQUE_PINNACLES_EDGE_DEADZONE
+#endif
+
+#ifndef CIRQUE_PINNACLES_TAP_TERM
+#    define CIRQUE_PINNACLES_TAP_TERM 200
+#endif
+
+#ifndef CIRQUE_PINNACLES_TOUCH_DEBOUNCE_MS
+#    define CIRQUE_PINNACLES_TOUCH_DEBOUNCE_MS 100
+#endif
 
 #ifndef CIRQUE_PINNACLES_TOUCH_ZONES_X
 #    define CIRQUE_PINNACLES_TOUCH_ZONES_X 1
@@ -9,18 +44,12 @@
 #    define CIRQUE_PINNACLES_TOUCH_ZONES_Y 1
 #endif
 
-#ifndef CIRQUE_PINNACLES_DEADZONE
-#    define CIRQUE_PINNACLES_DEADZONE 0
-#endif
-
-#ifndef CIRQUE_PINNACLES_COUNT
-#    define CIRQUE_PINNACLES_COUNT 1
-#endif
 
 typedef struct {
     int16_t                    x;
     int16_t                    y;
-    uint8_t                    touched;
+    bool                       touching;
+    uint16_t                   touched_at;
     uint16_t                   touch_x;
     uint16_t                   touch_y;
     int16_t                    prev_x;

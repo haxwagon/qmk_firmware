@@ -11,17 +11,6 @@ static gamepad_qt_device_t      gamepad_qt_devices[NUM_GAMEPAD_QTS];
 
 void keyboard_post_init_user(void)
 {
-    print("Initializing pointing devices...\n");
-    memset(cirque_pinnacles_states, 0, sizeof(cirque_pinnacles_states));
-    cirque_pinnacles_init(CIRQUE_PINNACLE_SPI_CS_PIN_LEFT);
-    // cirque_pinnacles_init(CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT);
-
-    memset(gamepad_qt_devices, 0, sizeof(gamepad_qt_devices));
-    gamepad_qt_devices[0].seesaw.address = 0x50;
-    gamepad_qt_devices[0].seesaw.flow = -1;
-    gamepad_qts_init(gamepad_qt_devices, 1);
-    printf("Done initializing pointing devices.\n");
-
 #if defined(CONSOLE_ENABLE)
     debug_enable = true;
     debug_matrix = false;
@@ -31,26 +20,55 @@ void keyboard_post_init_user(void)
     dprintf("keyboard initialized.");
 }
 
-report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
-{
-    gamepad_qts_update_states(gamepad_qt_devices, NUM_GAMEPAD_QTS);
-    if (cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_LEFT, &(cirque_pinnacles_states[0])) != NO_DATA_READ) {
-        dprintf("Left: (%d, %d)\n", cirque_pinnacles_states[0].x, cirque_pinnacles_states[0].y);
-        if (cirque_pinnacles_states[0].touched) {
-            dprintf("Left Touch: (%d, %d)\n", cirque_pinnacles_states[0].touch_x, cirque_pinnacles_states[0].touch_y);
-        }
-    }
-    if (cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT, &(cirque_pinnacles_states[1])) != NO_DATA_READ) {
-        dprintf("Right: (%d, %d)\n", cirque_pinnacles_states[1].x, cirque_pinnacles_states[1].y);
-        if (cirque_pinnacles_states[1].touched) {
-            dprintf("Right Touch: (%d, %d)\n", cirque_pinnacles_states[1].touch_x, cirque_pinnacles_states[1].touch_y);
-        }
-    }
+void pointing_device_driver_init(void) {
+    print("Initializing pointing devices...\n");
+    memset(cirque_pinnacles_states, 0, sizeof(cirque_pinnacles_states));
+    cirque_pinnacles_states[0].swap_xy = true;
+    cirque_pinnacles_init(CIRQUE_PINNACLE_SPI_CS_PIN_LEFT);
+    cirque_pinnacles_states[1].swap_xy = true;
+    cirque_pinnacles_init(CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT);
 
+    memset(gamepad_qt_devices, 0, sizeof(gamepad_qt_devices));
+    gamepad_qt_devices[0].seesaw.address = 0x50;
+    gamepad_qt_devices[0].seesaw.flow = -1;
+    gamepad_qts_init(gamepad_qt_devices, 1);
+    printf("Done initializing pointing devices.\n");
+}
+
+report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
+    gamepad_qts_update_states(gamepad_qt_devices, NUM_GAMEPAD_QTS);
     // if (gamepad_qt_devices[0].state.x != 0 || gamepad_qt_devices[0].state.y != 0) {
     //     dprintf("Gamepad QT %d %d (%d, %d)\n", gamepad_qt_devices[0].seesaw.address, gamepad_qt_devices[0].seesaw.hardware_type, gamepad_qt_devices[0].state.x, gamepad_qt_devices[0].state.y);
     // }
 
+    if (cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_LEFT, &(cirque_pinnacles_states[0])) != NO_DATA_READ) {
+        // dprintf("Left: (%d, %d)\n", cirque_pinnacles_states[0].x, cirque_pinnacles_states[0].y);
+        // if (cirque_pinnacles_states[0].touched) {
+        //     dprintf("Left Touch: (%d, %d)\n", cirque_pinnacles_states[0].touch_x, cirque_pinnacles_states[0].touch_y);
+        // }
+    }
+    if (cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT, &(cirque_pinnacles_states[1])) != NO_DATA_READ) {
+        // dprintf("Right: (%d, %d)\n", cirque_pinnacles_states[1].x, cirque_pinnacles_states[1].y);
+        // if (cirque_pinnacles_states[1].touched) {
+        //     dprintf("Right Touch: (%d, %d)\n", cirque_pinnacles_states[1].touch_x, cirque_pinnacles_states[1].touch_y);
+        // }
+    }
+
+    return mouse_report;
+}
+
+static uint16_t _cpi = POINTING_DEVICE_DEFAULT_DPI;
+
+uint16_t pointing_device_driver_get_cpi(void) {
+    return _cpi;
+}
+
+void pointing_device_driver_set_cpi(uint16_t cpi) {
+    _cpi = cpi;
+}
+
+report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
+{
     if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
         dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
     }

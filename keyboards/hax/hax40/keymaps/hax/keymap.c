@@ -467,7 +467,7 @@ bool cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx
 }
 
 bool cirque_pinnacles_tapped(uint8_t spi_cs_pin, uint8_t x, uint8_t y) {
-    uint16_t kc = cirque_pinnacles_keymaps[get_highest_layer(layer_state)][cirque_pinnacles_index(spi_cs_pin)][y][x];
+    uint16_t kc = cirque_pinnacles_keymaps[get_highest_layer(layer_state)][cirque_pinnacles_index(spi_cs_pin)][CIRQUE_PINNACLES_TOUCH_ZONES_Y - y - 1][x];
     if (kc == KC_NO || kc <= 0) {
         return false;
     }

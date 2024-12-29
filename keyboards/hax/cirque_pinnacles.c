@@ -7,8 +7,9 @@
 __attribute__((weak)) bool    cirque_pinnacles_tapped(uint8_t spi_cs_pin, uint8_t x, uint8_t y) { return false; }
 __attribute__((weak)) bool    cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx, int16_t dy) { return false; }
 
-static const uint16_t TOUCH_ZONE_X_SIZE = UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_X;
-static const uint16_t TOUCH_ZONE_Y_SIZE = UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_Y;
+#define CIRQUE_PINNACLES_TOUCH_ZONES_X_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_X)
+#define CIRQUE_PINNACLES_TOUCH_ZONES_Y_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_Y)
+#define CONSTRAIN(x, min, max) ((x) < min ? min : ((x) > max ? max : (x)))
 
 static uint8_t _spi_cs_pin = 0;
 
@@ -27,7 +28,14 @@ void cirque_pinnacles_init(uint8_t spi_cs_pin) {
     }
 }
 
+float linear_scale(float value, float min_in, float max_in, float min_out, float max_out) {
+    value = CONSTRAIN(value, min_in, max_in);
+    value -= min_in;
+    return (value * (max_out - min_out) / (max_in - min_in)) + min_out;
+}
+
 cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pin, cirque_pinnacles_state_t* state) {
+    cirque_pinnacles_select(spi_cs_pin);
     pinnacle_data_t data = cirque_pinnacle_read_data();
     if (!data.valid) {
         return NO_DATA_READ;
@@ -37,35 +45,55 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pi
     state->prev_y = state->y;
 
     cirque_pinnacle_scale_data(&data, UINT16_MAX, UINT16_MAX);
-    state->x = ((int16_t)(data.xValue / 2) - (INT16_MAX / 4)) * 2;
-    state->y = ((int16_t)(data.yValue / 2) - (INT16_MAX / 4)) * 2;
-    if (state->swap_xy) {
-        int16_t temp = state->x;
-        state->x = state->y;
-        state->y = temp;
-    }
-    if (state->flip_x) {
-        state->x *= -1;
-    }
-    if (state->flip_y) {
-        state->y *= -1;
-    }
-    if (state->x > -CIRQUE_PINNACLES_DEADZONE && state->x < CIRQUE_PINNACLES_DEADZONE) {
-        state->x = 0;
-    }
-    if (state->y > -CIRQUE_PINNACLES_DEADZONE && state->y < CIRQUE_PINNACLES_DEADZONE) {
-        state->y = 0;
-    }
 
-    state->touched = false;
-    state->touch_x = 0;
-    state->touch_y = 0;
-    if (data.touchDown) {
-        state->touched = true;
-        state->touch_x = data.xValue / TOUCH_ZONE_X_SIZE;
-        state->touch_y = data.yValue / TOUCH_ZONE_Y_SIZE;
-        if (cirque_pinnacles_tapped(spi_cs_pin, state->touch_x, state->touch_y)) {
-            return DATA_HANDLED;
+    if (data.touchDown && data.zValue > 0) { // actively touching
+        // handle scaling removing edge dead zones
+        state->x = linear_scale(data.xValue, CIRQUE_PINNACLES_LEFT_DEADZONE, UINT16_MAX - CIRQUE_PINNACLES_RIGHT_DEADZONE, INT16_MIN, INT16_MAX);
+        state->y = linear_scale(data.yValue, CIRQUE_PINNACLES_TOP_DEADZONE, UINT16_MAX - CIRQUE_PINNACLES_BOTTOM_DEADZONE, INT16_MIN, INT16_MAX);
+
+        if (state->swap_xy) {
+            int16_t temp = state->x;
+            state->x = state->y;
+            state->y = temp;
+        }
+        if (state->flip_x) {
+            state->x *= -1;
+        }
+        if (state->flip_y) {
+            state->y *= -1;
+        }
+        if (state->x > -CIRQUE_PINNACLES_CENTER_DEADZONE && state->x < CIRQUE_PINNACLES_CENTER_DEADZONE) {
+            state->x = 0;
+        }
+        if (state->y > -CIRQUE_PINNACLES_CENTER_DEADZONE && state->y < CIRQUE_PINNACLES_CENTER_DEADZONE) {
+            state->y = 0;
+        }
+
+        state->touch_x = CONSTRAIN(
+            linear_scale(state->x, INT16_MIN, INT16_MAX, 0, UINT16_MAX) / CIRQUE_PINNACLES_TOUCH_ZONES_X_SIZE,
+            0, CIRQUE_PINNACLES_TOUCH_ZONES_X - 1);
+        state->touch_y = CONSTRAIN(
+            linear_scale(state->y, INT16_MIN, INT16_MAX, 0, UINT16_MAX) / CIRQUE_PINNACLES_TOUCH_ZONES_Y_SIZE,
+            0, CIRQUE_PINNACLES_TOUCH_ZONES_Y - 1);
+
+        if (!state->touching) {
+            // started touching
+            state->touched_at = timer_read();
+        }
+        state->touching = true;
+    } else { // not actively touching
+        bool tapped = false;
+        if (state->touching && state->touched_at > 0 && timer_elapsed(state->touched_at) < CIRQUE_PINNACLES_TAP_TERM) {
+            // stopped touching quickly enough to be a tap
+            tapped = true;
+        }
+        state->touching = false;
+        state->touched_at = 0;
+        if (tapped) {
+            dprintf("Cirque Pinnacles (%d) tapped at (%d, %d)\n", spi_cs_pin, state->touch_x, state->touch_y);
+            if (cirque_pinnacles_tapped(spi_cs_pin, state->touch_x, state->touch_y)) {
+                return DATA_HANDLED;
+            }
         }
     }
 
@@ -81,18 +109,3 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pi
 
     return DATA_UPDATED;
 }
-
-// uint16_t cirque_pinnacle_get_cpi(void) {
-//     return CIRQUE_PINNACLE_PX_TO_INCH(cirque_pinnacle_get_scale());
-// }
-// void cirque_pinnacle_set_cpi(uint16_t cpi) {
-//     cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
-// }
-
-// // clang-format off
-// const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
-//     .init       = cirque_pinnacle_init,
-//     .get_report = cirque_pinnacle_get_report,
-//     .set_cpi    = cirque_pinnacle_set_cpi,
-//     .get_cpi    = cirque_pinnacle_get_cpi
-// };

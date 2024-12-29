@@ -12,5 +12,7 @@ SRC +=  \
 		../gamepad_qts.c \
 		../joysticks.c \
         ../oled.c \
-		../seesaw.c
+		../seesaw.c \
+		drivers/sensors/cirque_pinnacle.c \
+		drivers/sensors/cirque_pinnacle_spi.c
 
