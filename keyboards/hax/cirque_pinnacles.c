@@ -1,81 +1,96 @@
 #include QMK_KEYBOARD_H
+
 #include "cirque_pinnacles.h"
+#include "drivers/sensors/cirque_pinnacle.h"
+#include "spi_master.h"
 
-void cirque_pinnacles_init(cirque_pinnacles_device_t* devices, uint8_t count) {
-    for (uint8_t i = 0; i < count; i++) {
-        cirque_pinnacle_init_device(devices[i].address, devices[i].absolute);
+__attribute__((weak)) bool    cirque_pinnacles_tapped(uint8_t spi_cs_pin, uint8_t x, uint8_t y) { return false; }
+__attribute__((weak)) bool    cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx, int16_t dy) { return false; }
+
+static const uint16_t TOUCH_ZONE_X_SIZE = UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_X;
+static const uint16_t TOUCH_ZONE_Y_SIZE = UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_Y;
+
+static uint8_t _spi_cs_pin = 0;
+
+void cirque_pinnacles_select(uint8_t spi_cs_pin) {
+    _spi_cs_pin = spi_cs_pin;
+}
+
+uint8_t cirque_pinnacle_spi_get_cs_pin(void) { return _spi_cs_pin; }
+
+void cirque_pinnacles_init(uint8_t spi_cs_pin) {
+    spi_init();
+
+    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+        cirque_pinnacles_select(i);
+        cirque_pinnacle_init();
     }
 }
 
-bool cirque_pinnacles_update_state(cirque_pinnacles_device_t* device) {
-    if (device->absolute) {
-        pinnacle_absolute_data_t data = cirque_pinnacle_read_absolute_device_data(device->address);
-
-        if (!data.valid) {
-            return false;
-        }
-
-        memset(&(device->state), 0, sizeof(cirque_pinnacles_state_t));
-
-        device->state.x = ((int16_t)cirque_pinnacle_scale_absolute_x(data.xValue, UINT16_MAX / 2) - (INT16_MAX / 4)) * 2;
-        device->state.y = ((int16_t)cirque_pinnacle_scale_absolute_y(data.yValue, UINT16_MAX / 2) - (INT16_MAX / 4)) * 2;
-        if (device->swap_xy) {
-            int16_t temp = device->state.x;
-            device->state.x = device->state.y;
-            device->state.y = temp;
-        }
-        if (device->flip_x) {
-            device->state.x *= -1;
-        }
-        if (device->flip_y) {
-            device->state.y *= -1;
-        }
-        if (device->state.x > -CIRQUE_PINNACLES_DEADZONE && device->state.x < CIRQUE_PINNACLES_DEADZONE) {
-            device->state.x = 0;
-        }
-        if (device->state.y > -CIRQUE_PINNACLES_DEADZONE && device->state.y < CIRQUE_PINNACLES_DEADZONE) {
-            device->state.y = 0;
-        }
-
-        // calculate deltas
-        device->state.dx = device->state.x - device->last_x;
-        device->state.dy = device->state.y - device->last_y;
-
-        // save off position for next delta calculation
-        device->last_x = device->state.x;
-        device->last_y = device->state.y;
-
-        if (data.touchDown && !data.hovering) {
-            uint16_t zone_x = cirque_pinnacle_scale_absolute_x(data.xValue, CIRQUE_PINNACLES_TOUCH_ZONES_X);
-            uint16_t zone_y = cirque_pinnacle_scale_absolute_y(data.yValue, CIRQUE_PINNACLES_TOUCH_ZONES_Y);
-            device->state.touches[zone_y][zone_x] = 1;
-            // TODO: don't use 1, use the amount of time held down or something interesting
-        }
-
-        return true;
-    } else {
-        pinnacle_relative_data_t data = cirque_pinnacle_read_relative_device_data(device->address);
-
-        if (!data.valid) {
-            return false;
-        }
-
-        memset(&(device->state), 0, sizeof(cirque_pinnacles_state_t));
-        device->state.dx = data.xDelta;
-        device->state.dy = data.yDelta;
-        if (data.buttonFlags > 0) {
-            device->state.touches[CIRQUE_PINNACLES_TOUCH_ZONES_Y / 2][CIRQUE_PINNACLES_TOUCH_ZONES_X / 2] = 1;
-        }
-        return true;
+cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pin, cirque_pinnacles_state_t* state) {
+    pinnacle_data_t data = cirque_pinnacle_read_data();
+    if (!data.valid) {
+        return NO_DATA_READ;
     }
 
-    return false;
+    state->prev_x = state->x;
+    state->prev_y = state->y;
+
+    cirque_pinnacle_scale_data(&data, UINT16_MAX, UINT16_MAX);
+    state->x = ((int16_t)(data.xValue / 2) - (INT16_MAX / 4)) * 2;
+    state->y = ((int16_t)(data.yValue / 2) - (INT16_MAX / 4)) * 2;
+    if (state->swap_xy) {
+        int16_t temp = state->x;
+        state->x = state->y;
+        state->y = temp;
+    }
+    if (state->flip_x) {
+        state->x *= -1;
+    }
+    if (state->flip_y) {
+        state->y *= -1;
+    }
+    if (state->x > -CIRQUE_PINNACLES_DEADZONE && state->x < CIRQUE_PINNACLES_DEADZONE) {
+        state->x = 0;
+    }
+    if (state->y > -CIRQUE_PINNACLES_DEADZONE && state->y < CIRQUE_PINNACLES_DEADZONE) {
+        state->y = 0;
+    }
+
+    memset(&(state->touches), 0, sizeof(state->touches));
+    if (data.touchDown) {
+        uint16_t zone_x = data.xValue / TOUCH_ZONE_X_SIZE;
+        uint16_t zone_y = data.yValue / TOUCH_ZONE_Y_SIZE;
+        state->touches[zone_y][zone_x] = 1; // TODO: don't use 1, use the amount of time held down or something interesting
+        if (cirque_pinnacles_tapped(spi_cs_pin, zone_x, zone_y)) {
+            return DATA_HANDLED;
+        }
+    }
+
+    if (state->x == 0 && state->y == 0 && state->prev_x == 0 && state->prev_y == 0) {
+        // nothing interesting this round, don't do anything
+        return NO_DATA_READ;
+    }
+
+    if (cirque_pinnacles_moved(spi_cs_pin, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
+        // already handled
+        return DATA_HANDLED;
+    }
+
+    return DATA_UPDATED;
 }
 
-bool cirque_pinnacles_update_states(cirque_pinnacles_device_t* devices, uint8_t count) {
-    bool updated = false;
-    for (uint8_t i = 0; i < count; i++) {
-        updated = cirque_pinnacles_update_state(&(devices[i])) || updated;
-    }
-    return updated;
-}
+// uint16_t cirque_pinnacle_get_cpi(void) {
+//     return CIRQUE_PINNACLE_PX_TO_INCH(cirque_pinnacle_get_scale());
+// }
+// void cirque_pinnacle_set_cpi(uint16_t cpi) {
+//     cirque_pinnacle_set_scale(CIRQUE_PINNACLE_INCH_TO_PX(cpi));
+// }
+
+// // clang-format off
+// const pointing_device_driver_t cirque_pinnacle_pointing_device_driver = {
+//     .init       = cirque_pinnacle_init,
+//     .get_report = cirque_pinnacle_get_report,
+//     .set_cpi    = cirque_pinnacle_set_cpi,
+//     .get_cpi    = cirque_pinnacle_get_cpi
+// };

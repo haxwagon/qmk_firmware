@@ -1,9 +1,14 @@
 #include QMK_KEYBOARD_H
-#include "../../../cirque_pinnacles.h"
 #include "joysticks.h"
-#include "pointing_dpi.h"
 #include "tap_dance_quad.h"
 #include "print.h"
+
+#ifndef POINTING_DEVICE_MAX_DPI
+#    define POINTING_DEVICE_MAX_DPI 16
+#endif
+#ifndef POINTING_DEVICE_MIN_DPI
+#    define POINTING_DEVICE_MIN_DPI 1
+#endif
 
 enum LAYERS {
     LAYER_QWERTY, // default
@@ -20,7 +25,7 @@ enum LAYERS {
 
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
-const char* LAYER_MAPS[] = {
+static const char* LAYER_MAPS[] = {
     [LAYER_QWERTY] = "\
  Q  W  E  R  T      \n\
        Y  U  I  O  P\n\
@@ -103,7 +108,7 @@ F1 F2 F3 F4 F5      \n\
 ",
 };
 
-const char* LAYER_NAMES[] = {
+static const char* LAYER_NAMES[] = {
     [LAYER_QWERTY] = "Default",
     [LAYER_FUNC] = "Functions",
     [LAYER_GAMEPAD] = "Gamepad",
@@ -279,7 +284,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS),
 };
 
-const uint16_t PROGMEM cirque_pinnacles_keymaps[][2][CIRQUE_PINNACLES_TOUCH_ZONES_Y][CIRQUE_PINNACLES_TOUCH_ZONES_X] = {
+static const uint16_t PROGMEM cirque_pinnacles_keymaps[][2][CIRQUE_PINNACLES_TOUCH_ZONES_Y][CIRQUE_PINNACLES_TOUCH_ZONES_X] = {
     [LAYER_QWERTY] = {
         {
             { KC_NO, KC_NO, KC_NO },
@@ -402,15 +407,22 @@ const uint16_t PROGMEM cirque_pinnacles_keymaps[][2][CIRQUE_PINNACLES_TOUCH_ZONE
     },
 };
 
-bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* state) {
-    switch (index) {
+static uint8_t cirque_pinnacles_index(uint8_t spi_cs_pin) {
+    switch (spi_cs_pin) {
+    case CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT: return 1;
+    default: return 0;
+    }
+}
+
+bool cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx, int16_t dy) {
+    switch (cirque_pinnacles_index(spi_cs_pin)) {
     case 0: // left pad
         switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
         case LAYER_JOYSTICK2:
-            set_joystick_axis(-1, 0, state->x);
-            set_joystick_axis(-1, 1, state->y);
+            set_joystick_axis(-1, 0, x);
+            set_joystick_axis(-1, 1, y);
             return true;
 #endif
         default:
@@ -421,29 +433,29 @@ bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* state) {
         switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            set_joystick_axis(0, 0, state->x);
-            set_joystick_axis(0, 1, state->y);
+            set_joystick_axis(0, 0, x);
+            set_joystick_axis(0, 1, y);
             return true;
         case LAYER_JOYSTICK2:
-            move_joystick_axis(-1, 2, state->y / 10);
+            move_joystick_axis(-1, 2, y / 10);
             return true;
 #endif
         case LAYER_MOVE:
-            if (abs(state->y) > abs(state->x)) {
+            if (abs(y) > abs(x)) {
                 // scrolling vertically
-                if (state->y > -1) {
+                if (y > -1) {
                     tap_code(MS_WHLD);
                     return true;
-                } else if (state->y < -1) {
+                } else if (y < -1) {
                     tap_code(MS_WHLU);
                     return true;
                 }
-            } else if (abs(state->x) > abs(state->y)) {
+            } else if (abs(x) > abs(y)) {
                 // scrolling horizontally
-                if (state->x > -1) {
+                if (x > -1) {
                     tap_code(MS_WHLR);
                     return true;
-                } else if (state->x < -1) {
+                } else if (x < -1) {
                     tap_code(MS_WHLL);
                     return true;
                 }
@@ -454,15 +466,14 @@ bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* state) {
     return false;
 }
 
-void keyboard_post_init_user(void)
-{
-#if defined(CONSOLE_ENABLE)
-    debug_enable = true;
-    debug_matrix = false;
-    debug_keyboard = false;
-    debug_mouse = true;
-#endif
-    dprintf("keyboard initialized.");
+bool cirque_pinnacles_tapped(uint8_t spi_cs_pin, uint8_t x, uint8_t y) {
+    uint16_t kc = cirque_pinnacles_keymaps[get_highest_layer(layer_state)][cirque_pinnacles_index(spi_cs_pin)][y][x];
+    if (kc == KC_NO || kc <= 0) {
+        return false;
+    }
+    tap_code(kc);
+    dprintf("Pressed keycode: %d on cirque %d (%d, %d)\n", kc, cirque_pinnacles_index(spi_cs_pin), x, y);
+    return true;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record)
@@ -498,10 +509,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
 #endif
 #if defined(POINTING_DEVICE_ENABLE)
     case CKC_POINTING_DEVICE_DEC_DPI:
-        increase_pointing_dpi(-1);
+        {
+            uint16_t cpi = pointing_device_get_cpi();
+            if (cpi > POINTING_DEVICE_MIN_DPI) {
+                pointing_device_set_cpi(cpi - 1);
+            }
+        }
         break;
     case CKC_POINTING_DEVICE_INC_DPI:
-        increase_pointing_dpi(1);
+        {
+            uint16_t cpi = pointing_device_get_cpi();
+            if (cpi < POINTING_DEVICE_MAX_DPI) {
+                pointing_device_set_cpi(cpi + 1);
+            }
+        }
         break;
 #endif
 #if defined(JOYSTICK_ENABLE)
@@ -520,19 +541,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
         break;
     }
     return true;
-}
-
-
-report_mouse_t pointing_device_task_user(report_mouse_t mouse_report)
-{
-    if (mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.buttons != 0) {
-        dprintf("Pointing Device: X: %d, Y: %d, Buttons: %d\n", mouse_report.x, mouse_report.y, mouse_report.buttons);
-    }
-
-    // mouse_report.x *= get_pointing_dpi();
-    // mouse_report.y *= get_pointing_dpi();
-
-    return mouse_report;
 }
 
 uint8_t oled_get_macro_recording(void) {

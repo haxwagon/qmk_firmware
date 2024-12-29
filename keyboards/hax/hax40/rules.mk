@@ -8,10 +8,9 @@ POINTING_DEVICE_DRIVER = cirque_pinnacle_spi
 SPI_DRIVER_REQUIRED = yes
 
 SRC +=  \
-		pointing.c \
+		../cirque_pinnacles.c \
 		../gamepad_qts.c \
 		../joysticks.c \
         ../oled.c \
-		../pointing_dpi.c \
 		../seesaw.c
 
