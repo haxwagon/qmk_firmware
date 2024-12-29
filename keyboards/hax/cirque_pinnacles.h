@@ -17,17 +17,17 @@
 #    define CIRQUE_PINNACLES_COUNT 1
 #endif
 
-typedef uint8_t cirque_pinnacles_touches_t[CIRQUE_PINNACLES_TOUCH_ZONES_Y][CIRQUE_PINNACLES_TOUCH_ZONES_X];
-
 typedef struct {
     int16_t                    x;
     int16_t                    y;
+    uint8_t                    touched;
+    uint16_t                   touch_x;
+    uint16_t                   touch_y;
     int16_t                    prev_x;
     int16_t                    prev_y;
     bool                       flip_x;
     bool                       flip_y;
     bool                       swap_xy;
-    cirque_pinnacles_touches_t touches;
 } cirque_pinnacles_state_t;
 
 

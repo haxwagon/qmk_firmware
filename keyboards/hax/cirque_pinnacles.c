@@ -57,12 +57,14 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pi
         state->y = 0;
     }
 
-    memset(&(state->touches), 0, sizeof(state->touches));
+    state->touched = false;
+    state->touch_x = 0;
+    state->touch_y = 0;
     if (data.touchDown) {
-        uint16_t zone_x = data.xValue / TOUCH_ZONE_X_SIZE;
-        uint16_t zone_y = data.yValue / TOUCH_ZONE_Y_SIZE;
-        state->touches[zone_y][zone_x] = 1; // TODO: don't use 1, use the amount of time held down or something interesting
-        if (cirque_pinnacles_tapped(spi_cs_pin, zone_x, zone_y)) {
+        state->touched = true;
+        state->touch_x = data.xValue / TOUCH_ZONE_X_SIZE;
+        state->touch_y = data.yValue / TOUCH_ZONE_Y_SIZE;
+        if (cirque_pinnacles_tapped(spi_cs_pin, state->touch_x, state->touch_y)) {
             return DATA_HANDLED;
         }
     }
