@@ -7,8 +7,8 @@
 __attribute__((weak)) bool    cirque_pinnacles_tapped(uint8_t spi_cs_pin, uint8_t x, uint8_t y) { return false; }
 __attribute__((weak)) bool    cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx, int16_t dy) { return false; }
 
-#define CIRQUE_PINNACLES_TOUCH_ZONES_X_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_X)
-#define CIRQUE_PINNACLES_TOUCH_ZONES_Y_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TOUCH_ZONES_Y)
+#define CIRQUE_PINNACLES_TAP_ZONES_X_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TAP_ZONES_X)
+#define CIRQUE_PINNACLES_TAP_ZONES_Y_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TAP_ZONES_Y)
 #define CONSTRAIN(x, min, max) ((x) < min ? min : ((x) > max ? max : (x)))
 
 static uint8_t _spi_cs_pin = 0;
@@ -48,8 +48,8 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pi
 
     if (data.touchDown && data.zValue > 0) { // actively touching
         // handle scaling removing edge dead zones
-        state->x = linear_scale(data.xValue, CIRQUE_PINNACLES_LEFT_DEADZONE, UINT16_MAX - CIRQUE_PINNACLES_RIGHT_DEADZONE, INT16_MIN, INT16_MAX);
-        state->y = linear_scale(data.yValue, CIRQUE_PINNACLES_TOP_DEADZONE, UINT16_MAX - CIRQUE_PINNACLES_BOTTOM_DEADZONE, INT16_MIN, INT16_MAX);
+        state->x = linear_scale(data.xValue, CIRQUE_PINNACLES_DEADZONE_LEFT, UINT16_MAX - CIRQUE_PINNACLES_DEADZONE_RIGHT, INT16_MIN, INT16_MAX);
+        state->y = linear_scale(data.yValue, CIRQUE_PINNACLES_DEADZONE_TOP, UINT16_MAX - CIRQUE_PINNACLES_DEADZONE_BOTTOM, INT16_MIN, INT16_MAX);
 
         if (state->swap_xy) {
             int16_t temp = state->x;
@@ -62,36 +62,40 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pi
         if (state->flip_y) {
             state->y *= -1;
         }
-        if (state->x > -CIRQUE_PINNACLES_CENTER_DEADZONE && state->x < CIRQUE_PINNACLES_CENTER_DEADZONE) {
+        if (state->x > -CIRQUE_PINNACLES_DEADZONE_CENTER && state->x < CIRQUE_PINNACLES_DEADZONE_CENTER) {
             state->x = 0;
         }
-        if (state->y > -CIRQUE_PINNACLES_CENTER_DEADZONE && state->y < CIRQUE_PINNACLES_CENTER_DEADZONE) {
+        if (state->y > -CIRQUE_PINNACLES_DEADZONE_CENTER && state->y < CIRQUE_PINNACLES_DEADZONE_CENTER) {
             state->y = 0;
         }
-
-        state->touch_x = CONSTRAIN(
-            linear_scale(state->x, INT16_MIN, INT16_MAX, 0, UINT16_MAX) / CIRQUE_PINNACLES_TOUCH_ZONES_X_SIZE,
-            0, CIRQUE_PINNACLES_TOUCH_ZONES_X - 1);
-        state->touch_y = CONSTRAIN(
-            linear_scale(state->y, INT16_MIN, INT16_MAX, 0, UINT16_MAX) / CIRQUE_PINNACLES_TOUCH_ZONES_Y_SIZE,
-            0, CIRQUE_PINNACLES_TOUCH_ZONES_Y - 1);
 
         if (!state->touching) {
             // started touching
             state->touched_at = timer_read();
+            state->prev_x = state->x;
+            state->prev_y = state->y;
         }
+        state->tapped = false;
+        state->tap_x = 0;
+        state->tap_y = 0;
         state->touching = true;
     } else { // not actively touching
-        bool tapped = false;
+        state->tapped = false;
         if (state->touching && state->touched_at > 0 && timer_elapsed(state->touched_at) < CIRQUE_PINNACLES_TAP_TERM) {
             // stopped touching quickly enough to be a tap
-            tapped = true;
+            state->tapped = true;
+            state->tap_x = CONSTRAIN(
+                linear_scale(state->x, INT16_MIN, INT16_MAX, 0, UINT16_MAX) / CIRQUE_PINNACLES_TAP_ZONES_X_SIZE,
+                0, CIRQUE_PINNACLES_TAP_ZONES_X - 1);
+            state->tap_y = CONSTRAIN(
+                linear_scale(state->y, INT16_MIN, INT16_MAX, 0, UINT16_MAX) / CIRQUE_PINNACLES_TAP_ZONES_Y_SIZE,
+                0, CIRQUE_PINNACLES_TAP_ZONES_Y - 1);
         }
         state->touching = false;
         state->touched_at = 0;
-        if (tapped) {
-            dprintf("Cirque Pinnacles (%d) tapped at (%d, %d)\n", spi_cs_pin, state->touch_x, state->touch_y);
-            if (cirque_pinnacles_tapped(spi_cs_pin, state->touch_x, state->touch_y)) {
+        if (state->tapped) {
+            dprintf("Cirque Pinnacles (%d) tapped at (%d, %d)\n", spi_cs_pin, state->tap_x, state->tap_y);
+            if (cirque_pinnacles_tapped(spi_cs_pin, state->tap_x, state->tap_y)) {
                 return DATA_HANDLED;
             }
         }
