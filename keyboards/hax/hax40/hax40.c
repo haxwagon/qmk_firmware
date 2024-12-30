@@ -47,23 +47,32 @@ void pointing_device_driver_set_cpi(uint16_t cpi) {
     _dpi = CIRQUE_PINNACLE_INCH_TO_PX(cpi);
 }
 
+static uint16_t pointing_device_tapped_at = 0;
+
 report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
-    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
-    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON2);
-    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON3);
     gamepad_qts_update_states(gamepad_qt_devices, NUM_GAMEPAD_QTS);
     // if (gamepad_qt_devices[0].state.x != 0 || gamepad_qt_devices[0].state.y != 0) {
     //     dprintf("Gamepad QT %d %d (%d, %d)\n", gamepad_qt_devices[0].seesaw.address, gamepad_qt_devices[0].seesaw.hardware_type, gamepad_qt_devices[0].state.x, gamepad_qt_devices[0].state.y);
     // }
 
-    cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_LEFT, &(cirque_pinnacles_states[0]));
+    if (cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_LEFT, &(cirque_pinnacles_states[0])) == DATA_UPDATED) {
+        if (cirque_pinnacles_states[0].touching) {
+            mouse_report.h = (cirque_pinnacles_states[0].x - cirque_pinnacles_states[0].prev_x) / 256;
+            mouse_report.v = (cirque_pinnacles_states[0].y - cirque_pinnacles_states[0].prev_y) / 256;
+            #if CIRQUE_PINNACLES_SCROLL_REVERSE
+            mouse_report.v *= -1;
+            #endif
+        }
+    }
     if (cirque_pinnacles_read_data(CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT, &(cirque_pinnacles_states[1])) == DATA_UPDATED) {
         if (cirque_pinnacles_states[1].touching) {
+            pointing_device_tapped_at = timer_read();
             mouse_report.x = (cirque_pinnacles_states[1].x - cirque_pinnacles_states[1].prev_x) / 256 * pointing_device_driver_get_cpi();
             mouse_report.y = - (cirque_pinnacles_states[1].y - cirque_pinnacles_states[1].prev_y) / 256 * pointing_device_driver_get_cpi();
         }
 
         if (cirque_pinnacles_states[1].tapped) {
+            pointing_device_tapped_at = timer_read();
             if (cirque_pinnacles_states[1].tap_x < 1) {
                 mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON3);
             } else if (cirque_pinnacles_states[1].tap_x > 1) {
@@ -72,6 +81,13 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
                 mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
             }
         }
+    }
+
+    if (timer_elapsed(pointing_device_tapped_at) > CIRQUE_PINNACLES_TAP_TERM && !cirque_pinnacles_states[1].touching) {
+        // clear mouse down, have held off long enough
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON2);
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON3);
     }
 
     return mouse_report;
