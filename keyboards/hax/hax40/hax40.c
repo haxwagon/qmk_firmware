@@ -49,6 +49,8 @@ void pointing_device_driver_set_cpi(uint16_t cpi) {
 
 report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
     mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
+    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON2);
+    mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON3);
     gamepad_qts_update_states(gamepad_qt_devices, NUM_GAMEPAD_QTS);
     // if (gamepad_qt_devices[0].state.x != 0 || gamepad_qt_devices[0].state.y != 0) {
     //     dprintf("Gamepad QT %d %d (%d, %d)\n", gamepad_qt_devices[0].seesaw.address, gamepad_qt_devices[0].seesaw.hardware_type, gamepad_qt_devices[0].state.x, gamepad_qt_devices[0].state.y);
@@ -62,7 +64,13 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
         }
 
         if (cirque_pinnacles_states[1].tapped) {
-            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
+            if (cirque_pinnacles_states[1].tap_x < 1) {
+                mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON3);
+            } else if (cirque_pinnacles_states[1].tap_x > 1) {
+                mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON2);
+            } else {
+                mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
+            }
         }
     }
 
