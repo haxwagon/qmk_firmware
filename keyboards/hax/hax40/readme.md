@@ -7,6 +7,8 @@ A modification to the [Scotto34 (PCB Edition)](https://i.imgur.com/nTxYa7ih.jpg)
 Make example for this keyboard (after setting up your build environment):
 
     make hax/hax40:default
+    
+    qmk compile -kb hax/hax40 -km default
 
 Flashing example for this keyboard:
 

@@ -456,6 +456,9 @@ bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t x, int16_t y, int16_t 
             }
             break;
         }
+        break;
+    default:
+        break;
     }
     return false;
 }

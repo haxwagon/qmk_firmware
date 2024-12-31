@@ -6,11 +6,13 @@ A modification to the [Scotto34 (PCB Edition)](https://i.imgur.com/nTxYa7ih.jpg)
 
 Make example for this keyboard (after setting up your build environment):
 
-    make hax/hax40:default
+    make hax/haxgrips:default
+
+    qmk compile -kb hax/hax40 -km default
 
 Flashing example for this keyboard:
 
-    make hax/hax40:default:flash
+    make hax/haxgrips:default:flash
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 
