@@ -1,27 +1,26 @@
 #include QMK_KEYBOARD_H
 #include "gamepad_qts.h"
 
-#define BUTTON_X         6
-#define BUTTON_Y         2
-#define BUTTON_A         5
-#define BUTTON_B         1
-#define BUTTON_SELECT    0
-#define BUTTON_START    16
-uint32_t buttons_mask = (1UL << BUTTON_X) | (1UL << BUTTON_Y) | (1UL << BUTTON_START) |
-                        (1UL << BUTTON_A) | (1UL << BUTTON_B) | (1UL << BUTTON_SELECT);
+#define BUTTON_X 6
+#define BUTTON_Y 2
+#define BUTTON_A 5
+#define BUTTON_B 1
+#define BUTTON_SELECT 0
+#define BUTTON_START 16
+uint32_t buttons_mask = (1UL << BUTTON_X) | (1UL << BUTTON_Y) | (1UL << BUTTON_START) | (1UL << BUTTON_A) | (1UL << BUTTON_B) | (1UL << BUTTON_SELECT);
 
 enum {
-  SEESAW_GPIO_DIRSET_BULK = 0x02,
-  SEESAW_GPIO_DIRCLR_BULK = 0x03,
-  SEESAW_GPIO_BULK = 0x04,
-  SEESAW_GPIO_BULK_SET = 0x05,
-  SEESAW_GPIO_BULK_CLR = 0x06,
-  SEESAW_GPIO_BULK_TOGGLE = 0x07,
-  SEESAW_GPIO_INTENSET = 0x08,
-  SEESAW_GPIO_INTENCLR = 0x09,
-  SEESAW_GPIO_INTFLAG = 0x0A,
-  SEESAW_GPIO_PULLENSET = 0x0B,
-  SEESAW_GPIO_PULLENCLR = 0x0C,
+    SEESAW_GPIO_DIRSET_BULK = 0x02,
+    SEESAW_GPIO_DIRCLR_BULK = 0x03,
+    SEESAW_GPIO_BULK = 0x04,
+    SEESAW_GPIO_BULK_SET = 0x05,
+    SEESAW_GPIO_BULK_CLR = 0x06,
+    SEESAW_GPIO_BULK_TOGGLE = 0x07,
+    SEESAW_GPIO_INTENSET = 0x08,
+    SEESAW_GPIO_INTENCLR = 0x09,
+    SEESAW_GPIO_INTFLAG = 0x0A,
+    SEESAW_GPIO_PULLENSET = 0x0B,
+    SEESAW_GPIO_PULLENCLR = 0x0C,
 };
 
 // //#define IRQ_PIN   5
@@ -45,16 +44,16 @@ enum {
 //   }
 // #endif
 
-
-
-void gamepad_qts_init(gamepad_qt_device_t* devices, uint8_t count) {
+void gamepad_qts_init(gamepad_qt_device_t* devices, uint8_t count)
+{
     for (uint8_t i = 0; i < count; i++) {
         printf("initializing seesaw %d\n", i);
         seesaw_begin(&(devices[i].seesaw), true);
     }
 }
 
-bool gamepad_qts_update_state(gamepad_qt_device_t* device) {
+bool gamepad_qts_update_state(gamepad_qt_device_t* device)
+{
     device->last_x = device->state.x;
     device->last_y = device->state.y;
 
@@ -95,7 +94,8 @@ bool gamepad_qts_update_state(gamepad_qt_device_t* device) {
     return true;
 }
 
-bool gamepad_qts_update_states(gamepad_qt_device_t* devices, uint8_t count) {
+bool gamepad_qts_update_states(gamepad_qt_device_t* devices, uint8_t count)
+{
     bool updated = false;
     for (uint8_t i = 0; i < count; i++) {
         updated = gamepad_qts_update_state(&(devices[i])) || updated;

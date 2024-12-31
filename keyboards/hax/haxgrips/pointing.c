@@ -13,10 +13,11 @@ extern bool cirque_pinnacles_updated(uint8_t index, cirque_pinnacles_state_t* st
 #ifdef POINTING_DEVICE_custom
 
 static cirque_pinnacles_device_t cirque_pinnacle_devices[NUM_CIRQUE_PINNACLES];
-static gamepad_qt_device_t       gamepad_qt_devices[NUM_GAMEPAD_QTS];
+static gamepad_qt_device_t gamepad_qt_devices[NUM_GAMEPAD_QTS];
 static uint16_t _cpi;
 
-void pointing_device_driver_init(void) {
+void pointing_device_driver_init(void)
+{
     print("Initializing pointing devices...\n");
     memset(cirque_pinnacle_devices, 0, sizeof(cirque_pinnacle_devices));
     cirque_pinnacle_devices[0].address = 0x2A;
@@ -32,15 +33,18 @@ void pointing_device_driver_init(void) {
     printf("Done initializing pointing devices.\n");
 }
 
-uint16_t pointing_device_driver_get_cpi(void) {
+uint16_t pointing_device_driver_get_cpi(void)
+{
     return _cpi;
 }
 
-void pointing_device_driver_set_cpi(uint16_t cpi) {
+void pointing_device_driver_set_cpi(uint16_t cpi)
+{
     _cpi = cpi;
 }
 
-report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report) {
+report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
+{
     bool updated = false;
 
     updated = cirque_pinnacles_update_states(cirque_pinnacle_devices, NUM_CIRQUE_PINNACLES) || updated;

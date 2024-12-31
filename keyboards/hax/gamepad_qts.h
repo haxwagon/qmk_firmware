@@ -3,11 +3,11 @@
 #include "seesaw.h"
 
 #ifndef GAMEPAD_QTS_COUNT
-#    define GAMEPAD_QTS_COUNT 1
+#define GAMEPAD_QTS_COUNT 1
 #endif
 
 #ifndef GAMEPAD_QTS_DEADZONE
-#    define GAMEPAD_QTS_DEADZONE 4
+#define GAMEPAD_QTS_DEADZONE 4
 #endif
 
 // The default I2C address is 0x50. The other address options can be calculated by "adding" the A0/A1 to the base of 0x50.
@@ -33,9 +33,9 @@ typedef struct {
 
 typedef struct {
     seesaw_device_t seesaw;
-    bool     flip_x;
-    bool     flip_y;
-    bool     swap_xy;
+    bool flip_x;
+    bool flip_y;
+    bool swap_xy;
     uint16_t last_x;
     uint16_t last_y;
     gamepad_qt_state_t state;

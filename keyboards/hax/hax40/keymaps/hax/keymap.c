@@ -1,13 +1,13 @@
 #include QMK_KEYBOARD_H
 #include "joysticks.h"
-#include "tap_dance_quad.h"
 #include "print.h"
+#include "tap_dance_quad.h"
 
 #ifndef POINTING_DEVICE_MAX_DPI
-#    define POINTING_DEVICE_MAX_DPI 16
+#define POINTING_DEVICE_MAX_DPI 16
 #endif
 #ifndef POINTING_DEVICE_MIN_DPI
-#    define POINTING_DEVICE_MIN_DPI 1
+#define POINTING_DEVICE_MIN_DPI 1
 #endif
 
 enum LAYERS {
@@ -407,15 +407,9 @@ static const uint16_t PROGMEM cirque_pinnacles_keymaps[][2][CIRQUE_PINNACLES_TAP
     },
 };
 
-static uint8_t cirque_pinnacles_index(uint8_t spi_cs_pin) {
-    switch (spi_cs_pin) {
-    case CIRQUE_PINNACLE_SPI_CS_PIN_RIGHT: return 1;
-    default: return 0;
-    }
-}
-
-bool cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx, int16_t dy) {
-    switch (cirque_pinnacles_index(spi_cs_pin)) {
+bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
+{
+    switch (cirque_index) {
     case 0: // left pad
         switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
@@ -466,13 +460,14 @@ bool cirque_pinnacles_moved(uint8_t spi_cs_pin, int16_t x, int16_t y, int16_t dx
     return false;
 }
 
-bool cirque_pinnacles_tapped(uint8_t spi_cs_pin, uint8_t x, uint8_t y) {
-    uint16_t kc = cirque_pinnacles_keymaps[get_highest_layer(layer_state)][cirque_pinnacles_index(spi_cs_pin)][CIRQUE_PINNACLES_TAP_ZONES_Y - y - 1][x];
+bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t x, uint8_t y)
+{
+    uint16_t kc = cirque_pinnacles_keymaps[get_highest_layer(layer_state)][cirque_index][CIRQUE_PINNACLES_TAP_ZONES_Y - y - 1][x];
     if (kc == KC_NO || kc <= 0) {
         return false;
     }
     tap_code(kc);
-    dprintf("Pressed keycode: %d on cirque %d (%d, %d)\n", kc, cirque_pinnacles_index(spi_cs_pin), x, y);
+    dprintf("Pressed keycode: %d on cirque %d (%d, %d)\n", kc, cirque_index, x, y);
     return true;
 }
 
@@ -508,22 +503,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
         break;
 #endif
 #if defined(POINTING_DEVICE_ENABLE)
-    case CKC_POINTING_DEVICE_DEC_DPI:
-        {
-            uint16_t cpi = pointing_device_get_cpi();
-            if (cpi > POINTING_DEVICE_MIN_DPI) {
-                pointing_device_set_cpi(cpi - 1);
-            }
+    case CKC_POINTING_DEVICE_DEC_DPI: {
+        uint16_t cpi = pointing_device_get_cpi();
+        if (cpi > POINTING_DEVICE_MIN_DPI) {
+            pointing_device_set_cpi(cpi - 1);
         }
-        break;
-    case CKC_POINTING_DEVICE_INC_DPI:
-        {
-            uint16_t cpi = pointing_device_get_cpi();
-            if (cpi < POINTING_DEVICE_MAX_DPI) {
-                pointing_device_set_cpi(cpi + 1);
-            }
+    } break;
+    case CKC_POINTING_DEVICE_INC_DPI: {
+        uint16_t cpi = pointing_device_get_cpi();
+        if (cpi < POINTING_DEVICE_MAX_DPI) {
+            pointing_device_set_cpi(cpi + 1);
         }
-        break;
+    } break;
 #endif
 #if defined(JOYSTICK_ENABLE)
     case CKC_JS_CENTER_RIGHT:
@@ -543,12 +534,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
     return true;
 }
 
-uint8_t oled_get_macro_recording(void) {
+uint8_t oled_get_macro_recording(void)
+{
     return dynamic_macro_recording;
 }
-const char* oled_get_layer_map(void) {
+const char* oled_get_layer_map(void)
+{
     return LAYER_MAPS[get_highest_layer(layer_state)];
 }
-const char* oled_get_layer_name(void) {
+const char* oled_get_layer_name(void)
+{
     return LAYER_NAMES[get_highest_layer(layer_state)];
 }
