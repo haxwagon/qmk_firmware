@@ -33,3 +33,10 @@ cirque_pinnacles_config_t cirque_pinnacles_get_config(uint8_t cirque_index)
 {
     return cirque_pinnacles_configs[cirque_index];
 }
+
+#if defined(OLED_ENABLE)
+oled_rotation_t oled_init_kb(oled_rotation_t rotation)
+{
+    return OLED_ROTATION_0;
+}
+#endif
