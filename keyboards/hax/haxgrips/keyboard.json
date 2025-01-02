@@ -10,7 +10,6 @@
         "console": true,
         "encoder": false,
         "extrakey": true,
-        "joystick": true,
         "mousekey": true,
         "nkro": true,
         "oled": true,

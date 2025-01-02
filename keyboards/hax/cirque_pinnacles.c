@@ -122,6 +122,8 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
                 return DATA_HANDLED;
             }
         }
+        state->x = 0;
+        state->y = 0;
     }
 
     if (state->x == 0 && state->y == 0 && state->prev_x == 0 && state->prev_y == 0) {
@@ -183,6 +185,7 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
                 mouse_report.v = 0;
             }
 #if CIRQUE_PINNACLES_SCROLL_REVERSE
+            mouse_report.h *= -1;
             mouse_report.v *= -1;
 #endif
         }

@@ -239,17 +239,6 @@ combo_t key_combos[] = {
 static uint8_t dynamic_macro_recording = 0;
 #endif
 
-#if defined(JOYSTICK_ENABLE)
-joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-    JOYSTICK_AXIS_VIRTUAL,
-};
-#endif
-
 #if defined(OLED_ENABLE)
 static uint8_t oled_mode_select_highlighted = 0;
 
@@ -324,9 +313,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_Y, JS_4, JS_6, JS_7, JS_5,
-        MO(LAYER_JOYSTICK2), JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_2, JS_0, JS_1, JS_3,
-        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_X, JS_8, JS_10, JS_11, JS_9,
+        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_Y, JS_XINPUT_BUTTON_LB, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_RB,
+        MO(LAYER_JOYSTICK2), JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_CENTER_RIGHT, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
+        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_CENTER_RIGHT_X, JS_XINPUT_BUTTON_L3, JS_10, JS_11, JS_XINPUT_BUTTON_R3,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO),
     [LAYER_JOYSTICK2] = LAYOUT_ortho_4x10(
         KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
@@ -494,8 +483,8 @@ bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t x, int16_t y, int16_t 
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
         case LAYER_JOYSTICK2:
-            set_joystick_axis(-1, 0, x);
-            set_joystick_axis(-1, 1, y);
+            set_joystick_axis(JS_AXIS_0_X, x);
+            set_joystick_axis(JS_AXIS_0_Y, -y);
             return true;
 #endif
         default:
@@ -506,26 +495,26 @@ bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t x, int16_t y, int16_t 
         switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            set_joystick_axis(0, 0, x);
-            set_joystick_axis(0, 1, y);
+            set_joystick_axis(JS_AXIS_1_X, x);
+            set_joystick_axis(JS_AXIS_1_Y, -y);
             return true;
         case LAYER_JOYSTICK2:
-            move_joystick_axis(-1, 2, y / 10);
+            move_joystick_axis(JS_AXIS_RX, y / 10);
             return true;
 #endif
         case LAYER_MOVE:
             if (abs(y) > abs(x)) {
                 // scrolling vertically
-                if (y > -1) {
-                    tap_code(MS_WHLD);
+                if (y > 1) {
+                    tap_code(MS_WHLU);
                     return true;
                 } else if (y < -1) {
-                    tap_code(MS_WHLU);
+                    tap_code(MS_WHLD);
                     return true;
                 }
             } else if (abs(x) > abs(y)) {
                 // scrolling horizontally
-                if (x > -1) {
+                if (x > 1) {
                     tap_code(MS_WHLR);
                     return true;
                 } else if (x < -1) {
@@ -603,14 +592,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record)
 #endif
 #if defined(JOYSTICK_ENABLE)
     case CKC_JS_CENTER_RIGHT:
-        set_joystick_axis(1, 0, 0);
-        set_joystick_axis(1, 1, 0);
+        set_joystick_axis(JS_AXIS_RX, 0);
+        set_joystick_axis(JS_AXIS_RY, 0);
         return false;
     case CKC_JS_CENTER_RIGHT_X:
-        set_joystick_axis(1, 0, 0);
+        set_joystick_axis(JS_AXIS_RX, 0);
         return false;
     case CKC_JS_CENTER_RIGHT_Y:
-        set_joystick_axis(1, 1, 0);
+        set_joystick_axis(JS_AXIS_RY, 0);
         return false;
 #endif
 #if defined(OLED_ENABLE)

@@ -14,10 +14,21 @@ void keyboard_post_init_user(void)
     dprintf("keyboard initialized.\n");
 }
 
+#if defined(JOYSTICK_ENABLE)
+joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
+    JOYSTICK_AXIS_VIRTUAL,
+};
+#endif
+
 static const cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES_COUNT] = {
     {
         .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_LEFT,
-        .flip_x = false,
+        .flip_x = true,
         .flip_y = false,
         .swap_xy = false,
     },
