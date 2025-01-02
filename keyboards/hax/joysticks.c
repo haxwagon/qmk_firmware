@@ -21,6 +21,12 @@ void set_joystick_axis(uint8_t axis, int16_t value)
     dprintf("Setting joystick %d axis to %d\n", axis, value);
 
     // js values should be between -512 and 512, divide by 64 to scale int16
-    js_values[axis] = value / 64;
+    js_values[axis] = value / 32;
+    if (js_values[axis] > 512) {
+        js_values[axis] = 512;
+    } else if (js_values[axis] < -512) {
+        js_values[axis] = -512;
+    }
+
     joystick_set_axis(axis, js_values[axis]);
 }

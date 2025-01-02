@@ -57,7 +57,11 @@ float linear_scale(float value, float min_in, float max_in, float min_out, float
 {
     value = CONSTRAIN(value, min_in, max_in);
     value -= min_in;
-    return (value * (max_out - min_out) / (max_in - min_in)) + min_out;
+    value = (value * (max_out - min_out) / (max_in - min_in)) + min_out;
+    if (value > max_out) {
+        value = max_out;
+    }
+    return value;
 }
 
 cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_index, cirque_pinnacles_state_t* state)
