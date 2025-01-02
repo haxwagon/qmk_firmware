@@ -168,8 +168,20 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
 {
     if (cirque_pinnacles_read_data(0, &(cirque_pinnacles_states[0])) == DATA_UPDATED) {
         if (cirque_pinnacles_states[0].touching) {
-            mouse_report.h = (cirque_pinnacles_states[0].x - cirque_pinnacles_states[0].prev_x) / 256;
-            mouse_report.v = (cirque_pinnacles_states[0].y - cirque_pinnacles_states[0].prev_y) / 256;
+            if (cirque_pinnacles_states[0].x - cirque_pinnacles_states[0].prev_x >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+                mouse_report.h = 1;
+            } else if (cirque_pinnacles_states[0].prev_x - cirque_pinnacles_states[0].x >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+                mouse_report.h = -1;
+            } else {
+                mouse_report.h = 0;
+            }
+            if (cirque_pinnacles_states[0].y - cirque_pinnacles_states[0].prev_y >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+                mouse_report.v = 1;
+            } else if (cirque_pinnacles_states[0].prev_y - cirque_pinnacles_states[0].y >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+                mouse_report.v = -1;
+            } else {
+                mouse_report.v = 0;
+            }
 #if CIRQUE_PINNACLES_SCROLL_REVERSE
             mouse_report.v *= -1;
 #endif

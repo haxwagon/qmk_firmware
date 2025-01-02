@@ -1,0 +1,46 @@
+{
+    "manufacturer": "Matt Hawkins",
+    "keyboard_name": "cirquetest",
+    "maintainer": "haxwagon",
+    "bootloader": "rp2040",
+    "diode_direction": "COL2ROW",
+    "features": {
+        "bootmagic": false,
+        "command": false,
+        "console": true,
+        "encoder": false,
+        "extrakey": false,
+        "joystick": false,
+        "mousekey": true,
+        "nkro": true,
+        "oled": true,
+        "pointing_device": false,
+        "rgblight": false
+    },
+    "matrix_pins": {
+        "direct": [
+            ["GP26"]
+        ]
+    },
+    "processor": "RP2040",
+    "url": "https://github.com/hawxagon",
+    "usb": {
+        "device_version": "1.0.0",
+        "pid": "0xA703",
+        "vid": "0xFEED"
+    },
+    "ws2812": {
+        "pin": "GP25",
+        "driver": "vendor"
+    },
+    "rgblight": { },
+    "community_layouts": [],
+    "layouts": {
+        "LAYOUT_ortho_1x1": {
+            "layout": [
+                {"x": 0, "y": 0, "matrix": [0, 0]}
+            ]
+        }
+    }
+
+}
