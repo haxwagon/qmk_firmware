@@ -11,7 +11,6 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation)
 
 bool oled_task_kb(void)
 {
-    dprintf("oled_task_user\n");
     oled_write_P(PSTR(oled_get_layer_name()), false);
     oled_write_P(PSTR("\n"), false);
 
