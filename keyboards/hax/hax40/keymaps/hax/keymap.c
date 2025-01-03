@@ -28,13 +28,14 @@ enum LAYERS {
 
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
-static const uint8_t SELECTABLE_MODES_COUNT = 3;
+static const uint8_t SELECTABLE_MODES_COUNT = 4;
 static const uint8_t SELECTABLE_MODES[] = {
-    LAYER_GAMEPAD,
 #if defined(JOYSTICK_ENABLE)
     LAYER_JOYSTICK,
 #endif
     LAYER_NUMPAD,
+    LAYER_MEDIA,
+    LAYER_GAMEPAD,
 };
 
 static const char* LAYER_MAPS[] = {
