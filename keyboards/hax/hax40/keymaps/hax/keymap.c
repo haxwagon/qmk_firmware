@@ -353,7 +353,7 @@ bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int1
         case LAYER_JOYSTICK:
             if (js_right_alt_axes_active) {
                 joysticks_set_axis(JS_AXIS_RX, x);
-                joysticks_move_axis(JS_AXIS_RY, dy);
+                joysticks_move_axis(JS_AXIS_RY, dy / 8);
             } else {
                 joysticks_set_axis(JS_AXIS_Z, x);
                 joysticks_set_axis(JS_AXIS_RZ, -y);
