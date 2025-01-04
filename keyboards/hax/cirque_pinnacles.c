@@ -240,8 +240,18 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
                 return DATA_HANDLED;
             }
         }
+        state->prev_x = 0;
+        state->prev_y = 0;
         state->x = 0;
         state->y = 0;
+    }
+
+    if (!state->touching) {
+        cirque_pinnacles_ninebox_clear_keys(cirque_index);
+        if (cirque_pinnacles_touchup(cirque_index)) {
+            // already handled
+            return DATA_HANDLED;
+        }
     }
 
     if (state->x == 0 && state->y == 0 && state->prev_x == 0 && state->prev_y == 0) {
@@ -249,19 +259,11 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         return NO_DATA_READ;
     }
 
-    if (state->touching) {
-        if (cirque_pinnacles_try_press_ninebox(cirque_index, state->x, state->y)) {
-            return DATA_HANDLED;
-        } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
-            // already handled
-            return DATA_HANDLED;
-        }
-    } else {
-        cirque_pinnacles_ninebox_clear_keys(cirque_index);
-        if (cirque_pinnacles_touchup(cirque_index)) {
-            // already handled
-            return DATA_HANDLED;
-        }
+    if (cirque_pinnacles_try_press_ninebox(cirque_index, state->x, state->y)) {
+        return DATA_HANDLED;
+    } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
+        // already handled
+        return DATA_HANDLED;
     }
 
     return DATA_UPDATED;

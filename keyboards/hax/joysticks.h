@@ -13,14 +13,6 @@ enum JS_XINPUT_BUTTONS { // xinput order
     JS_XINPUT_BUTTON_R3,
 };
 
-enum JS_AXES {
-    JS_AXIS_0_X,
-    JS_AXIS_0_Y,
-    JS_AXIS_1_X,
-    JS_AXIS_RX,
-    JS_AXIS_RY,
-    JS_AXIS_1_Y,
-};
-
+void joysticks_init(void);
 void joysticks_move_axis(uint8_t axis, int16_t delta);
 void joysticks_set_axis(uint8_t axis, int16_t value);

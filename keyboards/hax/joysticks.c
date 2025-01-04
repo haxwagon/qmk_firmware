@@ -1,15 +1,21 @@
 #include QMK_KEYBOARD_H
 #include "joysticks.h"
 
-static int16_t js_values[JOYSTICK_AXIS_COUNT] = { 0, 0, 0, 0, 0, 0 };
+static int16_t js_values[JOYSTICK_AXIS_COUNT];
 
+void joysticks_init(void)
+{
+    for (uint8_t i = 0; i < JOYSTICK_AXIS_COUNT; i++) {
+        js_values[i] = 0;
+    }
+}
 
 void joysticks_move_axis(uint8_t axis, int16_t delta)
 {
     int16_t value = js_values[axis];
-    if (value > INT16_MAX - delta) {
+    if (delta >= 0 && INT16_MAX - value < delta) {
         value = INT16_MAX;
-    } else if (value < INT16_MIN + delta) {
+    } else if (delta < 0 && INT16_MIN - value > delta) {
         value = INT16_MIN;
     } else {
         value += delta;

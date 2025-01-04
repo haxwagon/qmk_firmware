@@ -1,6 +1,9 @@
 #include QMK_KEYBOARD_H
 
-#include "keyboards/hax/cirque_pinnacles.h"
+#include "../cirque_pinnacles.h"
+#if defined(JOYSTICK_ENABLE)
+#include "../joysticks.h"
+#endif
 
 void keyboard_post_init_user(void)
 {
@@ -10,6 +13,9 @@ void keyboard_post_init_user(void)
     debug_matrix = false;
     debug_keyboard = false;
     debug_mouse = true;
+#endif
+#if defined(JOYSTICK_ENABLE)
+    joysticks_init();
 #endif
     dprintf("keyboard initialized.\n");
 }

@@ -1,6 +1,8 @@
 #include QMK_KEYBOARD_H
 #include "cirque_pinnacles.h"
+#if defined(JOYSTICK_ENABLE)
 #include "joysticks.h"
+#endif
 #include "print.h"
 #include "tap_dance_quad.h"
 
@@ -74,11 +76,11 @@ LS     T  G  B      \n\
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "\
    NW  N NE         \n\
-      TR LB SE ST RB\n\
+         LB SE ST RB\n\
 DP  W  C  E         \n\
       BT  X  A  B  Y\n\
    SW  S SE         \n\
-         L3 10 11 R3\n\
+      RA L3 10 11 R3\n\
 ",
 #endif
     [LAYER_MEDIA]   = "\
@@ -129,7 +131,7 @@ enum CUSTOM_KEYCODES {
 #if defined(JOYSTICK_ENABLE)
     CKC_JS_LEFT_DPAD_TOGGLE,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
-    CKC_JS_RIGHT_TRIGGERS_TOGGLE,
+    CKC_JS_RIGHT_AXES_TOGGLE,
 #endif
     CKC_MODE_SELECT,
     CKC_MODE_SELECT_NEXT,
@@ -193,6 +195,29 @@ combo_t                key_combos[]          = {
 
 #if defined(DYNAMIC_MACRO_ENABLE)
 static uint8_t dynamic_macro_recording = 0;
+#endif
+
+#if defined(JOYSTICK_ENABLE)
+enum JS_AXES {
+    JS_AXIS_X,
+    JS_AXIS_Y,
+    JS_AXIS_Z,
+    JS_AXIS_RX,
+    JS_AXIS_RY,
+    JS_AXIS_RZ,
+};
+
+static bool js_right_alt_axes_active = false;
+static const uint16_t js_left_dpad_ninebox[9] = {
+    JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST,
+    JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST,
+    JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST
+};
+static const uint16_t js_right_buttons_ninebox[9] = {
+    KC_NO, JS_3, KC_NO,
+    JS_2, JS_9, JS_1,
+    KC_NO, JS_0, KC_NO
+};
 #endif
 
 #if defined(OLED_ENABLE)
@@ -270,9 +295,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, CKC_JS_RIGHT_TRIGGERS_TOGGLE, JS_XINPUT_BUTTON_LB, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_RB,
+        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_RB,
         CKC_JS_LEFT_DPAD_TOGGLE, JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
-        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, KC_NO, JS_XINPUT_BUTTON_L3, JS_10, JS_11, JS_XINPUT_BUTTON_R3,
+        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_10, JS_11, JS_XINPUT_BUTTON_R3,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
 #endif
@@ -308,28 +333,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
-#if defined(JOYSTICK_ENABLE)
-static bool js_right_triggers_active = false;
-static const uint16_t js_left_dpad_ninebox[9] = {
-    JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST,
-    JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST,
-    JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST
-};
-static const uint16_t js_right_buttons_ninebox[9] = {
-    KC_NO, JS_3, KC_NO,
-    JS_2, JS_9, JS_1,
-    KC_NO, JS_0, KC_NO
-};
-#endif
-
 bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy) {
     switch (cirque_index) {
     case 0: { // left pad
         switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            joystick_set_axis(JS_AXIS_0_X, x);
-            joystick_set_axis(JS_AXIS_0_Y, -y);
+            joysticks_set_axis(JS_AXIS_X, x);
+            joysticks_set_axis(JS_AXIS_Y, -y);
             return true;
 #endif
         default:
@@ -340,11 +351,12 @@ bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int1
         switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
         case LAYER_JOYSTICK:
-            if (js_right_triggers_active) {
-                joysticks_move_axis(JS_AXIS_RX, y / 10);
+            if (js_right_alt_axes_active) {
+                joysticks_set_axis(JS_AXIS_RX, x);
+                joysticks_move_axis(JS_AXIS_RY, dy);
             } else {
-                joysticks_set_axis(JS_AXIS_1_X, x);
-                joysticks_set_axis(JS_AXIS_1_Y, -y);
+                joysticks_set_axis(JS_AXIS_Z, x);
+                joysticks_set_axis(JS_AXIS_RZ, -y);
             }
             return true;
 #endif
@@ -369,6 +381,42 @@ bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int1
                 }
             }
         } break;
+        default:
+            break;
+        }
+    } break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool cirque_pinnacles_touchup(uint8_t cirque_index) {
+    switch (cirque_index) {
+    case 0: { // left pad
+        switch (get_highest_layer(layer_state)) {
+#if defined(JOYSTICK_ENABLE)
+        case LAYER_JOYSTICK:
+            joysticks_set_axis(JS_AXIS_X, 0);
+            joysticks_set_axis(JS_AXIS_Y, 0);
+            return true;
+#endif
+        default:
+            break;
+        }
+    } break;
+    case 1: { // right pad
+        switch (get_highest_layer(layer_state)) {
+#if defined(JOYSTICK_ENABLE)
+        case LAYER_JOYSTICK:
+            if (js_right_alt_axes_active) {
+                joysticks_set_axis(JS_AXIS_RX, 0);
+            } else {
+                joysticks_set_axis(JS_AXIS_Z, 0);
+                joysticks_set_axis(JS_AXIS_RZ, 0);
+            }
+            return true;
+#endif
         default:
             break;
         }
@@ -441,8 +489,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 cirque_pinnacles_ninebox_set(1, js_right_buttons_ninebox);
             }
             break;
-        case CKC_JS_RIGHT_TRIGGERS_TOGGLE:
-            js_right_triggers_active = !js_right_triggers_active;
+        case CKC_JS_RIGHT_AXES_TOGGLE:
+            js_right_alt_axes_active = !js_right_alt_axes_active;
             break;
 #endif
 #if defined(OLED_ENABLE)
