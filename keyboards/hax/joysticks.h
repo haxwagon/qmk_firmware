@@ -22,5 +22,5 @@ enum JS_AXES {
     JS_AXIS_1_Y,
 };
 
-void move_joystick_axis(uint8_t axis, int16_t delta);
-void set_joystick_axis(uint8_t axis, int16_t value);
+void joysticks_move_axis(uint8_t axis, int16_t delta);
+void joysticks_set_axis(uint8_t axis, int16_t value);

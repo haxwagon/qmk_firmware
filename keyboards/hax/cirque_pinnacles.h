@@ -71,3 +71,6 @@ typedef enum {
     DATA_UPDATED,
 } cirque_pinnacles_read_data_result_t;
 cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pin, cirque_pinnacles_state_t* state);
+
+const uint16_t* cirque_pinnacles_ninebox_get(uint8_t cirque_index);
+void cirque_pinnacles_ninebox_set(uint8_t cirque_index, const uint16_t* ninebox);

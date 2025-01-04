@@ -3,7 +3,8 @@
 
 static int16_t js_values[JOYSTICK_AXIS_COUNT] = { 0, 0, 0, 0, 0, 0 };
 
-void move_joystick_axis(uint8_t axis, int16_t delta)
+
+void joysticks_move_axis(uint8_t axis, int16_t delta)
 {
     int16_t value = js_values[axis];
     if (value > INT16_MAX - delta) {
@@ -13,10 +14,10 @@ void move_joystick_axis(uint8_t axis, int16_t delta)
     } else {
         value += delta;
     }
-    set_joystick_axis(axis, value);
+    joysticks_set_axis(axis, value);
 }
 
-void set_joystick_axis(uint8_t axis, int16_t value)
+void joysticks_set_axis(uint8_t axis, int16_t value)
 {
     dprintf("Setting joystick %d axis to %d\n", axis, value);
 

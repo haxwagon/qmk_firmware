@@ -20,7 +20,11 @@ __attribute__((weak)) bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t
 {
     return false;
 }
-__attribute__((weak)) bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
+__attribute__((weak)) bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
+{
+    return false;
+}
+__attribute__((weak)) bool cirque_pinnacles_touchup(uint8_t cirque_index)
 {
     return false;
 }
@@ -31,6 +35,30 @@ __attribute__((weak)) bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t 
 
 static cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES_COUNT];
 static uint8_t _current_spi_cs_pin = 0;
+
+static const uint16_t* _ninebox_mapping[CIRQUE_PINNACLES_COUNT];
+static uint16_t _ninebox_keysdown[CIRQUE_PINNACLES_COUNT][2];
+
+void cirque_pinnacles_ninebox_clear_keys(uint8_t cirque_index)
+{
+    for (uint8_t i = 0; i < 2; i++) {
+        if (_ninebox_keysdown[cirque_index][i] > 0) {
+            unregister_code16(_ninebox_keysdown[cirque_index][i]);
+            _ninebox_keysdown[cirque_index][i] = 0;
+        }
+    }
+}
+
+const uint16_t* cirque_pinnacles_ninebox_get(uint8_t cirque_index)
+{
+    return _ninebox_mapping[cirque_index];
+}
+
+void cirque_pinnacles_ninebox_set(uint8_t cirque_index, const uint16_t* ninebox)
+{
+    cirque_pinnacles_ninebox_clear_keys(cirque_index);
+    _ninebox_mapping[cirque_index] = ninebox;
+}
 
 void cirque_pinnacles_select(uint8_t cirque_index)
 {
@@ -47,6 +75,10 @@ void cirque_pinnacles_init(void)
     spi_init();
 
     for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+        _ninebox_mapping[i] = NULL;
+        for (uint8_t j = 0; j < 2; j++) {
+            _ninebox_keysdown[i][j] = 0;
+        }
         cirque_pinnacles_configs[i] = cirque_pinnacles_get_config(i);
         cirque_pinnacles_select(i);
         cirque_pinnacle_init();
@@ -62,6 +94,88 @@ float linear_scale(float value, float min_in, float max_in, float min_out, float
         value = max_out;
     }
     return value;
+}
+
+
+static const uint16_t NINEBOX_CENTER_SIZE = 512;
+uint8_t cirque_pinnacles_get_9box(int16_t x, int16_t y) {
+    if (abs(x) < NINEBOX_CENTER_SIZE && abs(y) < NINEBOX_CENTER_SIZE) {
+        return 4;
+    } else if (abs(x) >= 2 * abs(y)) { // right or left
+        return x > 0 ? 5 : 3;
+    } else if (abs(y) >= 2 * abs(x)) { // up or down
+        return y > 0 ? 1 : 7;
+    } else if (x >= 0 && y >= 0) {
+        return 2;
+    } else if (x >= 0 && y < 0) {
+        return 8;
+    } else if (y >= 0) {
+        return 0;
+    } else {
+        return 6;
+    }
+}
+
+bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t kc2) {
+    bool handled = false;
+    int8_t kc1_down_pos = -1;
+    int8_t kc2_down_pos = -1;
+    uint8_t next_open_pos = 0;
+    for (uint8_t i = 0; i < 2; i++) {
+        if (_ninebox_keysdown[cirque_index][i] > 0 && _ninebox_keysdown[cirque_index][i] != kc1 && _ninebox_keysdown[cirque_index][i] != kc2) {
+            unregister_code16(_ninebox_keysdown[cirque_index][i]);
+            _ninebox_keysdown[cirque_index][i] = 0;
+        } else if (_ninebox_keysdown[cirque_index][i] == kc1) {
+            kc1_down_pos = i;
+            next_open_pos = (i + 1) % 2;
+            handled = true;
+        } else if (_ninebox_keysdown[cirque_index][i] == kc2) {
+            kc2_down_pos = i;
+            next_open_pos = (i + 1) % 2;
+            handled = true;
+        }
+    }
+    if (kc1 != KC_NO && kc1_down_pos < 0) {
+        register_code16(kc1);
+        _ninebox_keysdown[cirque_index][next_open_pos] = kc1;
+        next_open_pos = (next_open_pos + 1) % 2;
+        handled = true;
+    }
+    if (kc2 != KC_NO && kc2_down_pos < 0) {
+        register_code16(kc2);
+        _ninebox_keysdown[cirque_index][next_open_pos] = kc2;
+        next_open_pos = (next_open_pos + 1) % 2;
+        handled = true;
+    }
+    return handled;
+}
+
+bool cirque_pinnacles_try_press_ninebox(uint8_t cirque_index, int16_t x, uint16_t y) {
+    if (!_ninebox_mapping[cirque_index]) {
+        return false;
+    }
+
+    // have a mapping, try to use it
+    uint8_t ninebox_pos = cirque_pinnacles_get_9box(x, y);
+    uint16_t kc = _ninebox_mapping[cirque_index][ninebox_pos];
+    if (kc != KC_NO || ninebox_pos == 1 || ninebox_pos == 3 || ninebox_pos == 5 || ninebox_pos == 7) {
+        // defined key or single cardinal direction
+        return cirque_pinnacles_set_keys_down(cirque_index, kc, KC_NO);
+    } else {
+        // corner direction and we don't have a kc for it explicitly, try the corners near it
+        switch (ninebox_pos) {
+            case 0: // upper left
+                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][1], _ninebox_mapping[cirque_index][3]);
+            case 2: // upper right
+                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][1], _ninebox_mapping[cirque_index][5]);
+            case 6: // lower left
+                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][3], _ninebox_mapping[cirque_index][7]);
+            case 7: // lower right
+                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][5], _ninebox_mapping[cirque_index][7]);
+            default:
+                return false;
+        }
+    }
 }
 
 cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_index, cirque_pinnacles_state_t* state)
@@ -135,9 +249,19 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         return NO_DATA_READ;
     }
 
-    if (cirque_pinnacles_moved(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
-        // already handled
-        return DATA_HANDLED;
+    if (state->touching) {
+        if (cirque_pinnacles_try_press_ninebox(cirque_index, state->x, state->y)) {
+            return DATA_HANDLED;
+        } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
+            // already handled
+            return DATA_HANDLED;
+        }
+    } else {
+        cirque_pinnacles_ninebox_clear_keys(cirque_index);
+        if (cirque_pinnacles_touchup(cirque_index)) {
+            // already handled
+            return DATA_HANDLED;
+        }
     }
 
     return DATA_UPDATED;

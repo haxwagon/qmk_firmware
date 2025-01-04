@@ -27,7 +27,7 @@ static const uint16_t PROGMEM cirque_pinnacles_keymaps[][2][CIRQUE_PINNACLES_TAP
     },
 };
 
-bool cirque_pinnacles_moved(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
+bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
 {
     switch (cirque_index) {
     case 0: // left pad
