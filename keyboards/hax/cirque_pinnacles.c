@@ -16,6 +16,16 @@ __attribute__((weak)) cirque_pinnacles_config_t cirque_pinnacles_get_config(uint
     return config;
 }
 
+__attribute__((weak)) void cirque_pinnacles_set_keydown(uint16_t kc)
+{
+    register_code16(kc);
+}
+
+__attribute__((weak)) void cirque_pinnacles_set_keydown(uint16_t kc)
+{
+    unregister_code16(kc);
+}
+
 __attribute__((weak)) bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t x, uint8_t y)
 {
     return false;
@@ -43,7 +53,7 @@ void cirque_pinnacles_ninebox_clear_keys(uint8_t cirque_index)
 {
     for (uint8_t i = 0; i < 2; i++) {
         if (_ninebox_keysdown[cirque_index][i] > 0) {
-            unregister_code16(_ninebox_keysdown[cirque_index][i]);
+            cirque_pinnacles_set_keyup(_ninebox_keysdown[cirque_index][i]);
             _ninebox_keysdown[cirque_index][i] = 0;
         }
     }
@@ -98,7 +108,7 @@ float linear_scale(float value, float min_in, float max_in, float min_out, float
 
 
 static const uint16_t NINEBOX_CENTER_SIZE = 512;
-uint8_t cirque_pinnacles_get_9box(int16_t x, int16_t y) {
+uint8_t cirque_pinnacles_get_ninebox(int16_t x, int16_t y) {
     if (abs(x) < NINEBOX_CENTER_SIZE && abs(y) < NINEBOX_CENTER_SIZE) {
         return 4;
     } else if (abs(x) >= 2 * abs(y)) { // right or left
@@ -123,7 +133,7 @@ bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t
     uint8_t next_open_pos = 0;
     for (uint8_t i = 0; i < 2; i++) {
         if (_ninebox_keysdown[cirque_index][i] > 0 && _ninebox_keysdown[cirque_index][i] != kc1 && _ninebox_keysdown[cirque_index][i] != kc2) {
-            unregister_code16(_ninebox_keysdown[cirque_index][i]);
+            cirque_pinnacles_set_keyup(_ninebox_keysdown[cirque_index][i]);
             _ninebox_keysdown[cirque_index][i] = 0;
         } else if (_ninebox_keysdown[cirque_index][i] == kc1) {
             kc1_down_pos = i;
@@ -136,13 +146,13 @@ bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t
         }
     }
     if (kc1 != KC_NO && kc1_down_pos < 0) {
-        register_code16(kc1);
+        cirque_pinnacles_set_keydown(kc1);
         _ninebox_keysdown[cirque_index][next_open_pos] = kc1;
         next_open_pos = (next_open_pos + 1) % 2;
         handled = true;
     }
     if (kc2 != KC_NO && kc2_down_pos < 0) {
-        register_code16(kc2);
+        cirque_pinnacles_set_keydown(kc2);
         _ninebox_keysdown[cirque_index][next_open_pos] = kc2;
         next_open_pos = (next_open_pos + 1) % 2;
         handled = true;
@@ -156,7 +166,7 @@ bool cirque_pinnacles_try_press_ninebox(uint8_t cirque_index, int16_t x, uint16_
     }
 
     // have a mapping, try to use it
-    uint8_t ninebox_pos = cirque_pinnacles_get_9box(x, y);
+    uint8_t ninebox_pos = cirque_pinnacles_get_ninebox(x, y);
     uint16_t kc = _ninebox_mapping[cirque_index][ninebox_pos];
     if (kc != KC_NO || ninebox_pos == 1 || ninebox_pos == 3 || ninebox_pos == 5 || ninebox_pos == 7) {
         // defined key or single cardinal direction
@@ -348,4 +358,9 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
 
     return mouse_report;
 }
+#endif
+
+#if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
+
+
 #endif

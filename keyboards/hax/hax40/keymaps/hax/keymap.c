@@ -234,6 +234,29 @@ static const uint16_t js_right_buttons_ninebox[9] = {
     JS_2, JS_9, JS_1,
     KC_NO, JS_0, KC_NO
 };
+
+uint8_t map_js_hat(uint16_t kc) {
+    switch (kc) {
+    case CKC_JS_HAT_C: return JOYSTICK_HAT_CENTER;
+    case CKC_JS_HAT_DL: return JOYSTICK_HAT_SOUTHWEST;
+    case CKC_JS_HAT_D: return JOYSTICK_HAT_SOUTH;
+    case CKC_JS_HAT_DR: return JOYSTICK_HAT_SOUTHEAST;
+    case CKC_JS_HAT_L: return JOYSTICK_HAT_WEST;
+    case CKC_JS_HAT_R: return JOYSTICK_HAT_EAST;
+    case CKC_JS_HAT_UL: return JOYSTICK_HAT_NORTHWEST;
+    case CKC_JS_HAT_U: return JOYSTICK_HAT_NORTH;
+    case CKC_JS_HAT_UR: return JOYSTICK_HAT_NORTHEAST;
+    default: return JOYSTICK_HAT_CENTER;
+    }
+}
+
+void process_js_hat(uint16_t kc, bool pressed) {
+    if (pressed) {
+        joystick_set_hat(map_js_hat(kc));
+    } else {
+        joystick_set_hat(JOYSTICK_HAT_CENTER);
+    }
+}
 #endif
 
 #if defined(OLED_ENABLE)
@@ -349,6 +372,35 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
+
+void cirque_pinnacles_set_keydown(uint16_t kc)
+{
+    switch (kc) {
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_HAT_C...CKC_JS_HAT_UR:
+        joystick_set_hat(map_js_hat(kc));
+        break;
+#endif
+    default:
+        register_code16(kc);
+        break;
+    }
+}
+
+void cirque_pinnacles_set_keyup(uint16_t kc)
+{
+    switch (kc) {
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_HAT_C...CKC_JS_HAT_UR:
+        joystick_set_hat(JOYSTICK_HAT_CENTER);
+        break;
+#endif
+    default:
+        unregister_code16(kc);
+        break;
+    }
+}
+
 bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy) {
     switch (cirque_index) {
     case 0: { // left pad
@@ -442,31 +494,6 @@ bool cirque_pinnacles_touchup(uint8_t cirque_index) {
     }
     return false;
 }
-
-#if defined(JOYSTICK_ENABLE)
-uint8_t map_js_hat(uint16_t kc) {
-    switch (kc) {
-    case CKC_JS_HAT_C: return JOYSTICK_HAT_CENTER;
-    case CKC_JS_HAT_DL: return JOYSTICK_HAT_SOUTHWEST;
-    case CKC_JS_HAT_D: return JOYSTICK_HAT_SOUTH;
-    case CKC_JS_HAT_DR: return JOYSTICK_HAT_SOUTHEAST;
-    case CKC_JS_HAT_L: return JOYSTICK_HAT_WEST;
-    case CKC_JS_HAT_R: return JOYSTICK_HAT_EAST;
-    case CKC_JS_HAT_UL: return JOYSTICK_HAT_NORTHWEST;
-    case CKC_JS_HAT_U: return JOYSTICK_HAT_NORTH;
-    case CKC_JS_HAT_UR: return JOYSTICK_HAT_NORTHEAST;
-    default: return JOYSTICK_HAT_CENTER;
-    }
-}
-
-void process_js_hat(uint16_t kc, bool pressed) {
-    if (pressed) {
-        joystick_set_hat(map_js_hat(kc));
-    } else {
-        joystick_set_hat(JOYSTICK_HAT_CENTER);
-    }
-}
-#endif
 
 bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
