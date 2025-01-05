@@ -128,6 +128,10 @@ uint8_t cirque_pinnacles_get_ninebox(int16_t x, int16_t y) {
     }
 }
 
+bool cirque_pinnacles_is_using_ninebox(uint8_t cirque_index) {
+    return _ninebox_mapping[cirque_index] != NULL;
+}
+
 bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t kc2) {
     bool handled = false;
     int8_t kc1_down_pos = -1;
@@ -163,7 +167,7 @@ bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t
 }
 
 bool cirque_pinnacles_try_press_ninebox(uint8_t cirque_index, int16_t x, uint16_t y) {
-    if (!_ninebox_mapping[cirque_index]) {
+    if (!cirque_pinnacles_is_using_ninebox(cirque_index)) {
         return false;
     }
 
@@ -182,7 +186,7 @@ bool cirque_pinnacles_try_press_ninebox(uint8_t cirque_index, int16_t x, uint16_
                 return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][1], _ninebox_mapping[cirque_index][5]);
             case 6: // lower left
                 return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][3], _ninebox_mapping[cirque_index][7]);
-            case 7: // lower right
+            case 8: // lower right
                 return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][5], _ninebox_mapping[cirque_index][7]);
             default:
                 return false;
@@ -265,7 +269,7 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         state->y = 0;
 
         cirque_pinnacles_ninebox_clear_keys(cirque_index);
-        if (cirque_pinnacles_touchup(cirque_index)) {
+        if (!cirque_pinnacles_is_using_ninebox(cirque_index) && cirque_pinnacles_touchup(cirque_index)) {
             // already handled
             return DATA_HANDLED;
         }
