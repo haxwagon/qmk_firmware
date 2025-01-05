@@ -76,11 +76,11 @@ LS     T  G  B      \n\
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "\
    NW  N NE         \n\
-         LB SE ST RB\n\
+         LB LT RT RB\n\
 DP  W  C  E         \n\
       BT  X  A  B  Y\n\
    SW  S SE         \n\
-      RA L3 10 11 R3\n\
+      RA L3 SE ST R3\n\
 ",
 #endif
     [LAYER_MEDIA]   = "\
@@ -118,21 +118,37 @@ F1 F2 F3 F4 F5      \n\
 };
 
 static const char* LAYER_NAMES[] = {
-    [LAYER_QWERTY] = "Default",    [LAYER_FUNC] = "Functions",          [LAYER_GAMEPAD] = "Gamepad", [LAYER_GAMEPAD2] = "Gamepad 2",
+    [LAYER_QWERTY] = "Default",
+    [LAYER_FUNC] = "Functions",
+    [LAYER_GAMEPAD] = "Gamepad",
+    [LAYER_GAMEPAD2] = "Gamepad 2",
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "Joystick",
 #endif
-    [LAYER_MEDIA] = "Media",       [LAYER_MODE_SELECT] = "Mode Select", [LAYER_MOVE] = "Move",       [LAYER_NUMPAD] = "Numpad",      [LAYER_NUMSYMS] = "Nums & Syms",
+    [LAYER_MEDIA] = "Media",
+    [LAYER_MODE_SELECT] = "Mode Select",
+    [LAYER_MOVE] = "Move",
+    [LAYER_NUMPAD] = "Numpad",
+    [LAYER_NUMSYMS] = "Nums & Syms",
 };
 
 enum CUSTOM_KEYCODES {
     CKC_POINTING_DEVICE_INC_DPI = SAFE_RANGE,
     CKC_POINTING_DEVICE_DEC_DPI,
-#if defined(JOYSTICK_ENABLE)
+    CKC_JS_HAT_C,
+    CKC_JS_HAT_D,
+    CKC_JS_HAT_DL,
+    CKC_JS_HAT_DR,
+    CKC_JS_HAT_L,
+    CKC_JS_HAT_R,
+    CKC_JS_HAT_U,
+    CKC_JS_HAT_UL,
+    CKC_JS_HAT_UR,
+    CKC_JS_LEFT_TRIGGER,
+    CKC_JS_RIGHT_TRIGGER,
     CKC_JS_LEFT_DPAD_TOGGLE,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
     CKC_JS_RIGHT_AXES_TOGGLE,
-#endif
     CKC_MODE_SELECT,
     CKC_MODE_SELECT_NEXT,
     CKC_MODE_SELECT_PREV,
@@ -209,9 +225,9 @@ enum JS_AXES {
 
 static bool js_right_alt_axes_active = false;
 static const uint16_t js_left_dpad_ninebox[9] = {
-    JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST,
-    JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST,
-    JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST
+    CKC_JS_HAT_UL, CKC_JS_HAT_U, CKC_JS_HAT_UR,
+    CKC_JS_HAT_L, CKC_JS_HAT_C, CKC_JS_HAT_R,
+    CKC_JS_HAT_DL, CKC_JS_HAT_D, CKC_JS_HAT_DR
 };
 static const uint16_t js_right_buttons_ninebox[9] = {
     KC_NO, JS_3, KC_NO,
@@ -295,9 +311,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_NO, JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_RB,
-        CKC_JS_LEFT_DPAD_TOGGLE, JOYSTICK_HAT_WEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_EAST, KC_NO, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
-        KC_NO, JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_10, JS_11, JS_XINPUT_BUTTON_R3,
+        KC_NO, CKC_JS_HAT_UL, CKC_JS_HAT_U, CKC_JS_HAT_UR, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, CKC_JS_LEFT_TRIGGER, CKC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB,
+        KC_NO, CKC_JS_HAT_L, CKC_JS_HAT_D, CKC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
+        KC_NO, CKC_JS_HAT_DL, CKC_JS_HAT_D, CKC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_R3,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
 #endif
@@ -427,97 +443,165 @@ bool cirque_pinnacles_touchup(uint8_t cirque_index) {
     return false;
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-    if (!record->event.pressed) {
-        return true;
+#if defined(JOYSTICK_ENABLE)
+uint8_t map_js_hat(uint16_t kc) {
+    switch (kc) {
+    case CKC_JS_HAT_C: return JOYSTICK_HAT_CENTER;
+    case CKC_JS_HAT_DL: return JOYSTICK_HAT_SOUTHWEST;
+    case CKC_JS_HAT_D: return JOYSTICK_HAT_SOUTH;
+    case CKC_JS_HAT_DR: return JOYSTICK_HAT_SOUTHEAST;
+    case CKC_JS_HAT_L: return JOYSTICK_HAT_WEST;
+    case CKC_JS_HAT_R: return JOYSTICK_HAT_EAST;
+    case CKC_JS_HAT_UL: return JOYSTICK_HAT_NORTHWEST;
+    case CKC_JS_HAT_U: return JOYSTICK_HAT_NORTH;
+    case CKC_JS_HAT_UR: return JOYSTICK_HAT_NORTHEAST;
+    default: return JOYSTICK_HAT_CENTER;
     }
+}
+
+void process_js_hat(uint16_t kc, bool pressed) {
+    if (pressed) {
+        joystick_set_hat(map_js_hat(kc));
+    } else {
+        joystick_set_hat(JOYSTICK_HAT_CENTER);
+    }
+}
+#endif
+
+bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
 
     switch (keycode) {
 #if defined(DYNAMIC_MACRO_ENABLE)
-        case DM_REC1:
-            switch (dynamic_macro_recording) {
-                case 0:
-                    dynamic_macro_recording = 1;
-                    break;
-                case 1:
-                    dynamic_macro_recording = 0;
-                    break;
-                default:
-                    break;
-            }
+    case DM_REC1:
+        switch (dynamic_macro_recording) {
+        case 0:
+            dynamic_macro_recording = 1;
             break;
-        case DM_REC2:
-            switch (dynamic_macro_recording) {
-                case 0:
-                    dynamic_macro_recording = 2;
-                    break;
-                case 2:
-                    dynamic_macro_recording = 0;
-                    break;
-                default:
-                    break;
-            }
+        case 1:
+            dynamic_macro_recording = 0;
             break;
-#endif
-#if defined(POINTING_DEVICE_ENABLE)
-        case CKC_POINTING_DEVICE_DEC_DPI: {
-            uint16_t cpi = pointing_device_get_cpi();
-            if (cpi > POINTING_DEVICE_MIN_DPI) {
-                pointing_device_set_cpi(cpi - 1);
-            }
-        } break;
-        case CKC_POINTING_DEVICE_INC_DPI: {
-            uint16_t cpi = pointing_device_get_cpi();
-            if (cpi < POINTING_DEVICE_MAX_DPI) {
-                pointing_device_set_cpi(cpi + 1);
-            }
-        } break;
-#endif
-#if defined(JOYSTICK_ENABLE)
-        case CKC_JS_LEFT_DPAD_TOGGLE:
-            if (cirque_pinnacles_ninebox_get(0) == js_left_dpad_ninebox) {
-                cirque_pinnacles_ninebox_set(0, NULL);
-            } else {
-                cirque_pinnacles_ninebox_set(0, js_left_dpad_ninebox);
-            }
-            break;
-        case CKC_JS_RIGHT_BUTTONS_TOGGLE:
-            if (cirque_pinnacles_ninebox_get(1) == js_right_buttons_ninebox) {
-                cirque_pinnacles_ninebox_set(1, NULL);
-            } else {
-                cirque_pinnacles_ninebox_set(1, js_right_buttons_ninebox);
-            }
-            break;
-        case CKC_JS_RIGHT_AXES_TOGGLE:
-            js_right_alt_axes_active = !js_right_alt_axes_active;
-            break;
-#endif
-#if defined(OLED_ENABLE)
-        case CKC_MODE_SELECT:
-            dprintf("Selecting mode %d=>%d...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
-            layer_move(TO(SELECTABLE_MODES[oled_mode_select_highlighted]));
-            oled_mode_select_highlighted = 0;
-            return false;
-        case CKC_MODE_SELECT_NEXT:
-            if (oled_mode_select_highlighted >= SELECTABLE_MODES_COUNT - 1) {
-                oled_mode_select_highlighted = 0;
-            } else {
-                oled_mode_select_highlighted++;
-            }
-            dprintf("Selecting next mode (now highlighting %d=>%d)...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
-            return false;
-        case CKC_MODE_SELECT_PREV:
-            if (oled_mode_select_highlighted > 0) {
-                oled_mode_select_highlighted--;
-            } else {
-                oled_mode_select_highlighted = SELECTABLE_MODES_COUNT - 1;
-            }
-            dprintf("Selecting previous mode (now highlighting %d=>%d)...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
-            return false;
-#endif
         default:
             break;
+        }
+        break;
+    case DM_REC2:
+        switch (dynamic_macro_recording) {
+        case 0:
+            dynamic_macro_recording = 2;
+            break;
+        case 2:
+            dynamic_macro_recording = 0;
+            break;
+        default:
+            break;
+        }
+        break;
+#endif
+#if defined(POINTING_DEVICE_ENABLE)
+    case CKC_POINTING_DEVICE_DEC_DPI: {
+        uint16_t cpi = pointing_device_get_cpi();
+        if (cpi > POINTING_DEVICE_MIN_DPI) {
+            pointing_device_set_cpi(cpi - 1);
+        }
+    } return false;
+    case CKC_POINTING_DEVICE_INC_DPI: {
+        uint16_t cpi = pointing_device_get_cpi();
+        if (cpi < POINTING_DEVICE_MAX_DPI) {
+            pointing_device_set_cpi(cpi + 1);
+        }
+    } return false;
+#endif
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_LEFT_DPAD_TOGGLE:
+        if (cirque_pinnacles_ninebox_get(0) == js_left_dpad_ninebox) {
+            dprintf("Setting left cirque to joystick mode...\n");
+            cirque_pinnacles_ninebox_set(0, NULL);
+        } else {
+            dprintf("Setting left cirque to dpad mode...\n");
+            cirque_pinnacles_ninebox_set(0, js_left_dpad_ninebox);
+        }
+        return false;
+    case CKC_JS_RIGHT_BUTTONS_TOGGLE:
+        if (cirque_pinnacles_ninebox_get(1) == js_right_buttons_ninebox) {
+            dprintf("Setting right cirque to joystick mode...\n");
+            cirque_pinnacles_ninebox_set(1, NULL);
+        } else {
+            dprintf("Setting right cirque to buttons mode...\n");
+            cirque_pinnacles_ninebox_set(1, js_right_buttons_ninebox);
+        }
+        return false;
+    case CKC_JS_RIGHT_AXES_TOGGLE:
+        js_right_alt_axes_active = !js_right_alt_axes_active;
+        return false;
+#endif
+#if defined(OLED_ENABLE)
+    case CKC_MODE_SELECT:
+        dprintf("Selecting mode %d=>%d...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
+        layer_move(TO(SELECTABLE_MODES[oled_mode_select_highlighted]));
+        oled_mode_select_highlighted = 0;
+        return false;
+    case CKC_MODE_SELECT_NEXT:
+        if (oled_mode_select_highlighted >= SELECTABLE_MODES_COUNT - 1) {
+            oled_mode_select_highlighted = 0;
+        } else {
+            oled_mode_select_highlighted++;
+        }
+        dprintf("Selecting next mode (now highlighting %d=>%d)...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
+        return false;
+    case CKC_MODE_SELECT_PREV:
+        if (oled_mode_select_highlighted > 0) {
+            oled_mode_select_highlighted--;
+        } else {
+            oled_mode_select_highlighted = SELECTABLE_MODES_COUNT - 1;
+        }
+        dprintf("Selecting previous mode (now highlighting %d=>%d)...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
+        return false;
+#endif
+    default:
+        break;
     }
+    return true;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    if (record->event.pressed) {
+        if (!process_record_user_pressed(keycode, record)) {
+            return false;
+        }
+    }
+
+    switch (keycode) {
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_HAT_C:
+    case CKC_JS_HAT_D:
+    case CKC_JS_HAT_DL:
+    case CKC_JS_HAT_DR:
+    case CKC_JS_HAT_L:
+    case CKC_JS_HAT_R:
+    case CKC_JS_HAT_U:
+    case CKC_JS_HAT_UL:
+    case CKC_JS_HAT_UR:
+        process_js_hat(keycode, record->event.pressed);
+        return false;
+    case CKC_JS_LEFT_TRIGGER:
+        if (record->event.pressed) {
+            joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
+        } else {
+            joysticks_set_axis(JS_AXIS_RX, 0);
+        }
+        return false;
+    case CKC_JS_RIGHT_TRIGGER:
+        if (record->event.pressed) {
+            joysticks_set_axis(JS_AXIS_RX, INT16_MAX);
+        } else {
+            joysticks_set_axis(JS_AXIS_RX, 0);
+        }
+        return false;
+#endif
+    default:
+        break;
+    }
+
     return true;
 }
