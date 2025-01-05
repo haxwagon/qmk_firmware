@@ -5,15 +5,19 @@
 typedef union {
     uint16_t u16;
     void*    context;
-} menu_item_context_t;
-typedef void (*oled_on_menu_item_selected)(uint8_t index, menu_item_context_t context);
+} oled_on_menu_item_selected_context_t;
+typedef void (*oled_on_menu_item_selected)(uint8_t index, oled_on_menu_item_selected_context_t context);
 
 typedef struct {
-    const char*                title;
-    const char*                items[MAX_MENU_ITEMS];
-    uint8_t                    items_count;
-    oled_on_menu_item_selected on_item_selected[MAX_MENU_ITEMS];
-    menu_item_context_t        item_contexts[MAX_MENU_ITEMS];
+    const char*                          name;
+    oled_on_menu_item_selected           on_selected;
+    oled_on_menu_item_selected_context_t context;
+} oled_menu_item_t;
+
+typedef struct {
+    const char*      title;
+    oled_menu_item_t items[MAX_MENU_ITEMS];
+    uint8_t          items_count;
 } oled_menu_t;
 
 bool oled_in_menu(void);

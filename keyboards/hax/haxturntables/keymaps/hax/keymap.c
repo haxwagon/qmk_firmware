@@ -279,27 +279,32 @@ void menu_activate_layer(uint8_t item_index, menu_item_context_t context)
 static const oled_menu_t MODE_SELECT_MENU = {
     .title = "Mode Select",
     .items = {
-        "Joystick",
-        "Numpad",
-        "Media",
-        "App: FPS",
-        "App: Moba",
+        {
+            .name = "Joystick",
+            .on_selected = menu_activate_layer,
+            .context = { u16: LAYER_JOYSTICK },
+        },
+        {
+            .name = "Numpad",
+            .on_selected = menu_activate_layer,
+            .context = { u16: LAYER_NUMPAD },
+        },
+        {
+            .name = "Media",
+            .on_selected = menu_activate_layer,
+            .context = { u16: LAYER_MEDIA },
+        },
+        {
+            .name = "App: FPS",
+            .on_selected = menu_activate_layer,
+            .context = { u16: LAYER_APP_FPS },
+        },
+        {
+            .name = "App: MOBA",
+            .on_selected = menu_activate_layer,
+            .context = { u16: LAYER_APP_MOBA },
+        },
     },
-    .items_count = 5,
-    .on_item_selected = {
-        menu_activate_layer,
-        menu_activate_layer,
-        menu_activate_layer,
-        menu_activate_layer,
-        menu_activate_layer,
-    },
-    .item_contexts = {
-        { u16: LAYER_JOYSTICK },
-        { u16: LAYER_NUMPAD },
-        { u16: LAYER_MEDIA },
-        { u16: LAYER_APP_FPS },
-        { u16: LAYER_APP_MOBA },
-    }
 };
 
 bool oled_task_user(void)

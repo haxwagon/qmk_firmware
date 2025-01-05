@@ -50,9 +50,9 @@ void oled_menu_select(void)
         return;
     }
 
-    oled_on_menu_item_selected on_selected = _active_menu->on_item_selected[_menu_highlighted_index];
+    oled_on_menu_item_selected on_selected = _active_menu->items[_menu_highlighted_index].on_selected;
     if (on_selected != NULL) {
-        menu_item_context_t context = _active_menu->item_contexts[_menu_highlighted_index];
+        oled_on_menu_item_selected_context_t context = _active_menu->items[_menu_highlighted_index].context;
         on_selected(_menu_highlighted_index, context);
     }
 }
@@ -104,7 +104,7 @@ void oled_render_menu(void)
             oled_write_P(PSTR("  "), false);
         }
 
-        oled_write_P(PSTR(_active_menu->items[_menu_highlighted_index + i]), false);
+        oled_write_P(PSTR(_active_menu->items[_menu_highlighted_index + i].name), false);
         oled_newline();
     }
     oled_render_dirty(true);
