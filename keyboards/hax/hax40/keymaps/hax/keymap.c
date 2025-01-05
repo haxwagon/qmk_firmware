@@ -297,8 +297,33 @@ uint8_t oled_get_macro_recording(void) {
     return dynamic_macro_recording;
 }
 
-const char* oled_get_layer_map(void) {
-    return LAYER_MAPS[get_highest_layer(layer_state)];
+void oled_write_layer_details(void) {
+    switch (get_highest_layer(layer_state)) {
+    case LAYER_JOYSTICK: {
+        oled_write_P((cirque_pinnacles_ninebox_get(0) == js_left_dpad_ninebox) ? PSTR("DPAD ") : PSTR("     "), false);
+        oled_write_P((cirque_pinnacles_ninebox_get(1) == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
+        oled_write_P(PSTR("\n"), false);
+    } break;
+    default: {
+        uint8_t macro_recording = oled_get_macro_recording();
+        if (macro_recording == 0) {
+            oled_write_P(PSTR("     "), false);
+        } else {
+            char buffer[8];
+            sprintf(buffer, "REC%d ", macro_recording);
+            oled_write_P(PSTR(buffer), false);
+        }
+
+        // Host Keyboard LED Status
+        led_t led_state = host_keyboard_led_state();
+        oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
+        oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
+        oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
+        oled_write_P(PSTR("\n"), false);
+    } break;
+    }
+
+    oled_write_P(PSTR(LAYER_MAPS[get_highest_layer(layer_state)]), false);
 }
 
 const char* oled_get_layer_name(void) {
@@ -418,6 +443,9 @@ void cirque_pinnacles_set_keydown(uint16_t kc)
     case CKC_JS_HAT_UR:
         joystick_set_hat(map_js_hat(kc));
         break;
+    case JS_0...JS_31:
+        register_joystick_button(kc);
+        break;
 #endif
     default:
         register_code16(kc);
@@ -439,6 +467,9 @@ void cirque_pinnacles_set_keyup(uint16_t kc)
     case CKC_JS_HAT_U:
     case CKC_JS_HAT_UR:
         joystick_set_hat(JOYSTICK_HAT_CENTER);
+        break;
+    case JS_0...JS_31:
+        unregister_joystick_button(kc);
         break;
 #endif
     default:
@@ -664,15 +695,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     case CKC_JS_LEFT_TRIGGER:
         if (record->event.pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
+            register_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
         } else {
             joysticks_set_axis(JS_AXIS_RX, 0);
+            unregister_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
         }
         return false;
     case CKC_JS_RIGHT_TRIGGER:
         if (record->event.pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MAX);
+            register_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
         } else {
             joysticks_set_axis(JS_AXIS_RX, 0);
+            unregister_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
         }
         return false;
 #endif
