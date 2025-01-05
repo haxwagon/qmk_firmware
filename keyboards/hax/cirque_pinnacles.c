@@ -21,7 +21,7 @@ __attribute__((weak)) void cirque_pinnacles_set_keydown(uint16_t kc)
     register_code16(kc);
 }
 
-__attribute__((weak)) void cirque_pinnacles_set_keydown(uint16_t kc)
+__attribute__((weak)) void cirque_pinnacles_set_keyup(uint16_t kc)
 {
     unregister_code16(kc);
 }
@@ -30,10 +30,12 @@ __attribute__((weak)) bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t
 {
     return false;
 }
+
 __attribute__((weak)) bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
 {
     return false;
 }
+
 __attribute__((weak)) bool cirque_pinnacles_touchup(uint8_t cirque_index)
 {
     return false;
@@ -234,6 +236,13 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         state->tap_x = 0;
         state->tap_y = 0;
         state->touching = true;
+
+        if (cirque_pinnacles_try_press_ninebox(cirque_index, state->x, state->y)) {
+            return DATA_HANDLED;
+        } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
+            // already handled
+            return DATA_HANDLED;
+        }
     } else { // not actively touching
         state->tapped = false;
         if (state->touching && state->touched_at > 0 && timer_elapsed(state->touched_at) < CIRQUE_PINNACLES_TAP_TERM) {
@@ -254,26 +263,12 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         state->prev_y = 0;
         state->x = 0;
         state->y = 0;
-    }
 
-    if (!state->touching) {
         cirque_pinnacles_ninebox_clear_keys(cirque_index);
         if (cirque_pinnacles_touchup(cirque_index)) {
             // already handled
             return DATA_HANDLED;
         }
-    }
-
-    if (state->x == 0 && state->y == 0 && state->prev_x == 0 && state->prev_y == 0) {
-        // nothing interesting this round, don't do anything
-        return NO_DATA_READ;
-    }
-
-    if (cirque_pinnacles_try_press_ninebox(cirque_index, state->x, state->y)) {
-        return DATA_HANDLED;
-    } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
-        // already handled
-        return DATA_HANDLED;
     }
 
     return DATA_UPDATED;

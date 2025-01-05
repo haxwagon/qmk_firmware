@@ -167,7 +167,17 @@ const key_override_t  f18_key_override           = ko_make_basic(MOD_MASK_SHIFT,
 const key_override_t  f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
 const key_override_t  f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
 const key_override_t* key_overrides[]            = {
-    &backspace_del_key_override, &f11_key_override, &f12_key_override, &f13_key_override, &f14_key_override, &f15_key_override, &f16_key_override, &f17_key_override, &f18_key_override, &f19_key_override, &f20_key_override,
+    &backspace_del_key_override,
+    &f11_key_override,
+    &f12_key_override,
+    &f13_key_override,
+    &f14_key_override,
+    &f15_key_override,
+    &f16_key_override,
+    &f17_key_override,
+    &f18_key_override,
+    &f19_key_override,
+    &f20_key_override,
 };
 #endif
 
@@ -189,7 +199,19 @@ enum {
 };
 
 tap_dance_action_t tap_dance_actions[] = {
-    [TD_ANGLES] = ACTION_TAP_DANCE_DOUBLE(KC_LABK, KC_RABK), [TD_BRACES] = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR), [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC), [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN), [TD_DOTCOLN] = ACTION_TAP_DANCE_QUAD(KC_DOT, KC_COLN, 0, 0), [TD_DOTEXLM] = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM), [TD_EQLPLUS] = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS), [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS), [TD_PARENS] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN), [TD_PASTSLS] = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS), [TD_PPLSMNS] = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS), [TD_QUOTGRV] = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV), [TD_SLASHES] = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE),
+    [TD_ANGLES] = ACTION_TAP_DANCE_DOUBLE(KC_LABK, KC_RABK),
+    [TD_BRACES] = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR),
+    [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC),
+    [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN),
+    [TD_DOTCOLN] = ACTION_TAP_DANCE_QUAD(KC_DOT, KC_COLN, 0, 0),
+    [TD_DOTEXLM] = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM),
+    [TD_EQLPLUS] = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS),
+    [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS),
+    [TD_PARENS] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
+    [TD_PASTSLS] = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS),
+    [TD_PPLSMNS] = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS),
+    [TD_QUOTGRV] = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV),
+    [TD_SLASHES] = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE),
 };
 #endif
 
@@ -205,7 +227,16 @@ const uint16_t PROGMEM right_gui_combo[]     = {KC_U, KC_I, COMBO_END};
 const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_I, KC_O, KC_P, COMBO_END};
 const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_U, KC_I, KC_O, COMBO_END};
 combo_t                key_combos[]          = {
-    COMBO(left_alt_combo, KC_LALT), COMBO(left_ctl_combo, KC_LCTL), COMBO(left_gui_combo, KC_LGUI), COMBO(left_ctl_alt_combo, LCTL(KC_LALT)), COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)), COMBO(right_alt_combo, KC_RALT), COMBO(right_ctl_combo, KC_RCTL), COMBO(right_gui_combo, KC_RGUI), COMBO(right_ctl_alt_combo, RCTL(KC_RALT)), COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
+    COMBO(left_alt_combo, KC_LALT),
+    COMBO(left_ctl_combo, KC_LCTL),
+    COMBO(left_gui_combo, KC_LGUI),
+    COMBO(left_ctl_alt_combo, LCTL(KC_LALT)),
+    COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)),
+    COMBO(right_alt_combo, KC_RALT),
+    COMBO(right_ctl_combo, KC_RCTL),
+    COMBO(right_gui_combo, KC_RGUI),
+    COMBO(right_ctl_alt_combo, RCTL(KC_RALT)),
+    COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
 };
 #endif
 
@@ -372,12 +403,19 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
-
 void cirque_pinnacles_set_keydown(uint16_t kc)
 {
     switch (kc) {
 #if defined(JOYSTICK_ENABLE)
-    case CKC_JS_HAT_C...CKC_JS_HAT_UR:
+    case CKC_JS_HAT_C:
+    case CKC_JS_HAT_DL:
+    case CKC_JS_HAT_D:
+    case CKC_JS_HAT_DR:
+    case CKC_JS_HAT_L:
+    case CKC_JS_HAT_R:
+    case CKC_JS_HAT_UL:
+    case CKC_JS_HAT_U:
+    case CKC_JS_HAT_UR:
         joystick_set_hat(map_js_hat(kc));
         break;
 #endif
@@ -391,7 +429,15 @@ void cirque_pinnacles_set_keyup(uint16_t kc)
 {
     switch (kc) {
 #if defined(JOYSTICK_ENABLE)
-    case CKC_JS_HAT_C...CKC_JS_HAT_UR:
+    case CKC_JS_HAT_C:
+    case CKC_JS_HAT_DL:
+    case CKC_JS_HAT_D:
+    case CKC_JS_HAT_DR:
+    case CKC_JS_HAT_L:
+    case CKC_JS_HAT_R:
+    case CKC_JS_HAT_UL:
+    case CKC_JS_HAT_U:
+    case CKC_JS_HAT_UR:
         joystick_set_hat(JOYSTICK_HAT_CENTER);
         break;
 #endif
@@ -601,16 +647,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch (keycode) {
 #if defined(JOYSTICK_ENABLE)
     case CKC_JS_HAT_C:
-    case CKC_JS_HAT_D:
     case CKC_JS_HAT_DL:
+    case CKC_JS_HAT_D:
     case CKC_JS_HAT_DR:
     case CKC_JS_HAT_L:
     case CKC_JS_HAT_R:
-    case CKC_JS_HAT_U:
     case CKC_JS_HAT_UL:
+    case CKC_JS_HAT_U:
     case CKC_JS_HAT_UR:
-        process_js_hat(keycode, record->event.pressed);
-        return false;
+        if (record->event.pressed) {
+            joystick_set_hat(map_js_hat(keycode));
+        } else {
+            joystick_set_hat(JOYSTICK_HAT_CENTER);
+        }
+        break;
     case CKC_JS_LEFT_TRIGGER:
         if (record->event.pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
