@@ -140,7 +140,7 @@ enum CUSTOM_KEYCODES {
     CKC_JS_LEFT_DPAD_TOGGLE,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
     CKC_JS_RIGHT_AXES_TOGGLE,
-    CKC_OPEN_MENU,
+    CKC_MENU_TOGGLE,
     CKC_MENU_SELECT,
     CKC_MENU_HIGHLIGHT_NEXT,
     CKC_MENU_HIGHLIGHT_PREV,
@@ -268,7 +268,7 @@ bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
 #endif
 
 #if defined(OLED_ENABLE)
-void menu_activate_layer(uint8_t item_index, menu_item_context_t context)
+void menu_activate_layer(uint8_t item_index, oled_on_menu_item_selected_context_t context)
 {
     uint8_t layer = (uint8_t)context.u16;
     dprintf("Selecting mode %d=>%d...\n", item_index, layer);
@@ -305,6 +305,7 @@ static const oled_menu_t MODE_SELECT_MENU = {
             .context = { u16: LAYER_APP_MOBA },
         },
     },
+    .items_count = 5,
 };
 
 bool oled_task_user(void)
@@ -357,7 +358,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR
     ),
     [LAYER_FUNC]     = LAYOUT_split_3x5_2(
-        KC_ESC, KC_NO, KC_NO, KC_NO, CKC_OPEN_MENU, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
+        KC_ESC, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
         KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         KC_LSFT, TD(TD_QUOTGRV), TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_ANGLES), TD(TD_PARENS), RSFT_T(KC_BSLS),
         KC_TRNS, KC_ESC, KC_ENT, KC_TRNS
@@ -380,7 +381,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_HIGHLIGHT_NEXT, CKC_MENU_HIGHLIGHT_PREV, KC_NO, CKC_MENU_SELECT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
+        KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE
     ),
     [LAYER_MOVE]        = LAYOUT_split_3x5_2(
         MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, CKC_POINTING_DEVICE_DEC_DPI, CKC_POINTING_DEVICE_INC_DPI, KC_DEL, KC_INS,
@@ -497,9 +498,14 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
         return false;
 #endif
 #if defined(OLED_ENABLE)
-    case CKC_OPEN_MENU:
-        oled_menu_activate(&MODE_SELECT_MENU);
-        layer_move(LAYER_MENU);
+    case CKC_MENU_TOGGLE:
+        if (oled_in_menu()) {
+            oled_menu_activate(NULL);
+            layer_move(LAYER_DEFAULT);
+        } else {
+            oled_menu_activate(&MODE_SELECT_MENU);
+            layer_move(LAYER_MENU);
+        }
         return false;
     case CKC_MENU_SELECT:
         oled_menu_select();
