@@ -5,7 +5,7 @@
 #include "../joysticks.h"
 #endif
 
-void keyboard_post_init_user(void)
+void keyboard_post_init_kb(void)
 {
     dprintf("keyboard initializing...\n");
 #if defined(CONSOLE_ENABLE)
@@ -17,6 +17,7 @@ void keyboard_post_init_user(void)
 #if defined(JOYSTICK_ENABLE)
     joysticks_init();
 #endif
+    keyboard_post_init_user();
     dprintf("keyboard initialized.\n");
 }
 

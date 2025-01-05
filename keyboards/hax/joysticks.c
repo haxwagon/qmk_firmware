@@ -12,6 +12,21 @@ void joysticks_init(void)
     }
 }
 
+uint8_t joysticks_map_js_hat_keycode(uint16_t kc) {
+    switch (kc) {
+    case KC_JS_HAT_C: return JOYSTICK_HAT_CENTER;
+    case KC_JS_HAT_DL: return JOYSTICK_HAT_SOUTHWEST;
+    case KC_JS_HAT_D: return JOYSTICK_HAT_SOUTH;
+    case KC_JS_HAT_DR: return JOYSTICK_HAT_SOUTHEAST;
+    case KC_JS_HAT_L: return JOYSTICK_HAT_WEST;
+    case KC_JS_HAT_R: return JOYSTICK_HAT_EAST;
+    case KC_JS_HAT_UL: return JOYSTICK_HAT_NORTHWEST;
+    case KC_JS_HAT_U: return JOYSTICK_HAT_NORTH;
+    case KC_JS_HAT_UR: return JOYSTICK_HAT_NORTHEAST;
+    default: return JOYSTICK_HAT_CENTER;
+    }
+}
+
 void joysticks_move_axis(uint8_t axis, int16_t delta)
 {
     int16_t value = js_values[axis] * AXIS_SCALE;
@@ -24,6 +39,53 @@ void joysticks_move_axis(uint8_t axis, int16_t delta)
     }
     dprintf("new axis %d with delta %d value is %d\n", axis, delta, value);
     joysticks_set_axis(axis, value);
+}
+
+bool joysticks_process_keycode(uint16_t kc, bool pressed) {
+    switch (kc) {
+    case KC_JS_HAT_C:
+    case KC_JS_HAT_DL:
+    case KC_JS_HAT_D:
+    case KC_JS_HAT_DR:
+    case KC_JS_HAT_L:
+    case KC_JS_HAT_R:
+    case KC_JS_HAT_UL:
+    case KC_JS_HAT_U:
+    case KC_JS_HAT_UR:
+        if (pressed) {
+            joystick_set_hat(joysticks_map_js_hat_keycode(kc));
+        } else {
+            joystick_set_hat(JOYSTICK_HAT_CENTER);
+        }
+        return false;
+    case KC_JS_LEFT_TRIGGER:
+        if (pressed) {
+            joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
+            register_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
+        } else {
+            joysticks_set_axis(JS_AXIS_RX, 0);
+            unregister_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
+        }
+        return false;
+    case KC_JS_RIGHT_TRIGGER:
+        if (pressed) {
+            joysticks_set_axis(JS_AXIS_RX, INT16_MAX);
+            register_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
+        } else {
+            joysticks_set_axis(JS_AXIS_RX, 0);
+            unregister_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
+        }
+        return false;
+    case JS_0...JS_31:
+        if (pressed) {
+            register_joystick_button(kc);
+        } else {
+            unregister_joystick_button(kc);
+        }
+        return false;
+    default:
+        return true;
+    }
 }
 
 void joysticks_set_axis(uint8_t axis, int16_t value)

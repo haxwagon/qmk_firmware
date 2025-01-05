@@ -135,17 +135,6 @@ static const char* LAYER_NAMES[] = {
 enum CUSTOM_KEYCODES {
     CKC_POINTING_DEVICE_INC_DPI = SAFE_RANGE,
     CKC_POINTING_DEVICE_DEC_DPI,
-    CKC_JS_HAT_C,
-    CKC_JS_HAT_D,
-    CKC_JS_HAT_DL,
-    CKC_JS_HAT_DR,
-    CKC_JS_HAT_L,
-    CKC_JS_HAT_R,
-    CKC_JS_HAT_U,
-    CKC_JS_HAT_UL,
-    CKC_JS_HAT_UR,
-    CKC_JS_LEFT_TRIGGER,
-    CKC_JS_RIGHT_TRIGGER,
     CKC_JS_LEFT_DPAD_TOGGLE,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
     CKC_JS_RIGHT_AXES_TOGGLE,
@@ -153,6 +142,16 @@ enum CUSTOM_KEYCODES {
     CKC_MODE_SELECT_NEXT,
     CKC_MODE_SELECT_PREV,
 };
+
+
+static const uint16_t* _cirque_pinnacles_nineboxes[CIRQUE_PINNACLES_COUNT];
+bool cirque_pinnacles_ninebox_active(uint8_t cirque_index) {
+    return _cirque_pinnacles_nineboxes[cirque_index] != NULL;
+}
+
+uint16_t cirque_pinnacles_get_ninebox(uint8_t cirque_index, uint8_t ninebox_index) {
+    return _cirque_pinnacles_nineboxes[cirque_index][ninebox_index];
+}
 
 #if defined(KEY_OVERRIDE_ENABLE)
 const key_override_t  backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
@@ -245,20 +244,10 @@ static uint8_t dynamic_macro_recording = 0;
 #endif
 
 #if defined(JOYSTICK_ENABLE)
-enum JS_AXES {
-    JS_AXIS_X,
-    JS_AXIS_Y,
-    JS_AXIS_Z,
-    JS_AXIS_RX,
-    JS_AXIS_RY,
-    JS_AXIS_RZ,
-};
-
-static bool js_right_alt_axes_active = false;
 static const uint16_t js_left_dpad_ninebox[9] = {
-    CKC_JS_HAT_UL, CKC_JS_HAT_U, CKC_JS_HAT_UR,
-    CKC_JS_HAT_L, CKC_JS_HAT_C, CKC_JS_HAT_R,
-    CKC_JS_HAT_DL, CKC_JS_HAT_D, CKC_JS_HAT_DR
+    KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR,
+    KC_JS_HAT_L, KC_JS_HAT_C, KC_JS_HAT_R,
+    KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR
 };
 static const uint16_t js_right_buttons_ninebox[9] = {
     KC_NO, JS_3, KC_NO,
@@ -266,27 +255,13 @@ static const uint16_t js_right_buttons_ninebox[9] = {
     KC_NO, JS_0, KC_NO
 };
 
-uint8_t map_js_hat(uint16_t kc) {
-    switch (kc) {
-    case CKC_JS_HAT_C: return JOYSTICK_HAT_CENTER;
-    case CKC_JS_HAT_DL: return JOYSTICK_HAT_SOUTHWEST;
-    case CKC_JS_HAT_D: return JOYSTICK_HAT_SOUTH;
-    case CKC_JS_HAT_DR: return JOYSTICK_HAT_SOUTHEAST;
-    case CKC_JS_HAT_L: return JOYSTICK_HAT_WEST;
-    case CKC_JS_HAT_R: return JOYSTICK_HAT_EAST;
-    case CKC_JS_HAT_UL: return JOYSTICK_HAT_NORTHWEST;
-    case CKC_JS_HAT_U: return JOYSTICK_HAT_NORTH;
-    case CKC_JS_HAT_UR: return JOYSTICK_HAT_NORTHEAST;
-    default: return JOYSTICK_HAT_CENTER;
-    }
+bool cirque_pinnacles_joysticks_active(void) {
+    return get_highest_layer(layer_state) == LAYER_JOYSTICK;
 }
 
-void process_js_hat(uint16_t kc, bool pressed) {
-    if (pressed) {
-        joystick_set_hat(map_js_hat(kc));
-    } else {
-        joystick_set_hat(JOYSTICK_HAT_CENTER);
-    }
+static bool js_right_alt_axes_active = false;
+bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
+    return js_right_alt_axes_active;
 }
 #endif
 
@@ -300,8 +275,8 @@ uint8_t oled_get_macro_recording(void) {
 void oled_write_layer_details(void) {
     switch (get_highest_layer(layer_state)) {
     case LAYER_JOYSTICK: {
-        oled_write_P((cirque_pinnacles_ninebox_get(0) == js_left_dpad_ninebox) ? PSTR("DPAD ") : PSTR("     "), false);
-        oled_write_P((cirque_pinnacles_ninebox_get(1) == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
+        oled_write_P((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox) ? PSTR("DPAD ") : PSTR("     "), false);
+        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
         oled_write_P(PSTR("\n"), false);
     } break;
     default: {
@@ -390,9 +365,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_NO, CKC_JS_HAT_UL, CKC_JS_HAT_U, CKC_JS_HAT_UR, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, CKC_JS_LEFT_TRIGGER, CKC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB,
-        KC_NO, CKC_JS_HAT_L, CKC_JS_HAT_D, CKC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
-        KC_NO, CKC_JS_HAT_DL, CKC_JS_HAT_D, CKC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_R3,
+        KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB,
+        KC_NO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
+        KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_R3,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
 #endif
@@ -428,148 +403,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
-void cirque_pinnacles_set_keydown(uint16_t kc)
-{
-    switch (kc) {
-#if defined(JOYSTICK_ENABLE)
-    case CKC_JS_HAT_C:
-    case CKC_JS_HAT_DL:
-    case CKC_JS_HAT_D:
-    case CKC_JS_HAT_DR:
-    case CKC_JS_HAT_L:
-    case CKC_JS_HAT_R:
-    case CKC_JS_HAT_UL:
-    case CKC_JS_HAT_U:
-    case CKC_JS_HAT_UR:
-        joystick_set_hat(map_js_hat(kc));
-        break;
-    case JS_0...JS_31:
-        register_joystick_button(kc);
-        break;
-#endif
-    default:
-        register_code16(kc);
-        break;
+void keyboard_post_init_user(void) {
+    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+        _cirque_pinnacles_nineboxes[i] = 0;
     }
-}
-
-void cirque_pinnacles_set_keyup(uint16_t kc)
-{
-    switch (kc) {
-#if defined(JOYSTICK_ENABLE)
-    case CKC_JS_HAT_C:
-    case CKC_JS_HAT_DL:
-    case CKC_JS_HAT_D:
-    case CKC_JS_HAT_DR:
-    case CKC_JS_HAT_L:
-    case CKC_JS_HAT_R:
-    case CKC_JS_HAT_UL:
-    case CKC_JS_HAT_U:
-    case CKC_JS_HAT_UR:
-        joystick_set_hat(JOYSTICK_HAT_CENTER);
-        break;
-    case JS_0...JS_31:
-        unregister_joystick_button(kc);
-        break;
-#endif
-    default:
-        unregister_code16(kc);
-        break;
-    }
-}
-
-bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy) {
-    switch (cirque_index) {
-    case 0: { // left pad
-        switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
-        case LAYER_JOYSTICK:
-            joysticks_set_axis(JS_AXIS_X, x);
-            joysticks_set_axis(JS_AXIS_Y, -y);
-            return true;
-#endif
-        default:
-            break;
-        }
-    } break;
-    case 1: { // right pad
-        switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
-        case LAYER_JOYSTICK:
-            if (js_right_alt_axes_active) {
-                joysticks_set_axis(JS_AXIS_RX, x);
-                joysticks_move_axis(JS_AXIS_RY, dy / 8);
-            } else {
-                joysticks_set_axis(JS_AXIS_Z, x);
-                joysticks_set_axis(JS_AXIS_RZ, -y);
-            }
-            return true;
-#endif
-        case LAYER_MOVE: {
-            if (abs(y) > abs(x)) {
-                // scrolling vertically
-                if (y > 1) {
-                    tap_code(MS_WHLU);
-                    return true;
-                } else if (y < -1) {
-                    tap_code(MS_WHLD);
-                    return true;
-                }
-            } else if (abs(x) > abs(y)) {
-                // scrolling horizontally
-                if (x > 1) {
-                    tap_code(MS_WHLR);
-                    return true;
-                } else if (x < -1) {
-                    tap_code(MS_WHLL);
-                    return true;
-                }
-            }
-        } break;
-        default:
-            break;
-        }
-    } break;
-    default:
-        break;
-    }
-    return false;
-}
-
-bool cirque_pinnacles_touchup(uint8_t cirque_index) {
-    switch (cirque_index) {
-    case 0: { // left pad
-        switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
-        case LAYER_JOYSTICK:
-            joysticks_set_axis(JS_AXIS_X, 0);
-            joysticks_set_axis(JS_AXIS_Y, 0);
-            return true;
-#endif
-        default:
-            break;
-        }
-    } break;
-    case 1: { // right pad
-        switch (get_highest_layer(layer_state)) {
-#if defined(JOYSTICK_ENABLE)
-        case LAYER_JOYSTICK:
-            if (js_right_alt_axes_active) {
-                joysticks_set_axis(JS_AXIS_RX, 0);
-            } else {
-                joysticks_set_axis(JS_AXIS_Z, 0);
-                joysticks_set_axis(JS_AXIS_RZ, 0);
-            }
-            return true;
-#endif
-        default:
-            break;
-        }
-    } break;
-    default:
-        break;
-    }
-    return false;
 }
 
 bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
@@ -618,24 +455,27 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
 #endif
 #if defined(JOYSTICK_ENABLE)
     case CKC_JS_LEFT_DPAD_TOGGLE:
-        if (cirque_pinnacles_ninebox_get(0) == js_left_dpad_ninebox) {
+        cirque_pinnacles_clear_active_keys(0);
+        if (_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox) {
             dprintf("Setting left cirque to joystick mode...\n");
-            cirque_pinnacles_ninebox_set(0, NULL);
+            _cirque_pinnacles_nineboxes[0] = NULL;
         } else {
             dprintf("Setting left cirque to dpad mode...\n");
-            cirque_pinnacles_ninebox_set(0, js_left_dpad_ninebox);
+            _cirque_pinnacles_nineboxes[0] = js_left_dpad_ninebox;
         }
         return false;
     case CKC_JS_RIGHT_BUTTONS_TOGGLE:
-        if (cirque_pinnacles_ninebox_get(1) == js_right_buttons_ninebox) {
+        cirque_pinnacles_clear_active_keys(1);
+        if (_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) {
             dprintf("Setting right cirque to joystick mode...\n");
-            cirque_pinnacles_ninebox_set(1, NULL);
+            _cirque_pinnacles_nineboxes[1] = NULL;
         } else {
             dprintf("Setting right cirque to buttons mode...\n");
-            cirque_pinnacles_ninebox_set(1, js_right_buttons_ninebox);
+            _cirque_pinnacles_nineboxes[1] = js_right_buttons_ninebox;
         }
         return false;
     case CKC_JS_RIGHT_AXES_TOGGLE:
+        cirque_pinnacles_clear_active_keys(1);
         js_right_alt_axes_active = !js_right_alt_axes_active;
         return false;
 #endif
@@ -675,45 +515,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
         }
     }
 
-    switch (keycode) {
 #if defined(JOYSTICK_ENABLE)
-    case CKC_JS_HAT_C:
-    case CKC_JS_HAT_DL:
-    case CKC_JS_HAT_D:
-    case CKC_JS_HAT_DR:
-    case CKC_JS_HAT_L:
-    case CKC_JS_HAT_R:
-    case CKC_JS_HAT_UL:
-    case CKC_JS_HAT_U:
-    case CKC_JS_HAT_UR:
-        if (record->event.pressed) {
-            joystick_set_hat(map_js_hat(keycode));
-        } else {
-            joystick_set_hat(JOYSTICK_HAT_CENTER);
-        }
-        break;
-    case CKC_JS_LEFT_TRIGGER:
-        if (record->event.pressed) {
-            joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
-            register_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
-        } else {
-            joysticks_set_axis(JS_AXIS_RX, 0);
-            unregister_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
-        }
+    if (!joysticks_process_keycode(keycode, record->event.pressed)) {
         return false;
-    case CKC_JS_RIGHT_TRIGGER:
-        if (record->event.pressed) {
-            joysticks_set_axis(JS_AXIS_RX, INT16_MAX);
-            register_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
-        } else {
-            joysticks_set_axis(JS_AXIS_RX, 0);
-            unregister_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
-        }
-        return false;
-#endif
-    default:
-        break;
     }
+#endif
 
     return true;
 }

@@ -1,6 +1,9 @@
 #include QMK_KEYBOARD_H
 
 #include "cirque_pinnacles.h"
+#if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
+#include "joysticks.h"
+#endif
 
 #include "drivers/sensors/cirque_pinnacle.h"
 #include "spi_master.h"
@@ -14,16 +17,6 @@ __attribute__((weak)) cirque_pinnacles_config_t cirque_pinnacles_get_config(uint
         .swap_xy = false,
     };
     return config;
-}
-
-__attribute__((weak)) void cirque_pinnacles_set_keydown(uint16_t kc)
-{
-    register_code16(kc);
-}
-
-__attribute__((weak)) void cirque_pinnacles_set_keyup(uint16_t kc)
-{
-    unregister_code16(kc);
 }
 
 __attribute__((weak)) bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t x, uint8_t y)
@@ -47,30 +40,7 @@ __attribute__((weak)) bool cirque_pinnacles_touchup(uint8_t cirque_index)
 
 static cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES_COUNT];
 static uint8_t _current_spi_cs_pin = 0;
-
-static const uint16_t* _ninebox_mapping[CIRQUE_PINNACLES_COUNT];
 static uint16_t _ninebox_keysdown[CIRQUE_PINNACLES_COUNT][2];
-
-void cirque_pinnacles_ninebox_clear_keys(uint8_t cirque_index)
-{
-    for (uint8_t i = 0; i < 2; i++) {
-        if (_ninebox_keysdown[cirque_index][i] > 0) {
-            cirque_pinnacles_set_keyup(_ninebox_keysdown[cirque_index][i]);
-            _ninebox_keysdown[cirque_index][i] = 0;
-        }
-    }
-}
-
-const uint16_t* cirque_pinnacles_ninebox_get(uint8_t cirque_index)
-{
-    return _ninebox_mapping[cirque_index];
-}
-
-void cirque_pinnacles_ninebox_set(uint8_t cirque_index, const uint16_t* ninebox)
-{
-    cirque_pinnacles_ninebox_clear_keys(cirque_index);
-    _ninebox_mapping[cirque_index] = ninebox;
-}
 
 void cirque_pinnacles_select(uint8_t cirque_index)
 {
@@ -87,7 +57,6 @@ void cirque_pinnacles_init(void)
     spi_init();
 
     for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
-        _ninebox_mapping[i] = NULL;
         for (uint8_t j = 0; j < 2; j++) {
             _ninebox_keysdown[i][j] = 0;
         }
@@ -96,6 +65,67 @@ void cirque_pinnacles_init(void)
         cirque_pinnacle_init();
     }
 }
+
+#if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
+
+__attribute__((weak)) bool cirque_pinnacles_joysticks_active(void) {
+    return false;
+}
+
+__attribute__((weak)) bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
+    return false;
+}
+
+bool cirque_pinnacles_joystick_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy) {
+    if (!cirque_pinnacles_joysticks_active()) {
+        return false;
+    }
+
+    switch (cirque_index) {
+    case 0: { // left pad
+        joysticks_set_axis(JS_AXIS_X, x);
+        joysticks_set_axis(JS_AXIS_Y, -y);
+        return true;
+    } break;
+    case 1: { // right pad
+        if (cirque_pinnacles_joysticks_right_alt_axes_active()) {
+            joysticks_set_axis(JS_AXIS_RX, x);
+            joysticks_move_axis(JS_AXIS_RY, dy / 8);
+        } else {
+            joysticks_set_axis(JS_AXIS_Z, x);
+            joysticks_set_axis(JS_AXIS_RZ, -y);
+        }
+        return true;
+    } break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool cirque_pinnacles_joystick_touchup(uint8_t cirque_index) {
+    switch (cirque_index) {
+    case 0: { // left pad
+        joysticks_set_axis(JS_AXIS_X, 0);
+        joysticks_set_axis(JS_AXIS_Y, 0);
+        return true;
+    } break;
+    case 1: { // right pad
+        if (cirque_pinnacles_joysticks_right_alt_axes_active()) {
+            joysticks_set_axis(JS_AXIS_RX, 0);
+        } else {
+            joysticks_set_axis(JS_AXIS_Z, 0);
+            joysticks_set_axis(JS_AXIS_RZ, 0);
+        }
+        return true;
+    } break;
+    default:
+        break;
+    }
+    return false;
+}
+
+#endif
 
 float linear_scale(float value, float min_in, float max_in, float min_out, float max_out)
 {
@@ -108,9 +138,8 @@ float linear_scale(float value, float min_in, float max_in, float min_out, float
     return value;
 }
 
-
 static const uint16_t NINEBOX_CENTER_SIZE = 512;
-uint8_t cirque_pinnacles_get_ninebox(int16_t x, int16_t y) {
+uint8_t cirque_pinnacles_ninebox_index(int16_t x, int16_t y) {
     if (abs(x) < NINEBOX_CENTER_SIZE && abs(y) < NINEBOX_CENTER_SIZE) {
         return 4;
     } else if (abs(x) >= 2 * abs(y)) { // right or left
@@ -128,8 +157,32 @@ uint8_t cirque_pinnacles_get_ninebox(int16_t x, int16_t y) {
     }
 }
 
-bool cirque_pinnacles_is_using_ninebox(uint8_t cirque_index) {
-    return _ninebox_mapping[cirque_index] != NULL;
+__attribute__((weak)) bool cirque_pinnacles_ninebox_active(uint8_t cirque_index) {
+    return false;
+}
+
+__attribute__((weak)) uint16_t cirque_pinnacles_get_ninebox(uint8_t cirque_index, uint8_t ninebox_index) {
+    return KC_NO;
+}
+
+void cirque_pinnacles_set_keydown(uint16_t kc)
+{
+#if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
+    if (joysticks_process_keycode(kc, true)) {
+        return;
+    }
+#endif
+    register_code16(kc);
+}
+
+void cirque_pinnacles_set_keyup(uint16_t kc)
+{
+#if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
+    if (joysticks_process_keycode(kc, false)) {
+        return;
+    }
+#endif
+    unregister_code16(kc);
 }
 
 bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t kc2) {
@@ -166,14 +219,14 @@ bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t
     return handled;
 }
 
-bool cirque_pinnacles_try_press_ninebox(uint8_t cirque_index, int16_t x, uint16_t y) {
-    if (!cirque_pinnacles_is_using_ninebox(cirque_index)) {
+bool cirque_pinnacles_ninebox_touchdown(uint8_t cirque_index, int16_t x, uint16_t y) {
+    if (!cirque_pinnacles_ninebox_active(cirque_index)) {
         return false;
     }
 
     // have a mapping, try to use it
-    uint8_t ninebox_pos = cirque_pinnacles_get_ninebox(x, y);
-    uint16_t kc = _ninebox_mapping[cirque_index][ninebox_pos];
+    uint8_t ninebox_pos = cirque_pinnacles_ninebox_index(x, y);
+    uint16_t kc = cirque_pinnacles_get_ninebox(cirque_index, ninebox_pos);
     if (kc != KC_NO || ninebox_pos == 1 || ninebox_pos == 3 || ninebox_pos == 5 || ninebox_pos == 7) {
         // defined key or single cardinal direction
         return cirque_pinnacles_set_keys_down(cirque_index, kc, KC_NO);
@@ -181,15 +234,31 @@ bool cirque_pinnacles_try_press_ninebox(uint8_t cirque_index, int16_t x, uint16_
         // corner direction and we don't have a kc for it explicitly, try the corners near it
         switch (ninebox_pos) {
             case 0: // upper left
-                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][1], _ninebox_mapping[cirque_index][3]);
+                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 1), cirque_pinnacles_get_ninebox(cirque_index, 3));
             case 2: // upper right
-                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][1], _ninebox_mapping[cirque_index][5]);
+                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 1), cirque_pinnacles_get_ninebox(cirque_index, 5));
             case 6: // lower left
-                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][3], _ninebox_mapping[cirque_index][7]);
+                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 3), cirque_pinnacles_get_ninebox(cirque_index, 7));
             case 8: // lower right
-                return cirque_pinnacles_set_keys_down(cirque_index, _ninebox_mapping[cirque_index][5], _ninebox_mapping[cirque_index][7]);
+                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 5), cirque_pinnacles_get_ninebox(cirque_index, 7));
             default:
                 return false;
+        }
+    }
+}
+
+bool cirque_pinnacles_ninebox_touchup(uint8_t cirque_index)
+{
+    cirque_pinnacles_clear_active_keys(cirque_index);
+    return cirque_pinnacles_ninebox_active(cirque_index);
+}
+
+void cirque_pinnacles_clear_active_keys(uint8_t cirque_index)
+{
+    for (uint8_t i = 0; i < 2; i++) {
+        if (_ninebox_keysdown[cirque_index][i] > 0) {
+            cirque_pinnacles_set_keyup(_ninebox_keysdown[cirque_index][i]);
+            _ninebox_keysdown[cirque_index][i] = 0;
         }
     }
 }
@@ -241,10 +310,13 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         state->tap_y = 0;
         state->touching = true;
 
-        if (cirque_pinnacles_try_press_ninebox(cirque_index, state->x, state->y)) {
+        int16_t dx = state->x - state->prev_x;
+        int16_t dy = state->y - state->prev_y;
+        if (cirque_pinnacles_ninebox_touchdown(cirque_index, state->x, state->y)) {
             return DATA_HANDLED;
-        } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, state->x - state->prev_x, state->y - state->prev_y)) {
-            // already handled
+        } else if (cirque_pinnacles_joystick_touchdown(cirque_index, state->x, state->y, dx, dy)) {
+            return DATA_HANDLED;
+        } else if (cirque_pinnacles_touchdown(cirque_index, state->x, state->y, dx, dy)) {
             return DATA_HANDLED;
         }
     } else { // not actively touching
@@ -268,9 +340,11 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         state->x = 0;
         state->y = 0;
 
-        cirque_pinnacles_ninebox_clear_keys(cirque_index);
-        if (!cirque_pinnacles_is_using_ninebox(cirque_index) && cirque_pinnacles_touchup(cirque_index)) {
-            // already handled
+        if (cirque_pinnacles_ninebox_touchup(cirque_index)) {
+            return DATA_HANDLED;
+        } else if (cirque_pinnacles_joystick_touchup(cirque_index)) {
+            return DATA_HANDLED;
+        } else if (cirque_pinnacles_touchup(cirque_index)) {
             return DATA_HANDLED;
         }
     }
@@ -359,7 +433,3 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
 }
 #endif
 
-#if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
-
-
-#endif
