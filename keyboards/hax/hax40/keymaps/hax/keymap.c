@@ -3,6 +3,9 @@
 #if defined(JOYSTICK_ENABLE)
 #include "joysticks.h"
 #endif
+#if defined(OLED_ENABLE)
+#include "oled.h"
+#endif
 #include "print.h"
 #include "tap_dance_quad.h"
 
@@ -275,29 +278,27 @@ uint8_t oled_get_macro_recording(void) {
 void oled_write_layer_details(void) {
     switch (get_highest_layer(layer_state)) {
     case LAYER_JOYSTICK: {
-        oled_write_P((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox) ? PSTR("DPAD ") : PSTR("     "), false);
+        oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), "DPAD", 4);
         oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
-        oled_write_P(PSTR("\n"), false);
+    } break;
+    case LAYER_MOVE: {
+        oled_render_pointing_dpi();
     } break;
     default: {
         uint8_t macro_recording = oled_get_macro_recording();
         if (macro_recording == 0) {
-            oled_write_P(PSTR("     "), false);
+            oled_render_padding(4);
         } else {
-            char buffer[8];
-            sprintf(buffer, "REC%d ", macro_recording);
-            oled_write_P(PSTR(buffer), false);
+            oled_write_P("REC", false);
+            oled_render_u16(macro_recording);
         }
 
-        // Host Keyboard LED Status
-        led_t led_state = host_keyboard_led_state();
-        oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false);
-        oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false);
-        oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false);
-        oled_write_P(PSTR("\n"), false);
+        // oled_render_locks();
+        oled_render_mods(false);
     } break;
     }
 
+    oled_newline();
     oled_write_P(PSTR(LAYER_MAPS[get_highest_layer(layer_state)]), false);
 }
 
@@ -313,12 +314,12 @@ bool oled_task_user(void) {
     oled_clear();
 
     oled_write_P(PSTR(oled_get_layer_name()), false);
-    oled_write_P(PSTR("\n"), false);
-    oled_write_P(PSTR("\n"), false);
+    oled_newline();
+    oled_newline();
 
     for (int8_t i = -2; i <= 2; i++) {
         if (oled_mode_select_highlighted + i < 0 || oled_mode_select_highlighted + i > SELECTABLE_MODES_COUNT - 1) {
-            oled_write_P(PSTR("\n"), false);
+            oled_newline();
             continue;
         }
 
@@ -329,7 +330,7 @@ bool oled_task_user(void) {
         }
 
         oled_write_P(PSTR(LAYER_NAMES[SELECTABLE_MODES[oled_mode_select_highlighted + i]]), false);
-        oled_write_P(PSTR("\n"), false);
+        oled_newline();
     }
 
     oled_render_dirty(true);
@@ -399,7 +400,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
         LSFT_T(KC_EXLM), KC_AT, KC_HASH, KC_DLR, KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, MO(LAYER_MOVE), KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 };
 
