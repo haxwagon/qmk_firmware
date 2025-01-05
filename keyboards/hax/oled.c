@@ -1,6 +1,62 @@
 #include QMK_KEYBOARD_H
 #include "oled.h"
 
+static const oled_menu_t* _active_menu = NULL;
+static uint8_t _menu_highlighted_index = 0;
+
+bool oled_in_menu(void)
+{
+    return _active_menu != NULL;
+}
+
+void oled_menu_activate(const oled_menu_t* menu)
+{
+    _active_menu = menu;
+
+    if (!oled_in_menu()) {
+        return;
+    }
+    _menu_highlighted_index = 0;
+}
+
+void oled_menu_highlight_next(void)
+{
+    if (!oled_in_menu()) {
+        return;
+    }
+    if (_menu_highlighted_index < _active_menu->items_count - 1) {
+        _menu_highlighted_index++;
+    } else {
+        _menu_highlighted_index = 0;
+    }
+}
+
+void oled_menu_highlight_prev(void)
+{
+    if (!oled_in_menu()) {
+        return;
+    }
+
+    if (_menu_highlighted_index > 0) {
+        _menu_highlighted_index--;
+    } else {
+        _menu_highlighted_index = _active_menu->items_count - 1;
+    }
+}
+
+void oled_menu_select(void)
+{
+    if (!oled_in_menu()) {
+        return;
+    }
+
+    oled_on_menu_item_selected on_selected = _active_menu->on_item_selected[_menu_highlighted_index];
+    if (on_selected != NULL) {
+        menu_item_context_t context = _active_menu->item_contexts[_menu_highlighted_index];
+        on_selected(_menu_highlighted_index, context);
+    }
+}
+
 void oled_newline(void)
 {
     oled_write_P(PSTR("\n"), false);
@@ -24,6 +80,34 @@ void oled_render_locks(void)
     oled_render_flag(led_state.num_lock, "NUM", 4);
     oled_render_flag(led_state.caps_lock, "CAP", 4);
     oled_render_flag(led_state.scroll_lock, "SCR", 4);
+}
+
+void oled_render_menu(void)
+{
+    if (!oled_in_menu()) {
+        return;
+    }
+
+    oled_clear();
+    oled_write_ln_P(PSTR(_active_menu->title), false);
+    oled_newline();
+
+    for (int8_t i = -2; i <= 2; i++) {
+        if (_menu_highlighted_index + i < 0 || _menu_highlighted_index + i > _active_menu->items_count - 1) {
+            oled_newline();
+            continue;
+        }
+
+        if (i == 0) {
+            oled_write_P(PSTR("> "), false);
+        } else {
+            oled_write_P(PSTR("  "), false);
+        }
+
+        oled_write_P(PSTR(_active_menu->items[_menu_highlighted_index + i]), false);
+        oled_newline();
+    }
+    oled_render_dirty(true);
 }
 
 void oled_render_mods(bool verbose)

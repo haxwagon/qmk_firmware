@@ -21,27 +21,18 @@ enum LAYERS {
     LAYER_NUMSYMS, // upper
     LAYER_FUNC,    // lower
     LAYER_MOVE,    // adjust
-    LAYER_GAMEPAD,
-    LAYER_GAMEPAD2,
 #if defined(JOYSTICK_ENABLE)
     LAYER_JOYSTICK,
 #endif
     LAYER_MEDIA,
-    LAYER_MODE_SELECT,
+    LAYER_MENU,
     LAYER_NUMPAD,
+    LAYER_APP_FPS,
+    LAYER_APP_FPS2,
+    LAYER_APP_MOBA,
 };
 
 static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
-
-static const uint8_t SELECTABLE_MODES_COUNT = 4;
-static const uint8_t SELECTABLE_MODES[]     = {
-#if defined(JOYSTICK_ENABLE)
-    LAYER_JOYSTICK,
-#endif
-    LAYER_NUMPAD,
-    LAYER_MEDIA,
-    LAYER_GAMEPAD,
-};
 
 static const char* LAYER_MAPS[] = {
     [LAYER_QWERTY]   = "\
@@ -59,22 +50,6 @@ ES          MO      \n\
        <  v  ^  > EN\n\
 LS '` =+ -_ /\\      \n\
       {} [] <> ()  \\\n\
-",
-    [LAYER_GAMEPAD]  = "\
-ES  Q  W  E  R      \n\
-                    \n\
-->  A  S  D  F      \n\
-                    \n\
-LS  Z  X  C  V      \n\
-                    \n\
-",
-    [LAYER_GAMEPAD2] = "\
-F1 F2 F3 F4 F5      \n\
-                    \n\
- 1  2  3  4  5      \n\
-                     \n\
-LS     T  G  B      \n\
-                    \n\
 ",
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "\
@@ -118,21 +93,45 @@ F1 F2 F3 F4 F5      \n\
  !  @  #  $  %      \n\
        ^  &  *  (  )\n\
 ",
+    [LAYER_APP_FPS]  = "\
+ES  Q  W  E  R      \n\
+                    \n\
+->  A  S  D  F      \n\
+                    \n\
+LS  Z  X  C  V      \n\
+                    \n\
+",
+    [LAYER_APP_FPS2] = "\
+F1 F2 F3 F4 F5      \n\
+                    \n\
+ 1  2  3  4  5      \n\
+                     \n\
+LS     T  G  B      \n\
+                    \n\
+",
+    [LAYER_APP_MOBA] = "\
+ES ->     D  T      \n\
+                    \n\
+ Q  W  E  R  F      \n\
+                    \n\
+ 1  2  3  4  5      \n\
+                     \n\
+",
 };
 
 static const char* LAYER_NAMES[] = {
     [LAYER_QWERTY] = "Default",
     [LAYER_FUNC] = "Functions",
-    [LAYER_GAMEPAD] = "Gamepad",
-    [LAYER_GAMEPAD2] = "Gamepad 2",
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "Joystick",
 #endif
     [LAYER_MEDIA] = "Media",
-    [LAYER_MODE_SELECT] = "Mode Select",
     [LAYER_MOVE] = "Move",
     [LAYER_NUMPAD] = "Numpad",
     [LAYER_NUMSYMS] = "Nums & Syms",
+    [LAYER_APP_FPS] = "App: FPS",
+    [LAYER_APP_FPS2] = "App: FPS 2",
+    [LAYER_APP_MOBA] = "App: MOBA",
 };
 
 enum CUSTOM_KEYCODES {
@@ -141,11 +140,11 @@ enum CUSTOM_KEYCODES {
     CKC_JS_LEFT_DPAD_TOGGLE,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
     CKC_JS_RIGHT_AXES_TOGGLE,
-    CKC_MODE_SELECT,
-    CKC_MODE_SELECT_NEXT,
-    CKC_MODE_SELECT_PREV,
+    CKC_OPEN_MENU,
+    CKC_MENU_SELECT,
+    CKC_MENU_HIGHLIGHT_NEXT,
+    CKC_MENU_HIGHLIGHT_PREV,
 };
-
 
 static const uint16_t* _cirque_pinnacles_nineboxes[CIRQUE_PINNACLES_COUNT];
 bool cirque_pinnacles_ninebox_active(uint8_t cirque_index) {
@@ -269,10 +268,47 @@ bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
 #endif
 
 #if defined(OLED_ENABLE)
-static uint8_t oled_mode_select_highlighted = 0;
+void menu_activate_layer(uint8_t item_index, menu_item_context_t context)
+{
+    uint8_t layer = (uint8_t)context.u16;
+    dprintf("Selecting mode %d=>%d...\n", item_index, layer);
+    layer_move(TO(layer));
+    oled_menu_activate(NULL);
+}
+
+static const oled_menu_t MODE_SELECT_MENU = {
+    .title = "Mode Select",
+    .items = {
+        "Joystick",
+        "Numpad",
+        "Media",
+        "App: FPS",
+        "App: Moba",
+    },
+    .items_count = 5,
+    .on_item_selected = {
+        menu_activate_layer,
+        menu_activate_layer,
+        menu_activate_layer,
+        menu_activate_layer,
+        menu_activate_layer,
+    },
+    .item_contexts = {
+        { u16: LAYER_JOYSTICK },
+        { u16: LAYER_NUMPAD },
+        { u16: LAYER_MEDIA },
+        { u16: LAYER_APP_FPS },
+        { u16: LAYER_APP_MOBA },
+    }
+};
 
 bool oled_task_user(void)
 {
+    if (oled_in_menu()) {
+        oled_render_menu();
+        return false;
+    }
+
     oled_clear();
     oled_write_P(PSTR(LAYER_NAMES[get_highest_layer(layer_state)]), false);
     oled_newline();
@@ -284,25 +320,6 @@ bool oled_task_user(void)
     case LAYER_JOYSTICK: {
         oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), "DPAD", 4);
         oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
-    } break;
-    case LAYER_MODE_SELECT: {
-        oled_newline();
-        for (int8_t i = -2; i <= 2; i++) {
-            if (oled_mode_select_highlighted + i < 0 || oled_mode_select_highlighted + i > SELECTABLE_MODES_COUNT - 1) {
-                oled_newline();
-                continue;
-            }
-
-            if (i == 0) {
-                oled_write_P(PSTR("> "), false);
-            } else {
-                oled_write_P(PSTR("  "), false);
-            }
-
-            oled_write_P(PSTR(LAYER_NAMES[SELECTABLE_MODES[oled_mode_select_highlighted + i]]), false);
-        }
-        return false;
-        // oled_render_dirty(true);
     } break;
     case LAYER_MOVE: {
         oled_render_pointing_dpi();
@@ -335,22 +352,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR
     ),
     [LAYER_FUNC]     = LAYOUT_split_3x5_2(
-        KC_ESC, KC_NO, KC_NO, KC_NO, TO(LAYER_MODE_SELECT), DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
+        KC_ESC, KC_NO, KC_NO, KC_NO, CKC_OPEN_MENU, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
         KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         KC_LSFT, TD(TD_QUOTGRV), TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_ANGLES), TD(TD_PARENS), RSFT_T(KC_BSLS),
         KC_TRNS, KC_ESC, KC_ENT, KC_TRNS
-    ),
-    [LAYER_GAMEPAD]  = LAYOUT_split_3x5_2(
-        KC_ESC, KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TAB, KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        MO(LAYER_GAMEPAD2), KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
-    ),
-    [LAYER_GAMEPAD2] = LAYOUT_split_3x5_2(
-        KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LSFT, KC_NO, KC_T, KC_G, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
@@ -366,9 +371,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO, KC_MFFD, KC_NO,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
     ),
-    [LAYER_MODE_SELECT] = LAYOUT_split_3x5_2(
+    [LAYER_MENU] = LAYOUT_split_3x5_2(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MODE_SELECT_NEXT, CKC_MODE_SELECT_PREV, KC_NO, CKC_MODE_SELECT,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_HIGHLIGHT_NEXT, CKC_MENU_HIGHLIGHT_PREV, KC_NO, CKC_MENU_SELECT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
     ),
@@ -389,6 +394,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
         LSFT_T(KC_EXLM), KC_AT, KC_HASH, KC_DLR, KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
         KC_TRNS, MO(LAYER_MOVE), KC_ENT, KC_TRNS
+    ),
+    [LAYER_APP_FPS]  = LAYOUT_split_3x5_2(
+        KC_ESC, KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_TAB, KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        MO(LAYER_APP_FPS2), KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
+    ),
+    [LAYER_APP_FPS2] = LAYOUT_split_3x5_2(
+        KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_LSFT, KC_NO, KC_T, KC_G, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+    ),
+    [LAYER_APP_MOBA]  = LAYOUT_split_3x5_2(
+        KC_ESC, KC_TAB, KC_NO, KC_D, KC_T, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_Q, KC_W, KC_E, KC_R, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_LCTL, KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
     ),
 };
 
@@ -469,26 +492,18 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
         return false;
 #endif
 #if defined(OLED_ENABLE)
-    case CKC_MODE_SELECT:
-        dprintf("Selecting mode %d=>%d...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
-        layer_move(TO(SELECTABLE_MODES[oled_mode_select_highlighted]));
-        oled_mode_select_highlighted = 0;
+    case CKC_OPEN_MENU:
+        oled_menu_activate(&MODE_SELECT_MENU);
+        layer_move(LAYER_MENU);
         return false;
-    case CKC_MODE_SELECT_NEXT:
-        if (oled_mode_select_highlighted >= SELECTABLE_MODES_COUNT - 1) {
-            oled_mode_select_highlighted = 0;
-        } else {
-            oled_mode_select_highlighted++;
-        }
-        dprintf("Selecting next mode (now highlighting %d=>%d)...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
+    case CKC_MENU_SELECT:
+        oled_menu_select();
         return false;
-    case CKC_MODE_SELECT_PREV:
-        if (oled_mode_select_highlighted > 0) {
-            oled_mode_select_highlighted--;
-        } else {
-            oled_mode_select_highlighted = SELECTABLE_MODES_COUNT - 1;
-        }
-        dprintf("Selecting previous mode (now highlighting %d=>%d)...\n", oled_mode_select_highlighted, SELECTABLE_MODES[oled_mode_select_highlighted]);
+    case CKC_MENU_HIGHLIGHT_NEXT:
+        oled_menu_highlight_next();
+        return false;
+    case CKC_MENU_HIGHLIGHT_PREV:
+        oled_menu_highlight_prev();
         return false;
 #endif
     default:
