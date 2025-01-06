@@ -217,27 +217,47 @@ tap_dance_action_t tap_dance_actions[] = {
 #endif
 
 #if defined(COMBO_ENABLE)
-const uint16_t PROGMEM left_alt_combo[]      = {KC_Q, KC_W, COMBO_END};
-const uint16_t PROGMEM left_ctl_combo[]      = {KC_W, KC_E, COMBO_END};
-const uint16_t PROGMEM left_ctl_alt_combo[]  = {KC_Q, KC_W, KC_E, COMBO_END};
-const uint16_t PROGMEM left_ctl_gui_combo[]  = {KC_W, KC_E, KC_R, COMBO_END};
-const uint16_t PROGMEM left_gui_combo[]      = {KC_E, KC_R, COMBO_END};
-const uint16_t PROGMEM right_alt_combo[]     = {KC_O, KC_P, COMBO_END};
-const uint16_t PROGMEM right_ctl_combo[]     = {KC_I, KC_O, COMBO_END};
-const uint16_t PROGMEM right_gui_combo[]     = {KC_U, KC_I, COMBO_END};
-const uint16_t PROGMEM right_ctl_alt_combo[] = {KC_I, KC_O, KC_P, COMBO_END};
-const uint16_t PROGMEM right_ctl_gui_combo[] = {KC_U, KC_I, KC_O, COMBO_END};
+const uint16_t PROGMEM qwerty_left_alt_combo[]      = {KC_Q, KC_W, COMBO_END};
+const uint16_t PROGMEM qwerty_left_ctl_combo[]      = {KC_W, KC_E, COMBO_END};
+const uint16_t PROGMEM qwerty_left_ctl_alt_combo[]  = {KC_Q, KC_W, KC_E, COMBO_END};
+const uint16_t PROGMEM qwerty_left_ctl_gui_combo[]  = {KC_W, KC_E, KC_R, COMBO_END};
+const uint16_t PROGMEM qwerty_left_gui_combo[]      = {KC_E, KC_R, COMBO_END};
+const uint16_t PROGMEM qwerty_right_alt_combo[]     = {KC_O, KC_P, COMBO_END};
+const uint16_t PROGMEM qwerty_right_ctl_combo[]     = {KC_I, KC_O, COMBO_END};
+const uint16_t PROGMEM qwerty_right_gui_combo[]     = {KC_U, KC_I, COMBO_END};
+const uint16_t PROGMEM qwerty_right_ctl_alt_combo[] = {KC_I, KC_O, KC_P, COMBO_END};
+const uint16_t PROGMEM qwerty_right_ctl_gui_combo[] = {KC_U, KC_I, KC_O, COMBO_END};
+const uint16_t PROGMEM numsyms_left_alt_combo[]      = {KC_F1, KC_F2, COMBO_END};
+const uint16_t PROGMEM numsyms_left_ctl_combo[]      = {KC_F2, KC_F3, COMBO_END};
+const uint16_t PROGMEM numsyms_left_ctl_alt_combo[]  = {KC_F1, KC_F2, KC_F3, COMBO_END};
+const uint16_t PROGMEM numsyms_left_ctl_gui_combo[]  = {KC_F2, KC_F3, KC_F4, COMBO_END};
+const uint16_t PROGMEM numsyms_left_gui_combo[]      = {KC_F3, KC_F4, COMBO_END};
+const uint16_t PROGMEM numsyms_right_alt_combo[]     = {KC_F9, KC_F10, COMBO_END};
+const uint16_t PROGMEM numsyms_right_ctl_combo[]     = {KC_F8, KC_F9, COMBO_END};
+const uint16_t PROGMEM numsyms_right_gui_combo[]     = {KC_F7, KC_F8, COMBO_END};
+const uint16_t PROGMEM numsyms_right_ctl_alt_combo[] = {KC_F8, KC_F9, KC_F10, COMBO_END};
+const uint16_t PROGMEM numsyms_right_ctl_gui_combo[] = {KC_F7, KC_F8, KC_F9, COMBO_END};
 combo_t                key_combos[]          = {
-    COMBO(left_alt_combo, KC_LALT),
-    COMBO(left_ctl_combo, KC_LCTL),
-    COMBO(left_gui_combo, KC_LGUI),
-    COMBO(left_ctl_alt_combo, LCTL(KC_LALT)),
-    COMBO(left_ctl_gui_combo, LCTL(KC_LGUI)),
-    COMBO(right_alt_combo, KC_RALT),
-    COMBO(right_ctl_combo, KC_RCTL),
-    COMBO(right_gui_combo, KC_RGUI),
-    COMBO(right_ctl_alt_combo, RCTL(KC_RALT)),
-    COMBO(right_ctl_gui_combo, RCTL(KC_RGUI)),
+    COMBO(qwerty_left_alt_combo, KC_LALT),
+    COMBO(qwerty_left_ctl_combo, KC_LCTL),
+    COMBO(qwerty_left_gui_combo, KC_LGUI),
+    COMBO(qwerty_left_ctl_alt_combo, LCTL(KC_LALT)),
+    COMBO(qwerty_left_ctl_gui_combo, LCTL(KC_LGUI)),
+    COMBO(qwerty_right_alt_combo, KC_RALT),
+    COMBO(qwerty_right_ctl_combo, KC_RCTL),
+    COMBO(qwerty_right_gui_combo, KC_RGUI),
+    COMBO(qwerty_right_ctl_alt_combo, RCTL(KC_RALT)),
+    COMBO(qwerty_right_ctl_gui_combo, RCTL(KC_RGUI)),
+    COMBO(numsyms_left_alt_combo, KC_LALT),
+    COMBO(numsyms_left_ctl_combo, KC_LCTL),
+    COMBO(numsyms_left_gui_combo, KC_LGUI),
+    COMBO(numsyms_left_ctl_alt_combo, LCTL(KC_LALT)),
+    COMBO(numsyms_left_ctl_gui_combo, LCTL(KC_LGUI)),
+    COMBO(numsyms_right_alt_combo, KC_RALT),
+    COMBO(numsyms_right_ctl_combo, KC_RCTL),
+    COMBO(numsyms_right_gui_combo, KC_RGUI),
+    COMBO(numsyms_right_ctl_alt_combo, RCTL(KC_RALT)),
+    COMBO(numsyms_right_ctl_gui_combo, RCTL(KC_RGUI)),
 };
 #endif
 
