@@ -28,7 +28,6 @@ enum LAYERS {
     LAYER_MENU,
     LAYER_NUMPAD,
     LAYER_APP_FPS,
-    LAYER_APP_FPS2,
     LAYER_APP_MOBA,
 };
 
@@ -94,28 +93,20 @@ F1 F2 F3 F4 F5      \n\
        ^  &  *  (  )\n\
 ",
     [LAYER_APP_FPS]  = "\
-ES  Q  W  E  R      \n\
-                    \n\
-->  A  S  D  F      \n\
-                    \n\
-LS  Z  X  C  V      \n\
-                    \n\
-",
-    [LAYER_APP_FPS2] = "\
-F1 F2 F3 F4 F5      \n\
-                    \n\
  1  2  3  4  5      \n\
-                     \n\
-LS     T  G  B      \n\
+                    \n\
+LS  C SP  Q  E      \n\
+                    \n\
+cZ  X  V Rt Fg      \n\
                     \n\
 ",
     [LAYER_APP_MOBA] = "\
-ES ->     D  T      \n\
+ 1  2  3  4  5      \n\
                     \n\
  Q  W  E  R  F      \n\
                     \n\
- 1  2  3  4  5      \n\
-                     \n\
+ES ->     D  T      \n\
+                    \n\
 ",
 };
 
@@ -130,7 +121,6 @@ static const char* LAYER_NAMES[] = {
     [LAYER_NUMPAD] = "Numpad",
     [LAYER_NUMSYMS] = "Nums & Syms",
     [LAYER_APP_FPS] = "App: FPS",
-    [LAYER_APP_FPS2] = "App: FPS 2",
     [LAYER_APP_MOBA] = "App: MOBA",
 };
 
@@ -157,6 +147,11 @@ uint16_t cirque_pinnacles_get_ninebox(uint8_t cirque_index, uint8_t ninebox_inde
 
 #if defined(KEY_OVERRIDE_ENABLE)
 const key_override_t  backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
+const key_override_t  shift1_f1_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_1, KC_F1);
+const key_override_t  shift2_f2_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_2, KC_F2);
+const key_override_t  shift3_f3_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_3, KC_F3);
+const key_override_t  shift4_f4_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_4, KC_F4);
+const key_override_t  shift5_f5_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_5, KC_F5);
 const key_override_t  f11_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
 const key_override_t  f12_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
 const key_override_t  f13_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
@@ -169,6 +164,11 @@ const key_override_t  f19_key_override           = ko_make_basic(MOD_MASK_SHIFT,
 const key_override_t  f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
 const key_override_t* key_overrides[]            = {
     &backspace_del_key_override,
+    &shift1_f1_key_override,
+    &shift2_f2_key_override,
+    &shift3_f3_key_override,
+    &shift4_f4_key_override,
+    &shift5_f5_key_override,
     &f11_key_override,
     &f12_key_override,
     &f13_key_override,
@@ -191,28 +191,36 @@ enum {
     TD_DOTCOLN,
     TD_DOTEXLM,
     TD_EQLPLUS,
+    TD_F_G,
+    TD_M_N,
     TD_MINSUNDS,
     TD_PARENS,
     TD_PASTSLS,
     TD_PPLSMNS,
     TD_QUOTGRV,
+    TD_R_T,
     TD_SLASHES,
+    TD_TAB_ESC,
 };
 
 tap_dance_action_t tap_dance_actions[] = {
-    [TD_ANGLES] = ACTION_TAP_DANCE_DOUBLE(KC_LABK, KC_RABK),
-    [TD_BRACES] = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR),
+    [TD_ANGLES]   = ACTION_TAP_DANCE_DOUBLE(KC_LABK, KC_RABK),
+    [TD_BRACES]   = ACTION_TAP_DANCE_DOUBLE(KC_LCBR, KC_RCBR),
     [TD_BRACKETS] = ACTION_TAP_DANCE_DOUBLE(KC_LBRC, KC_RBRC),
     [TD_COMMSCLN] = ACTION_TAP_DANCE_DOUBLE(KC_COMM, KC_SCLN),
-    [TD_DOTCOLN] = ACTION_TAP_DANCE_QUAD(KC_DOT, KC_COLN, 0, 0),
-    [TD_DOTEXLM] = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM),
-    [TD_EQLPLUS] = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS),
+    [TD_DOTCOLN]  = ACTION_TAP_DANCE_QUAD(KC_DOT, KC_COLN, 0, 0),
+    [TD_DOTEXLM]  = ACTION_TAP_DANCE_DOUBLE(KC_DOT, KC_EXLM),
+    [TD_EQLPLUS]  = ACTION_TAP_DANCE_DOUBLE(KC_EQL, KC_PLUS),
+    [TD_F_G]      = ACTION_TAP_DANCE_DOUBLE(KC_F, KC_G),
+    [TD_M_N]      = ACTION_TAP_DANCE_DOUBLE(KC_M, KC_N),
     [TD_MINSUNDS] = ACTION_TAP_DANCE_DOUBLE(KC_MINS, KC_UNDS),
-    [TD_PARENS] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
-    [TD_PASTSLS] = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS),
-    [TD_PPLSMNS] = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS),
-    [TD_QUOTGRV] = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV),
-    [TD_SLASHES] = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE),
+    [TD_PARENS]   = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
+    [TD_PASTSLS]  = ACTION_TAP_DANCE_DOUBLE(KC_PAST, KC_PSLS),
+    [TD_PPLSMNS]  = ACTION_TAP_DANCE_DOUBLE(KC_PPLS, KC_PMNS),
+    [TD_QUOTGRV]  = ACTION_TAP_DANCE_DOUBLE(KC_QUOT, KC_GRV),
+    [TD_R_T]      = ACTION_TAP_DANCE_DOUBLE(KC_R, KC_T),
+    [TD_SLASHES]  = ACTION_TAP_DANCE_QUAD(KC_SLSH, KC_QUES, KC_BSLS, KC_PIPE),
+    [TD_TAB_ESC]  = ACTION_TAP_DANCE_DOUBLE(KC_TAB, KC_ESC),
 };
 #endif
 
@@ -237,7 +245,7 @@ const uint16_t PROGMEM numsyms_right_ctl_combo[]     = {KC_F8, KC_F9, COMBO_END}
 const uint16_t PROGMEM numsyms_right_gui_combo[]     = {KC_F7, KC_F8, COMBO_END};
 const uint16_t PROGMEM numsyms_right_ctl_alt_combo[] = {KC_F8, KC_F9, KC_F10, COMBO_END};
 const uint16_t PROGMEM numsyms_right_ctl_gui_combo[] = {KC_F7, KC_F8, KC_F9, COMBO_END};
-combo_t                key_combos[]          = {
+combo_t key_combos[] = {
     COMBO(qwerty_left_alt_combo, KC_LALT),
     COMBO(qwerty_left_ctl_combo, KC_LCTL),
     COMBO(qwerty_left_gui_combo, KC_LGUI),
@@ -422,29 +430,43 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, MO(LAYER_MOVE), KC_ENT, KC_TRNS
     ),
     [LAYER_APP_FPS]  = LAYOUT_split_3x5_2(
-        KC_ESC, KC_Q, KC_W, KC_E, KC_R, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TAB, KC_A, KC_S, KC_D, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        MO(LAYER_APP_FPS2), KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
-    ),
-    [LAYER_APP_FPS2] = LAYOUT_split_3x5_2(
-        KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LSFT, KC_NO, KC_T, KC_G, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_LSFT, KC_C, KC_SPACE, KC_Q, KC_E, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        LCTL_T(KC_Z), KC_X, KC_V, TD(TD_R_T), TD(TD_F_G), KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        TD(TD_M_N), TD(TD_TAB_ESC), KC_SPACE, TO(LAYER_DEFAULT)
     ),
     [LAYER_APP_MOBA]  = LAYOUT_split_3x5_2(
-        KC_ESC, KC_TAB, KC_NO, KC_D, KC_T, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_Q, KC_W, KC_E, KC_R, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_Q, KC_W, KC_E, KC_R, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_ESC, KC_TAB, KC_NO, KC_D, KC_T, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_LCTL, KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
     ),
 };
 
+static const uint16_t _wasd_ninebox[9] = {
+    KC_NO, KC_W, KC_NO,
+    KC_A, KC_NO, KC_D,
+    KC_NO, KC_S, KC_NO,
+};
+
 void keyboard_post_init_user(void) {
     for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
-        _cirque_pinnacles_nineboxes[i] = 0;
+        _cirque_pinnacles_nineboxes[i] = NULL;
     }
+}
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    switch(get_highest_layer(state)) {
+        case LAYER_APP_FPS:
+            _cirque_pinnacles_nineboxes[0] = _wasd_ninebox;
+            _cirque_pinnacles_nineboxes[1] = NULL;
+            break;
+        default:
+            _cirque_pinnacles_nineboxes[0] = NULL;
+            _cirque_pinnacles_nineboxes[1] = NULL;
+            break;
+    }
+    return state;
 }
 
 bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
@@ -551,7 +573,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     }
 
 #if defined(JOYSTICK_ENABLE)
-    if (!joysticks_process_keycode(keycode, record->event.pressed)) {
+    if (joysticks_handle_keycode(keycode, record->event.pressed)) {
         return false;
     }
 #endif

@@ -172,7 +172,7 @@ __attribute__((weak)) uint16_t cirque_pinnacles_get_ninebox(uint8_t cirque_index
 void cirque_pinnacles_set_keydown(uint16_t kc)
 {
 #if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
-    if (joysticks_process_keycode(kc, true)) {
+    if (joysticks_handle_keycode(kc, true)) {
         return;
     }
 #endif
@@ -182,14 +182,15 @@ void cirque_pinnacles_set_keydown(uint16_t kc)
 void cirque_pinnacles_set_keyup(uint16_t kc)
 {
 #if defined(CIRQUE_PINNACLES_DUAL_JOYSTICKS)
-    if (joysticks_process_keycode(kc, false)) {
+    if (joysticks_handle_keycode(kc, false)) {
         return;
     }
 #endif
     unregister_code16(kc);
 }
 
-bool cirque_pinnacles_set_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t kc2) {
+bool cirque_pinnacles_handle_keys_down(uint8_t cirque_index, uint16_t kc1, uint16_t kc2) {
+    dprintf("cirque_pinnacles_handle_keys_down: %d, %d, %d\n", cirque_index, kc1, kc2);
     bool handled = false;
     int8_t kc1_down_pos = -1;
     int8_t kc2_down_pos = -1;
@@ -233,18 +234,18 @@ bool cirque_pinnacles_ninebox_touchdown(uint8_t cirque_index, int16_t x, uint16_
     uint16_t kc = cirque_pinnacles_get_ninebox(cirque_index, ninebox_pos);
     if (kc != KC_NO || ninebox_pos == 1 || ninebox_pos == 3 || ninebox_pos == 5 || ninebox_pos == 7) {
         // defined key or single cardinal direction
-        return cirque_pinnacles_set_keys_down(cirque_index, kc, KC_NO);
+        return cirque_pinnacles_handle_keys_down(cirque_index, kc, KC_NO);
     } else {
         // corner direction and we don't have a kc for it explicitly, try the corners near it
         switch (ninebox_pos) {
             case 0: // upper left
-                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 1), cirque_pinnacles_get_ninebox(cirque_index, 3));
+                return cirque_pinnacles_handle_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 1), cirque_pinnacles_get_ninebox(cirque_index, 3));
             case 2: // upper right
-                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 1), cirque_pinnacles_get_ninebox(cirque_index, 5));
+                return cirque_pinnacles_handle_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 1), cirque_pinnacles_get_ninebox(cirque_index, 5));
             case 6: // lower left
-                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 3), cirque_pinnacles_get_ninebox(cirque_index, 7));
+                return cirque_pinnacles_handle_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 3), cirque_pinnacles_get_ninebox(cirque_index, 7));
             case 8: // lower right
-                return cirque_pinnacles_set_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 5), cirque_pinnacles_get_ninebox(cirque_index, 7));
+                return cirque_pinnacles_handle_keys_down(cirque_index, cirque_pinnacles_get_ninebox(cirque_index, 5), cirque_pinnacles_get_ninebox(cirque_index, 7));
             default:
                 return false;
         }

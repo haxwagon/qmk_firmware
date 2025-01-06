@@ -41,7 +41,7 @@ void joysticks_move_axis(uint8_t axis, int16_t delta)
     joysticks_set_axis(axis, value);
 }
 
-bool joysticks_process_keycode(uint16_t kc, bool pressed) {
+bool joysticks_handle_keycode(uint16_t kc, bool pressed) {
     switch (kc) {
     case KC_JS_HAT_C:
     case KC_JS_HAT_DL:
@@ -57,7 +57,7 @@ bool joysticks_process_keycode(uint16_t kc, bool pressed) {
         } else {
             joystick_set_hat(JOYSTICK_HAT_CENTER);
         }
-        return false;
+        return true;
     case KC_JS_LEFT_TRIGGER:
         if (pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
@@ -66,7 +66,7 @@ bool joysticks_process_keycode(uint16_t kc, bool pressed) {
             joysticks_set_axis(JS_AXIS_RX, 0);
             unregister_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
         }
-        return false;
+        return true;
     case KC_JS_RIGHT_TRIGGER:
         if (pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MAX);
@@ -75,16 +75,16 @@ bool joysticks_process_keycode(uint16_t kc, bool pressed) {
             joysticks_set_axis(JS_AXIS_RX, 0);
             unregister_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
         }
-        return false;
+        return true;
     case JS_0...JS_31:
         if (pressed) {
             register_joystick_button(kc);
         } else {
             unregister_joystick_button(kc);
         }
-        return false;
-    default:
         return true;
+    default:
+        return false;
     }
 }
 
