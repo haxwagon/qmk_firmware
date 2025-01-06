@@ -18,21 +18,7 @@
         "xstddef": "c",
         "type_traits": "c",
         "utility": "c",
-        "ranges": "c",
-        "compare": "c",
-        "cstdint": "c",
-        "*.tcc": "c",
-        "charconv": "c",
-        "chrono": "c",
-        "optional": "c",
-        "format": "c",
-        "ratio": "c",
-        "system_error": "c",
-        "array": "c",
-        "functional": "c",
-        "regex": "c",
-        "tuple": "c",
-        "cstdlib": "c"
+        "ranges": "c"
     },
     "[markdown]": {
         "editor.trimAutoWhitespace": false,
@@ -44,6 +30,5 @@
     },
     "clangd.arguments": [
         "--header-insertion=never"
-    ],
-    "C_Cpp.errorSquiggles": "disabled"
+    ]
 }
