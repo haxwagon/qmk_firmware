@@ -104,6 +104,10 @@ bool cirque_pinnacles_joystick_touchdown(uint8_t cirque_index, int16_t x, int16_
 }
 
 bool cirque_pinnacles_joystick_touchup(uint8_t cirque_index) {
+    if (!cirque_pinnacles_joysticks_active()) {
+        return false;
+    }
+
     switch (cirque_index) {
     case 0: { // left pad
         joysticks_set_axis(JS_AXIS_X, 0);
@@ -406,27 +410,34 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
     if (cirque_pinnacles_read_data(1, &(cirque_pinnacles_states[1])) == DATA_UPDATED) {
         if (cirque_pinnacles_states[1].touching) {
             pointing_device_tapped_at = timer_read();
-            mouse_report.x = (cirque_pinnacles_states[1].x - cirque_pinnacles_states[1].prev_x) / 256 * pointing_device_driver_get_cpi();
-            mouse_report.y = -(cirque_pinnacles_states[1].y - cirque_pinnacles_states[1].prev_y) / 256 * pointing_device_driver_get_cpi();
+            mouse_report.x = (cirque_pinnacles_states[1].x - cirque_pinnacles_states[1].prev_x) / 512 * pointing_device_driver_get_cpi();
+            mouse_report.y = -(cirque_pinnacles_states[1].y - cirque_pinnacles_states[1].prev_y) / 512 * pointing_device_driver_get_cpi();
         }
 
         if (cirque_pinnacles_states[1].tapped) {
             pointing_device_tapped_at = timer_read();
             if (cirque_pinnacles_states[1].tap_x < 1) {
+                dprintf("Setting mouse button 3\n");
                 mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON3);
             } else if (cirque_pinnacles_states[1].tap_x > 1) {
+                dprintf("Setting mouse button 2\n");
                 mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON2);
             } else {
+                dprintf("Setting mouse button 1\n");
                 mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
             }
         }
     }
 
-    if (timer_elapsed(pointing_device_tapped_at) > CIRQUE_PINNACLES_TAP_TERM && !cirque_pinnacles_states[1].touching) {
-        // clear mouse down, have held off long enough
-        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
-        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON2);
-        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON3);
+    if (!cirque_pinnacles_states[1].touching && pointing_device_tapped_at > 0) {
+        if (timer_elapsed(pointing_device_tapped_at) > CIRQUE_PINNACLES_TAP_TERM) {
+            // clear mouse down, have held off long enough
+            dprintf("Clearing all mouse buttons\n");
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON1);
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON2);
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, false, POINTING_DEVICE_BUTTON3);
+            pointing_device_tapped_at = 0;
+        }
     }
 
     return mouse_report;
