@@ -94,7 +94,7 @@ F1 F2 F3 F4 F5      \n\
 ",
     [LAYER_APP_FPS]  = "\
  1  2  3  4  5      \n\
-                    \n\
+      SS HL         \n\
 LS  C SP  Q  E      \n\
                     \n\
 cZ  X  V Rt Fg      \n\
@@ -102,10 +102,10 @@ cZ  X  V Rt Fg      \n\
 ",
     [LAYER_APP_MOBA] = "\
  1  2  3  4  5      \n\
+      SS HL         \n\
+ Q  W  E  R  A      \n\
                     \n\
- Q  W  E  R  F      \n\
-                    \n\
-ES ->     D  T      \n\
+tE  T  D  F  B      \n\
                     \n\
 ",
 };
@@ -430,15 +430,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, MO(LAYER_MOVE), KC_ENT, KC_TRNS
     ),
     [LAYER_APP_FPS]  = LAYOUT_split_3x5_2(
-        KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_1, KC_2, KC_3, KC_4, KC_5, LALT(KC_F1), LALT(KC_F10), KC_NO, KC_NO, KC_NO,
         KC_LSFT, KC_C, KC_SPACE, KC_Q, KC_E, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         LCTL_T(KC_Z), KC_X, KC_V, TD(TD_R_T), TD(TD_F_G), KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         TD(TD_M_N), TD(TD_TAB_ESC), KC_SPACE, TO(LAYER_DEFAULT)
     ),
     [LAYER_APP_MOBA]  = LAYOUT_split_3x5_2(
-        KC_1, KC_2, KC_3, KC_4, KC_5, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_Q, KC_W, KC_E, KC_R, KC_F, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_ESC, KC_TAB, KC_NO, KC_D, KC_T, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_1, KC_2, KC_3, KC_4, KC_5, LALT(KC_F1), LALT(KC_F10), KC_NO, KC_NO, KC_NO,
+        KC_Q, KC_W, KC_E, KC_R, KC_A, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        TD(TD_TAB_ESC), KC_T, KC_D, KC_F, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_LCTL, KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
     ),
 };
@@ -448,6 +448,34 @@ static const uint16_t _wasd_ninebox[9] = {
     KC_A, KC_NO, KC_D,
     KC_NO, KC_S, KC_NO,
 };
+
+#if defined(CIRQUE_PINNACLES_POINTING_DEVICE)
+uint8_t cirque_pinnacles_pointing_device_get_mode(uint8_t cirque_index)
+{
+    if (get_highest_layer(layer_state) == LAYER_APP_MOBA) {
+        switch (cirque_index) {
+        case 0: return 1 << POINTING_DEVICE_XY;
+        default: return 0;
+        }
+    } else {
+        switch (cirque_index) {
+        case 0: return 1 << POINTING_DEVICE_HV;
+        case 1: return 1 << POINTING_DEVICE_BUTTONS | 1 << POINTING_DEVICE_XY;
+        default: return 0;
+        }
+    }
+}
+
+report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t mouse_report) {
+    if (get_highest_layer(layer_state) == LAYER_APP_MOBA) {
+        // simulate middle mouse drag for panning
+        bool mouse_moving = (mouse_report.x != 0 || mouse_report.y != 0);
+        mouse_report.buttons = pointing_device_handle_buttons(0, mouse_moving, POINTING_DEVICE_BUTTON3);
+        return mouse_report;
+    }
+    return mouse_report;
+}
+#endif
 
 void keyboard_post_init_user(void) {
     for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {

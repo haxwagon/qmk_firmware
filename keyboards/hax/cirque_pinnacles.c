@@ -357,7 +357,15 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
     return DATA_UPDATED;
 }
 
-#if defined(CIRQUE_PINNACLES_DUAL_MOUSE)
+#if defined(CIRQUE_PINNACLES_POINTING_DEVICE)
+
+__attribute__((weak)) report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t mouse_report) {
+    return mouse_report;
+}
+
+__attribute__((weak)) report_mouse_t cirque_pinnacles_pointing_device_get_report_kb(report_mouse_t mouse_report) {
+    return cirque_pinnacles_pointing_device_get_report_user(mouse_report);
+}
 
 #define CIRQUE_PINNACLE_INCH_TO_PX(inch) (DIVIDE_UNSIGNED_ROUND((inch) * (uint32_t)CIRQUE_PINNACLE_DIAMETER_MM * 10, 254))
 #define CIRQUE_PINNACLE_PX_TO_INCH(px) (DIVIDE_UNSIGNED_ROUND((px) * (uint32_t)254, CIRQUE_PINNACLE_DIAMETER_MM * 10))
@@ -384,53 +392,100 @@ void pointing_device_driver_init(void)
     printf("Done initializing dual Cirque Pinnacles.\n");
 }
 
+report_mouse_t cirque_pinnacles_pointing_device_update_buttons(report_mouse_t mouse_report, cirque_pinnacles_state_t* state)
+{
+    if (state->tapped) {
+        pointing_device_tapped_at = timer_read();
+        if (state->tap_x < 1) {
+            dprintf("Setting mouse button 3\n");
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON3);
+        } else if (state->tap_x > 1) {
+            dprintf("Setting mouse button 2\n");
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON2);
+        } else {
+            dprintf("Setting mouse button 1\n");
+            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
+        }
+    }
+
+
+    return mouse_report;
+}
+
+report_mouse_t cirque_pinnacles_pointing_device_update_hv(report_mouse_t mouse_report, cirque_pinnacles_state_t* state)
+{
+    if (!state->touching) {
+        return mouse_report;
+    }
+
+    if (state->x - state->prev_x >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+        mouse_report.h = 1;
+    } else if (state->prev_x - state->x >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+        mouse_report.h = -1;
+    } else {
+        mouse_report.h = 0;
+    }
+    if (state->y - state->prev_y >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+        mouse_report.v = 1;
+    } else if (state->prev_y - state->y >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
+        mouse_report.v = -1;
+    } else {
+        mouse_report.v = 0;
+    }
+#if CIRQUE_PINNACLES_SCROLL_REVERSE
+    mouse_report.h *= -1;
+    mouse_report.v *= -1;
+#endif
+    return mouse_report;
+}
+
+report_mouse_t cirque_pinnacles_pointing_device_update_xy(report_mouse_t mouse_report, cirque_pinnacles_state_t* state)
+{
+    if (!state->touching) {
+        return mouse_report;
+    }
+
+    pointing_device_tapped_at = timer_read();
+    mouse_report.x = (state->x - state->prev_x) / 512 * pointing_device_driver_get_cpi();
+    mouse_report.y = -(state->y - state->prev_y) / 512 * pointing_device_driver_get_cpi();
+    return mouse_report;
+}
+
+__attribute__((weak)) uint8_t cirque_pinnacles_pointing_device_get_mode(uint8_t cirque_index)
+{
+#if CIRQUE_PINNACLES_COUNT == 1
+    return 1 << POINTING_DEVICE_BUTTONS | 1 << POINTING_DEVICE_XY | 1 << POINTING_DEVICE_HV;
+#else
+    switch (cirque_index) {
+    case 0: return 1 << POINTING_DEVICE_HV;
+    case 1: return 1 << POINTING_DEVICE_BUTTONS | 1 << POINTING_DEVICE_XY;
+    default: return 0;
+    }
+#endif
+}
+
 report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
 {
-    if (cirque_pinnacles_read_data(0, &(cirque_pinnacles_states[0])) == DATA_UPDATED) {
-        if (cirque_pinnacles_states[0].touching) {
-            if (cirque_pinnacles_states[0].x - cirque_pinnacles_states[0].prev_x >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
-                mouse_report.h = 1;
-            } else if (cirque_pinnacles_states[0].prev_x - cirque_pinnacles_states[0].x >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
-                mouse_report.h = -1;
-            } else {
-                mouse_report.h = 0;
-            }
-            if (cirque_pinnacles_states[0].y - cirque_pinnacles_states[0].prev_y >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
-                mouse_report.v = 1;
-            } else if (cirque_pinnacles_states[0].prev_y - cirque_pinnacles_states[0].y >= CIRQUE_PINNACLES_SCROLL_THRESHOLD) {
-                mouse_report.v = -1;
-            } else {
-                mouse_report.v = 0;
-            }
-#if CIRQUE_PINNACLES_SCROLL_REVERSE
-            mouse_report.h *= -1;
-            mouse_report.v *= -1;
-#endif
-        }
-    }
-    if (cirque_pinnacles_read_data(1, &(cirque_pinnacles_states[1])) == DATA_UPDATED) {
-        if (cirque_pinnacles_states[1].touching) {
-            pointing_device_tapped_at = timer_read();
-            mouse_report.x = (cirque_pinnacles_states[1].x - cirque_pinnacles_states[1].prev_x) / 512 * pointing_device_driver_get_cpi();
-            mouse_report.y = -(cirque_pinnacles_states[1].y - cirque_pinnacles_states[1].prev_y) / 512 * pointing_device_driver_get_cpi();
+    bool button_device_touching = false;
+    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+        if (cirque_pinnacles_read_data(i, &(cirque_pinnacles_states[i])) != DATA_UPDATED) {
+            continue;
         }
 
-        if (cirque_pinnacles_states[1].tapped) {
-            pointing_device_tapped_at = timer_read();
-            if (cirque_pinnacles_states[1].tap_x < 1) {
-                dprintf("Setting mouse button 3\n");
-                mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON3);
-            } else if (cirque_pinnacles_states[1].tap_x > 1) {
-                dprintf("Setting mouse button 2\n");
-                mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON2);
-            } else {
-                dprintf("Setting mouse button 1\n");
-                mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
-            }
+        uint8_t mode = cirque_pinnacles_pointing_device_get_mode(i);
+        if (mode & (1 << POINTING_DEVICE_BUTTONS)) {
+            mouse_report = cirque_pinnacles_pointing_device_update_buttons(mouse_report, &(cirque_pinnacles_states[i]));
+            button_device_touching = cirque_pinnacles_states[i].touching;
+        }
+        if (mode & (1 << POINTING_DEVICE_XY)) {
+            mouse_report = cirque_pinnacles_pointing_device_update_xy(mouse_report, &(cirque_pinnacles_states[i]));
+        }
+        if (mode & (1 << POINTING_DEVICE_HV)) {
+            mouse_report = cirque_pinnacles_pointing_device_update_hv(mouse_report, &(cirque_pinnacles_states[i]));
         }
     }
 
-    if (!cirque_pinnacles_states[1].touching && pointing_device_tapped_at > 0) {
+    if (!button_device_touching && pointing_device_tapped_at > 0) {
         if (timer_elapsed(pointing_device_tapped_at) > CIRQUE_PINNACLES_TAP_TERM) {
             // clear mouse down, have held off long enough
             dprintf("Clearing all mouse buttons\n");
@@ -440,6 +495,8 @@ report_mouse_t pointing_device_driver_get_report(report_mouse_t mouse_report)
             pointing_device_tapped_at = 0;
         }
     }
+
+    mouse_report = cirque_pinnacles_pointing_device_get_report_kb(mouse_report);
 
     return mouse_report;
 }

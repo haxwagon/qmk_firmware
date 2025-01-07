@@ -9,10 +9,10 @@ void keyboard_post_init_kb(void)
 {
     dprintf("keyboard initializing...\n");
 #if defined(CONSOLE_ENABLE)
-    debug_enable = true;
+    debug_enable = false;
     debug_matrix = false;
     debug_keyboard = false;
-    debug_mouse = true;
+    debug_mouse = false;
 #endif
 #if defined(JOYSTICK_ENABLE)
     joysticks_init();

@@ -73,3 +73,11 @@ typedef enum {
 cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t spi_cs_pin, cirque_pinnacles_state_t* state);
 
 void cirque_pinnacles_clear_active_keys(uint8_t cirque_index);
+
+#if defined(CIRQUE_PINNACLES_POINTING_DEVICE)
+typedef enum {
+    POINTING_DEVICE_BUTTONS,
+    POINTING_DEVICE_HV,
+    POINTING_DEVICE_XY,
+} cirque_pinnacles_pointing_device_mode_t;
+#endif
