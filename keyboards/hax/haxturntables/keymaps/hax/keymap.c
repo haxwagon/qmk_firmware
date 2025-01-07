@@ -467,11 +467,24 @@ uint8_t cirque_pinnacles_pointing_device_get_mode(uint8_t cirque_index)
 }
 
 report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t mouse_report) {
-    if (get_highest_layer(layer_state) == LAYER_APP_MOBA) {
+    switch (get_highest_layer(layer_state)) {
+    case LAYER_FUNC:
+        if (mouse_report.buttons > 0) {
+            mouse_report.buttons = pointing_device_handle_buttons(0, true, POINTING_DEVICE_BUTTON3);
+        }
+        break;
+    case LAYER_NUMSYMS:
+        if (mouse_report.buttons > 0) {
+            mouse_report.buttons = pointing_device_handle_buttons(0, true, POINTING_DEVICE_BUTTON2);
+        }
+        break;
+    case LAYER_APP_MOBA: {
         // simulate middle mouse drag for panning
         bool mouse_moving = (mouse_report.x != 0 || mouse_report.y != 0);
         mouse_report.buttons = pointing_device_handle_buttons(0, mouse_moving, POINTING_DEVICE_BUTTON3);
-        return mouse_report;
+    } break;
+    default:
+        break;
     }
     return mouse_report;
 }

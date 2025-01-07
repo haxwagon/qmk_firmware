@@ -10,7 +10,7 @@
 extern bool touchpad_init;
 
 
-__attribute__((weak)) uint8_t cirque_pinnacle_spi_get_cs_pin(void) { return CIRQUE_PINNACLE_SPI_CS_PIN; }
+__attribute__((weak)) pin_t cirque_pinnacle_spi_get_cs_pin(void) { return CIRQUE_PINNACLE_SPI_CS_PIN; }
 
 /*  RAP Functions */
 // Reads <count> Pinnacle registers starting at <address>

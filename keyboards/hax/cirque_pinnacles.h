@@ -57,7 +57,7 @@ typedef struct {
 } cirque_pinnacles_state_t;
 
 typedef struct {
-    uint8_t spi_cs_pin;
+    pin_t spi_cs_pin;
     bool flip_x;
     bool flip_y;
     bool swap_xy;

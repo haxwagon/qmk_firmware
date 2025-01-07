@@ -39,7 +39,7 @@ __attribute__((weak)) bool cirque_pinnacles_touchup(uint8_t cirque_index)
 #define CONSTRAIN(x, min, max) ((x) < min ? min : ((x) > max ? max : (x)))
 
 static cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES_COUNT];
-static uint8_t _current_spi_cs_pin = 0;
+static pin_t _current_spi_cs_pin = 0;
 static uint16_t _ninebox_keysdown[CIRQUE_PINNACLES_COUNT][2];
 
 void cirque_pinnacles_select(uint8_t cirque_index)
@@ -47,7 +47,7 @@ void cirque_pinnacles_select(uint8_t cirque_index)
     _current_spi_cs_pin = cirque_pinnacles_configs[cirque_index].spi_cs_pin;
 }
 
-uint8_t cirque_pinnacle_spi_get_cs_pin(void)
+pin_t cirque_pinnacle_spi_get_cs_pin(void)
 {
     return _current_spi_cs_pin;
 }
@@ -396,18 +396,9 @@ report_mouse_t cirque_pinnacles_pointing_device_update_buttons(report_mouse_t mo
 {
     if (state->tapped) {
         pointing_device_tapped_at = timer_read();
-        if (state->tap_x < 1) {
-            dprintf("Setting mouse button 3\n");
-            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON3);
-        } else if (state->tap_x > 1) {
-            dprintf("Setting mouse button 2\n");
-            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON2);
-        } else {
-            dprintf("Setting mouse button 1\n");
-            mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
-        }
+        dprintf("Setting mouse button 1\n");
+        mouse_report.buttons = pointing_device_handle_buttons(mouse_report.buttons, true, POINTING_DEVICE_BUTTON1);
     }
-
 
     return mouse_report;
 }
