@@ -269,9 +269,6 @@ combo_t key_combos[] = {
 };
 #endif
 
-#if defined(DYNAMIC_MACRO_ENABLE)
-static uint8_t dynamic_macro_recording = 0;
-#endif
 
 #if defined(JOYSTICK_ENABLE)
 static const uint16_t js_left_dpad_ninebox[9] = {
@@ -292,6 +289,23 @@ bool cirque_pinnacles_joysticks_active(void) {
 static bool js_right_alt_axes_active = false;
 bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
     return js_right_alt_axes_active;
+}
+#endif
+
+#if defined(DYNAMIC_MACRO_ENABLE)
+static int8_t dynamic_macro_direction = 0;
+bool dynamic_macro_record_start_user(int8_t direction)
+{
+    dynamic_macro_direction = direction;
+    dprintf("Started recording macro %d\n", dynamic_macro_direction);
+    return true;
+}
+
+bool dynamic_macro_record_end_user(int8_t direction) {
+    dprintf("Stopped recording macro %d\n", dynamic_macro_direction);
+    dynamic_macro_direction = 0;
+    dynamic_macro_led_blink();
+    return true;
 }
 #endif
 
@@ -362,11 +376,12 @@ bool oled_task_user(void)
         // oled_render_locks();
         oled_render_mods(false);
 
-        if (dynamic_macro_recording == 0) {
+        if (dynamic_macro_direction == 0) {
             oled_render_padding(4);
         } else {
             oled_write_P("REC", false);
-            oled_render_u16(dynamic_macro_recording);
+            oled_write_P("1", false);
+            // oled_render_u16(dynamic_macro_recording);
         }
     } break;
     }
@@ -514,32 +529,6 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
 
     switch (keycode) {
-#if defined(DYNAMIC_MACRO_ENABLE)
-    case DM_REC1:
-        switch (dynamic_macro_recording) {
-        case 0:
-            dynamic_macro_recording = 1;
-            break;
-        case 1:
-            dynamic_macro_recording = 0;
-            break;
-        default:
-            break;
-        }
-        break;
-    case DM_REC2:
-        switch (dynamic_macro_recording) {
-        case 0:
-            dynamic_macro_recording = 2;
-            break;
-        case 2:
-            dynamic_macro_recording = 0;
-            break;
-        default:
-            break;
-        }
-        break;
-#endif
 #if defined(POINTING_DEVICE_ENABLE)
     case CKC_POINTING_DEVICE_DEC_DPI: {
         uint16_t cpi = pointing_device_get_cpi();
