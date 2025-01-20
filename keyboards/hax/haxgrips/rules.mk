@@ -9,8 +9,8 @@ POINTING_DEVICE_DRIVER = custom
 SPI_DRIVER_REQUIRED = yes
 
 SRC +=  \
-		../gamepad_qts.c \
+		../cirque_pinnacles.c \
 		../joysticks.c \
-		../oled.c \
-		../seesaw.c
-
+        ../oled.c \
+		drivers/sensors/cirque_pinnacle.c \
+		drivers/sensors/cirque_pinnacle_spi.c
