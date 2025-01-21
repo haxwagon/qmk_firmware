@@ -41,8 +41,43 @@ void joysticks_move_axis(uint8_t axis, int16_t delta)
     joysticks_set_axis(axis, value);
 }
 
+static bool is_turbo_active = false;
+static uint16_t turbo_down_at = 0;
+static uint16_t turbo_up_at = 0;
+bool joysticks_handle_turbo(uint16_t kc, bool pressed) {
+    if (!pressed) {
+        unregister_joystick_button(kc);
+        turbo_down_at = 0;
+        turbo_up_at = 0;
+        return true;
+    }
+
+    // we are holding down a joystick button with turbo mode active
+    if (timer_elapsed(turbo_up_at) >= TURBO_DELAY / 2) {
+        register_joystick_button(kc);
+        turbo_down_at = timer_read();
+    } else if (timer_elapsed(turbo_down_at) >= TURBO_DELAY / 2) {
+        unregister_joystick_button(kc);
+        turbo_up_at = timer_read();
+    }
+    return true;
+}
+
 bool joysticks_handle_keycode(uint16_t kc, bool pressed) {
     switch (kc) {
+    case JS_0...JS_31:
+        if (is_turbo_active) {
+            return joysticks_handle_turbo(kc, pressed);
+        }
+        if (pressed) {
+            register_joystick_button(kc);
+        } else {
+            unregister_joystick_button(kc);
+        }
+        return true;
+    case KC_JS_TURBO:
+        is_turbo_active = pressed;
+        return true;
     case KC_JS_HAT_C:
     case KC_JS_HAT_DL:
     case KC_JS_HAT_D:
@@ -74,13 +109,6 @@ bool joysticks_handle_keycode(uint16_t kc, bool pressed) {
         } else {
             joysticks_set_axis(JS_AXIS_RX, 0);
             unregister_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
-        }
-        return true;
-    case JS_0...JS_31:
-        if (pressed) {
-            register_joystick_button(kc);
-        } else {
-            unregister_joystick_button(kc);
         }
         return true;
     default:

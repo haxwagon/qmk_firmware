@@ -52,4 +52,5 @@
 #define TAPPING_TERM 300
 #define TAPPING_TERM_PER_KEY
 #define TAPPING_TOGGLE 2
+#define TURBO_DELAY 20
 

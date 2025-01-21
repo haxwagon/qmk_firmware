@@ -47,9 +47,9 @@ static const cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES
     }
 };
 
-cirque_pinnacles_config_t cirque_pinnacles_get_config(uint8_t cirque_index)
+const cirque_pinnacles_config_t* cirque_pinnacles_get_config(uint8_t cirque_index)
 {
-    return cirque_pinnacles_configs[cirque_index];
+    return &cirque_pinnacles_configs[cirque_index];
 }
 
 #if defined(OLED_ENABLE)

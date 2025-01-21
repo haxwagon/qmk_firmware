@@ -23,6 +23,7 @@ enum LAYERS {
     LAYER_MOVE,    // adjust
 #if defined(JOYSTICK_ENABLE)
     LAYER_JOYSTICK,
+    LAYER_CLOSED_JOYSTICK,
 #endif
     LAYER_MEDIA,
     LAYER_MENU,
@@ -35,93 +36,55 @@ static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
 static const char* LAYER_MAPS[] = {
     [LAYER_QWERTY]   = "\
- Q  W  E  R  T      \n\
-       Y  U  I  O  P\n\
- A  S  D  F  G      \n\
-       H  J  K  L  '\n\
- Z  X  C  V  B      \n\
-       N  M ,; .!  /\n\
+Q W E R T Y U I O P\n\
+A S D F G H J K L '\n\
+Z X C V B N M ,; .! /\n\
 ",
     [LAYER_FUNC]     = "\
-ES          MO      \n\
-      R1 R2 P2 P1 <-\n\
--> MN HM FD ME      \n\
-       <  v  ^  > EN\n\
-LS '` =+ -_ /\\      \n\
-      {} [] <> ()  \\\n\
+ES     MO r1r2p2p1<-\n\
+->MnHmFiMe < v ^ >EN\n\
+LS'`=+-_/ {}[]<>()\\\n\
 ",
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "\
-   NW  N NE         \n\
-         LB LT RT RB\n\
-DP  W  C  E         \n\
-      BT  X  A  B  Y\n\
-   SW  S SE         \n\
-      RA L3 SE ST R3\n\
+  NW NNE     LBLTRTRB\n\
+TB W C EDP BT X A B Y\n\
+  SW SSE   RAL3SeStR3\n\
+",
+    [LAYER_CLOSED_JOYSTICK] = "\
 ",
 #endif
     [LAYER_MEDIA]   = "\
-                    \n\
-         BD BU      \n\
-                    \n\
-      |< VD VU >| EN\n\
-                    \n\
+         BD BU     \n\
+       |< VD VU >| EN\n\
       << MU    >>   \n\
 ",
     [LAYER_MOVE]    = "\
-WU WL MU WR M2      \n\
-               DE IN\n\
-WD ML MD MR M1      \n\
-       <  v  ^  > EN\n\
-M7 M6 M5 M4 M3      \n\
-      HM PD PU ED   \n\
+wUwLmUwRm2       DE IN\n\
+wDmLmDmRm1  < v ^ > EN\n\
+m7m6m5m4m3 HmPdPuEd  \n\
 ",
     [LAYER_NUMPAD]  = "\
-                    \n\
-      */  6  8  9 <-\n\
-                    \n\
-      +-  4  5  6 EN\n\
-                    \n\
-       0  1  2  3  .\n\
+         */ 6 8 9 <-\n\
+         +- 4 5 6 EN\n\
+          0 1 2 3 .\n\
 ",
     [LAYER_NUMSYMS] = "\
-F1 F2 F3 F4 F5      \n\
-      F6 F7 F8 F9 F0\n\
- 1  2  3  4  5      \n\
-       6  7  8  9  0\n\
- !  @  #  $  %      \n\
-       ^  &  *  (  )\n\
+F1F2F3F4F5F6F7F8F9F0\n\
+ 1 2 3 4 5 6 7 8 9 0\n\
+ ! @ # $ % ^ & * ( )\n\
 ",
     [LAYER_APP_FPS]  = "\
- 1  2  3  4  5      \n\
-      SS HL         \n\
-LS  C SP  Q  E      \n\
-                    \n\
-cZ  X  V Rt Fg      \n\
+ 1 2  3 4  5  SS HL \n\
+LS C sp Q  E        \n\
+cZ X  V Rt Fg       \n\
                     \n\
 ",
     [LAYER_APP_MOBA] = "\
- 1  2  3  4  5      \n\
-      SS HL         \n\
- Q  W  E  R  A      \n\
-                    \n\
-tE  T  D  F  B      \n\
-                    \n\
+ 1 2 3 4 5  SS HL   \n\
+ Q W E R A          \n\
+tE T D F B          \n\
 ",
-};
-
-static const char* LAYER_NAMES[] = {
-    [LAYER_QWERTY] = "Default",
-    [LAYER_FUNC] = "Functions",
-#if defined(JOYSTICK_ENABLE)
-    [LAYER_JOYSTICK] = "Joystick",
-#endif
-    [LAYER_MEDIA] = "Media",
-    [LAYER_MOVE] = "Move",
-    [LAYER_NUMPAD] = "Numpad",
-    [LAYER_NUMSYMS] = "Nums & Syms",
-    [LAYER_APP_FPS] = "App: FPS",
-    [LAYER_APP_MOBA] = "App: MOBA",
 };
 
 enum CUSTOM_KEYCODES {
@@ -237,7 +200,13 @@ static const uint16_t js_right_buttons_ninebox[9] = {
 };
 
 bool cirque_pinnacles_joysticks_active(void) {
-    return get_highest_layer(layer_state) == LAYER_JOYSTICK;
+    switch (get_highest_layer(layer_state)) {
+    case LAYER_JOYSTICK:
+    case LAYER_CLOSED_JOYSTICK:
+        return true;
+    default:
+        return false;
+    }
 }
 
 static bool js_right_alt_axes_active = false;
@@ -281,6 +250,11 @@ static const oled_menu_t MODE_SELECT_MENU = {
             .context = { u16: LAYER_JOYSTICK },
         },
         {
+            .name = "Joystick (Closed)",
+            .on_selected = menu_activate_layer,
+            .context = { u16: LAYER_CLOSED_JOYSTICK },
+        },
+        {
             .name = "Numpad",
             .on_selected = menu_activate_layer,
             .context = { u16: LAYER_NUMPAD },
@@ -312,14 +286,11 @@ bool oled_task_user(void)
     }
 
     oled_clear();
-    oled_write_P(PSTR(LAYER_NAMES[get_highest_layer(layer_state)]), false);
-    oled_newline();
-    oled_set_cursor(16, 0);
-    oled_write_P(PSTR("HaxTT"), false);
-    oled_set_cursor(0, 1);
+    oled_set_cursor(0, 0);
 
     switch (get_highest_layer(layer_state)) {
-    case LAYER_JOYSTICK: {
+    case LAYER_JOYSTICK:
+    case LAYER_CLOSED_JOYSTICK: {
         oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), "DPAD", 4);
         oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
     } break;
@@ -365,9 +336,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
         KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB,
-        KC_NO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
+        KC_JS_TURBO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
         KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_R3,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
+    ),
+    [LAYER_CLOSED_JOYSTICK] = LAYOUT_ortho_4x10(
+        CKC_JS_RIGHT_BUTTONS_TOGGLE, CKC_JS_RIGHT_AXES_TOGGLE, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_JS_TURBO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JS_XINPUT_BUTTON_Y, JS_XINPUT_BUTTON_B,
+        CKC_JS_LEFT_DPAD_TOGGLE, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A,
+        KC_JS_LEFT_TRIGGER, JS_XINPUT_BUTTON_LB, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, JS_XINPUT_BUTTON_RB, KC_JS_RIGHT_TRIGGER
     ),
 #endif
     [LAYER_MEDIA]       = LAYOUT_ortho_4x10(
@@ -414,154 +391,159 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
-static const uint16_t PROGMEM cirque_pinnacles_keymaps[][2][CIRQUE_PINNACLES_TAP_ZONES_Y][CIRQUE_PINNACLES_TAP_ZONES_X] = {
-    [LAYER_QWERTY] = {
-        {
-            { JOYSTICK_HAT_NORTHWEST, JOYSTICK_HAT_NORTH, JOYSTICK_HAT_NORTHEAST },
-            { JOYSTICK_HAT_WEST, JS_8, JOYSTICK_HAT_EAST },
-            { JOYSTICK_HAT_SOUTHWEST, JOYSTICK_HAT_SOUTH, JOYSTICK_HAT_SOUTHEAST },
-        },
-        {
-            { KC_NO, JS_3, KC_NO },
-            { JS_2, JS_9, JS_1 },
-            { KC_NO, JS_0, KC_NO },
-        },
-    },
+static const uint16_t _wasd_ninebox[9] = {
+    KC_NO, KC_W, KC_NO,
+    KC_A, KC_NO, KC_D,
+    KC_NO, KC_S, KC_NO,
 };
 
-bool cirque_pinnacles_touchdown(uint8_t cirque_index, int16_t x, int16_t y, int16_t dx, int16_t dy)
+#if defined(CIRQUE_PINNACLES_POINTING_DEVICE)
+uint8_t cirque_pinnacles_pointing_device_get_mode(uint8_t cirque_index)
 {
-    switch (cirque_index) {
-    case 0: // left pad
-        // switch (get_highest_layer(layer_state)) {
-        // case LAYER_JOYSTICK:
-        // case LAYER_JOYSTICK2:
-        //     set_joystick_axis(-1, 0, x);
-        //     set_joystick_axis(-1, 1, y);
-        //     return true;
-        // default:
-        //     break;
-        // }
-        break;
-    case 1: // right pad
-        // switch (get_highest_layer(layer_state)) {
-        // case LAYER_JOYSTICK:
-        //     set_joystick_axis(0, 0, x);
-        //     set_joystick_axis(0, 1, y);
-        //     return true;
-        // case LAYER_JOYSTICK2:
-        //     move_joystick_axis(-1, 2, y / 10);
-        //     return true;
-        // case LAYER_MOVE:
-        //     if (abs(y) > abs(x)) {
-        //         // scrolling vertically
-        //         if (y > -1) {
-        //             tap_code(MS_WHLD);
-        //             return true;
-        //         } else if (y < -1) {
-        //             tap_code(MS_WHLU);
-        //             return true;
-        //         }
-        //     } else if (abs(x) > abs(y)) {
-        //         // scrolling horizontally
-        //         if (x > -1) {
-        //             tap_code(MS_WHLR);
-        //             return true;
-        //         } else if (x < -1) {
-        //             tap_code(MS_WHLL);
-        //             return true;
-        //         }
-        //     }
-        //     break;
-        // }
-        break;
+    if (get_highest_layer(layer_state) == LAYER_APP_MOBA) {
+        switch (cirque_index) {
+        case 0: return 1 << POINTING_DEVICE_XY;
+        default: return 0;
+        }
+    } else {
+        switch (cirque_index) {
+        case 0: return 1 << POINTING_DEVICE_HV;
+        case 1: return 1 << POINTING_DEVICE_BUTTONS | 1 << POINTING_DEVICE_XY;
+        default: return 0;
+        }
     }
-    return false;
 }
 
-bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t x, uint8_t y)
-{
-    uint16_t kc = cirque_pinnacles_keymaps[get_highest_layer(layer_state)][cirque_index][CIRQUE_PINNACLES_TAP_ZONES_Y - y - 1][x];
-    if (kc == KC_NO || kc <= 0) {
-        return false;
+report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t mouse_report) {
+    switch (get_highest_layer(layer_state)) {
+    case LAYER_FUNC:
+        if (mouse_report.buttons > 0) {
+            mouse_report.buttons = pointing_device_handle_buttons(0, true, POINTING_DEVICE_BUTTON3);
+        }
+        break;
+    case LAYER_NUMSYMS:
+        if (mouse_report.buttons > 0) {
+            mouse_report.buttons = pointing_device_handle_buttons(0, true, POINTING_DEVICE_BUTTON2);
+        }
+        break;
+    case LAYER_APP_MOBA: {
+        // simulate middle mouse drag for panning
+        bool mouse_moving = (mouse_report.x != 0 || mouse_report.y != 0);
+        mouse_report.buttons = pointing_device_handle_buttons(0, mouse_moving, POINTING_DEVICE_BUTTON3);
+    } break;
+    default:
+        break;
     }
-    tap_code(kc);
-    dprintf("Pressed keycode: %d on cirque %d (%d, %d)\n", kc, cirque_index, x, y);
-    return true;
+    return mouse_report;
+}
+#endif
+
+bool haxgrips_is_open_user(void) {
+    return get_highest_layer(layer_state) != LAYER_CLOSED_JOYSTICK;
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record)
-{
+void keyboard_post_init_user(void) {
+    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+        _cirque_pinnacles_nineboxes[i] = NULL;
+    }
+}
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    switch(get_highest_layer(state)) {
+        case LAYER_APP_FPS:
+            _cirque_pinnacles_nineboxes[0] = _wasd_ninebox;
+            _cirque_pinnacles_nineboxes[1] = NULL;
+            break;
+        default:
+            _cirque_pinnacles_nineboxes[0] = NULL;
+            _cirque_pinnacles_nineboxes[1] = NULL;
+            break;
+    }
+    return state;
+}
+
+bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
 
     switch (keycode) {
-// #if defined(DYNAMIC_MACRO_ENABLE)
-//     case DM_REC1:
-//         switch (dynamic_macro_recording) {
-//         case 0:
-//             dynamic_macro_recording = 1;
-//             break;
-//         case 1:
-//             dynamic_macro_recording = 0;
-//             break;
-//         default:
-//             break;
-//         }
-//         break;
-//     case DM_REC2:
-//         switch (dynamic_macro_recording) {
-//         case 0:
-//             dynamic_macro_recording = 2;
-//             break;
-//         case 2:
-//             dynamic_macro_recording = 0;
-//             break;
-//         default:
-//             break;
-//         }
-//         break;
-// #endif
-// #if defined(POINTING_DEVICE_ENABLE)
-//     case CKC_POINTING_DEVICE_DEC_DPI: {
-//         uint16_t cpi = pointing_device_get_cpi();
-//         if (cpi > POINTING_DEVICE_MIN_DPI) {
-//             pointing_device_set_cpi(cpi - 1);
-//         }
-//     } break;
-//     case CKC_POINTING_DEVICE_INC_DPI: {
-//         uint16_t cpi = pointing_device_get_cpi();
-//         if (cpi < POINTING_DEVICE_MAX_DPI) {
-//             pointing_device_set_cpi(cpi + 1);
-//         }
-//     } break;
-// #endif
-// #if defined(JOYSTICK_ENABLE)
-//     case CKC_JS_CENTER_RIGHT:
-//         set_joystick_axis(1, 0, 0);
-//         set_joystick_axis(1, 1, 0);
-//         return false;
-//     case CKC_JS_CENTER_RIGHT_X:
-//         set_joystick_axis(1, 0, 0);
-//         return false;
-//     case CKC_JS_CENTER_RIGHT_Y:
-//         set_joystick_axis(1, 1, 0);
-//         return false;
-// #endif
+#if defined(POINTING_DEVICE_ENABLE)
+    case CKC_POINTING_DEVICE_DEC_DPI: {
+        uint16_t cpi = pointing_device_get_cpi();
+        if (cpi > POINTING_DEVICE_MIN_DPI) {
+            pointing_device_set_cpi(cpi - 1);
+        }
+    } return false;
+    case CKC_POINTING_DEVICE_INC_DPI: {
+        uint16_t cpi = pointing_device_get_cpi();
+        if (cpi < POINTING_DEVICE_MAX_DPI) {
+            pointing_device_set_cpi(cpi + 1);
+        }
+    } return false;
+#endif
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_LEFT_DPAD_TOGGLE:
+        cirque_pinnacles_clear_active_keys(0);
+        if (_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox) {
+            dprintf("Setting left cirque to joystick mode...\n");
+            _cirque_pinnacles_nineboxes[0] = NULL;
+        } else {
+            dprintf("Setting left cirque to dpad mode...\n");
+            _cirque_pinnacles_nineboxes[0] = js_left_dpad_ninebox;
+        }
+        return false;
+    case CKC_JS_RIGHT_BUTTONS_TOGGLE:
+        cirque_pinnacles_clear_active_keys(1);
+        if (_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) {
+            dprintf("Setting right cirque to joystick mode...\n");
+            _cirque_pinnacles_nineboxes[1] = NULL;
+        } else {
+            dprintf("Setting right cirque to buttons mode...\n");
+            _cirque_pinnacles_nineboxes[1] = js_right_buttons_ninebox;
+        }
+        return false;
+    case CKC_JS_RIGHT_AXES_TOGGLE:
+        cirque_pinnacles_clear_active_keys(1);
+        js_right_alt_axes_active = !js_right_alt_axes_active;
+        return false;
+#endif
+#if defined(OLED_ENABLE)
+    case CKC_MENU_TOGGLE:
+        if (oled_in_menu()) {
+            oled_menu_activate(NULL);
+            layer_move(LAYER_DEFAULT);
+        } else {
+            oled_menu_activate(&MODE_SELECT_MENU);
+            layer_move(LAYER_MENU);
+        }
+        return false;
+    case CKC_MENU_SELECT:
+        oled_menu_select();
+        return false;
+    case CKC_MENU_HIGHLIGHT_NEXT:
+        oled_menu_highlight_next();
+        return false;
+    case CKC_MENU_HIGHLIGHT_PREV:
+        oled_menu_highlight_prev();
+        return false;
+#endif
     default:
         break;
     }
     return true;
 }
 
-// uint8_t oled_get_macro_recording(void)
-// {
-//     return dynamic_macro_recording;
-// }
-// const char* oled_get_layer_map(void)
-// {
-//     return LAYER_MAPS[get_highest_layer(layer_state)];
-// }
-// const char* oled_get_layer_name(void)
-// {
-//     return LAYER_NAMES[get_highest_layer(layer_state)];
-// }
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    if (record->event.pressed) {
+        if (!process_record_user_pressed(keycode, record)) {
+            return false;
+        }
+    }
+
+#if defined(JOYSTICK_ENABLE)
+    if (joysticks_handle_keycode(keycode, record->event.pressed)) {
+        return false;
+    }
+#endif
+
+    return true;
+}

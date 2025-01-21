@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef TURBO_DELAY
+#define TURBO_DELAY 80
+#endif
+
 enum JS_AXES {
     JS_AXIS_X,
     JS_AXIS_Y,
@@ -24,8 +28,9 @@ enum JS_XINPUT_BUTTONS { // xinput order
     JS_XINPUT_BUTTON_R3,
 };
 
-enum JS_HAT_KEYCODES {
-    KC_JS_HAT_C = 0x7F60,
+enum JOYSTICKS_KEYCODES {
+    KC_JS_TURBO = 0x7F60,
+    KC_JS_HAT_C,
     KC_JS_HAT_D,
     KC_JS_HAT_DL,
     KC_JS_HAT_DR,

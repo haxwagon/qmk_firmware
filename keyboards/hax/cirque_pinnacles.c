@@ -8,15 +8,16 @@
 #include "drivers/sensors/cirque_pinnacle.h"
 #include "spi_master.h"
 
-__attribute__((weak)) cirque_pinnacles_config_t cirque_pinnacles_get_config(uint8_t cirque_index)
+const static cirque_pinnacles_config_t DEFAULT_CONFIG = {
+    .spi_cs_pin = 0,
+    .flip_x = false,
+    .flip_y = false,
+    .swap_xy = false,
+};
+
+__attribute__((weak)) const cirque_pinnacles_config_t* cirque_pinnacles_get_config(uint8_t cirque_index)
 {
-    cirque_pinnacles_config_t config = {
-        .spi_cs_pin = 0,
-        .flip_x = false,
-        .flip_y = false,
-        .swap_xy = false,
-    };
-    return config;
+    return &DEFAULT_CONFIG;
 }
 
 __attribute__((weak)) bool cirque_pinnacles_tapped(uint8_t cirque_index, uint8_t x, uint8_t y)
@@ -38,13 +39,12 @@ __attribute__((weak)) bool cirque_pinnacles_touchup(uint8_t cirque_index)
 #define CIRQUE_PINNACLES_TAP_ZONES_Y_SIZE (UINT16_MAX / CIRQUE_PINNACLES_TAP_ZONES_Y)
 #define CONSTRAIN(x, min, max) ((x) < min ? min : ((x) > max ? max : (x)))
 
-static cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES_COUNT];
 static pin_t _current_spi_cs_pin = 0;
 static uint16_t _ninebox_keysdown[CIRQUE_PINNACLES_COUNT][2];
 
 void cirque_pinnacles_select(uint8_t cirque_index)
 {
-    _current_spi_cs_pin = cirque_pinnacles_configs[cirque_index].spi_cs_pin;
+    _current_spi_cs_pin = cirque_pinnacles_get_config(cirque_index)->spi_cs_pin;
 }
 
 pin_t cirque_pinnacle_spi_get_cs_pin(void)
@@ -60,7 +60,6 @@ void cirque_pinnacles_init(void)
         for (uint8_t j = 0; j < 2; j++) {
             _ninebox_keysdown[i][j] = 0;
         }
-        cirque_pinnacles_configs[i] = cirque_pinnacles_get_config(i);
         cirque_pinnacles_select(i);
         cirque_pinnacle_init();
     }
@@ -286,15 +285,15 @@ cirque_pinnacles_read_data_result_t cirque_pinnacles_read_data(uint8_t cirque_in
         state->x = linear_scale(data.xValue, CIRQUE_PINNACLES_DEADZONE_LEFT, UINT16_MAX - CIRQUE_PINNACLES_DEADZONE_RIGHT, INT16_MIN, INT16_MAX);
         state->y = linear_scale(data.yValue, CIRQUE_PINNACLES_DEADZONE_TOP, UINT16_MAX - CIRQUE_PINNACLES_DEADZONE_BOTTOM, INT16_MIN, INT16_MAX);
 
-        if (cirque_pinnacles_configs[cirque_index].swap_xy) {
+        if (cirque_pinnacles_get_config(cirque_index)->swap_xy) {
             int16_t temp = state->x;
             state->x = state->y;
             state->y = temp;
         }
-        if (cirque_pinnacles_configs[cirque_index].flip_x) {
+        if (cirque_pinnacles_get_config(cirque_index)->flip_x) {
             state->x *= -1;
         }
-        if (cirque_pinnacles_configs[cirque_index].flip_y) {
+        if (cirque_pinnacles_get_config(cirque_index)->flip_y) {
             state->y *= -1;
         }
         if (state->x > -CIRQUE_PINNACLES_DEADZONE_CENTER && state->x < CIRQUE_PINNACLES_DEADZONE_CENTER) {
