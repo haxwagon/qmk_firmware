@@ -81,3 +81,22 @@ oled_rotation_t oled_init_kb(oled_rotation_t rotation)
     return OLED_ROTATION_180;
 }
 #endif
+
+bool process_record_kb(uint16_t keycode, keyrecord_t* record)
+{
+#if defined(JOYSTICK_ENABLE)
+    if (joysticks_handle_keycode(keycode, record->event.pressed)) {
+        return false;
+    }
+#endif
+    return process_record_user(keycode, record);
+}
+
+void housekeeping_task_kb(void)
+{
+#if defined(JOYSTICK_ENABLE)
+    joysticks_housekeeping();
+#endif
+    return housekeeping_task_user();
+}
+

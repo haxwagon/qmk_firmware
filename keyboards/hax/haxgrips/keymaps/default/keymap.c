@@ -414,7 +414,8 @@ uint8_t cirque_pinnacles_pointing_device_get_mode(uint8_t cirque_index)
     }
 }
 
-report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t mouse_report) {
+report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t mouse_report)
+{
     switch (get_highest_layer(layer_state)) {
     case LAYER_FUNC:
         if (mouse_report.buttons > 0) {
@@ -438,17 +439,20 @@ report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t m
 }
 #endif
 
-bool haxgrips_is_open_user(void) {
+bool haxgrips_is_open_user(void)
+{
     return get_highest_layer(layer_state) != LAYER_CLOSED_JOYSTICK;
 }
 
 void keyboard_post_init_user(void) {
-    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++) {
+    for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++)
+    {
         _cirque_pinnacles_nineboxes[i] = NULL;
     }
 }
 
-layer_state_t layer_state_set_user(layer_state_t state) {
+layer_state_t layer_state_set_user(layer_state_t state)
+{
     switch(get_highest_layer(state)) {
         case LAYER_APP_FPS:
             _cirque_pinnacles_nineboxes[0] = _wasd_ninebox;
@@ -462,7 +466,8 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return state;
 }
 
-bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
+bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record)
+{
     dprintf("Pressed keycode: %d on layer %d\n", keycode, get_highest_layer(layer_state));
 
     switch (keycode) {
@@ -532,18 +537,12 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record) {
     return true;
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+bool process_record_user(uint16_t keycode, keyrecord_t* record)
+{
     if (record->event.pressed) {
         if (!process_record_user_pressed(keycode, record)) {
             return false;
         }
     }
-
-#if defined(JOYSTICK_ENABLE)
-    if (joysticks_handle_keycode(keycode, record->event.pressed)) {
-        return false;
-    }
-#endif
-
     return true;
 }

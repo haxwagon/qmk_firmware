@@ -44,39 +44,40 @@ void joysticks_move_axis(uint8_t axis, int16_t delta)
 static bool is_turbo_active = false;
 static uint16_t turbo_down_at = 0;
 static uint16_t turbo_up_at = 0;
-bool joysticks_handle_turbo(uint16_t kc, bool pressed) {
-    if (!pressed) {
-        unregister_joystick_button(kc);
-        turbo_down_at = 0;
-        turbo_up_at = 0;
-        return true;
-    }
-
-    // we are holding down a joystick button with turbo mode active
-    if (timer_elapsed(turbo_up_at) >= TURBO_DELAY / 2) {
-        register_joystick_button(kc);
-        turbo_down_at = timer_read();
-    } else if (timer_elapsed(turbo_down_at) >= TURBO_DELAY / 2) {
-        unregister_joystick_button(kc);
-        turbo_up_at = timer_read();
-    }
-    return true;
-}
+static uint16_t turbo_button = 0;
 
 bool joysticks_handle_keycode(uint16_t kc, bool pressed) {
     switch (kc) {
     case JS_0...JS_31:
-        if (is_turbo_active) {
-            return joysticks_handle_turbo(kc, pressed);
-        }
         if (pressed) {
             register_joystick_button(kc);
+            if (is_turbo_active) {
+                if (turbo_button > 0) {
+                    unregister_joystick_button(turbo_button);
+                }
+                turbo_button = kc;
+                turbo_down_at = timer_read();
+                turbo_up_at = 0;
+            }
         } else {
             unregister_joystick_button(kc);
+            if (is_turbo_active) {
+                if (turbo_button > 0) {
+                    unregister_joystick_button(turbo_button);
+                }
+                turbo_button = 0;
+                turbo_down_at = 0;
+                turbo_up_at = 0;
+            }
         }
         return true;
     case KC_JS_TURBO:
         is_turbo_active = pressed;
+        if (!is_turbo_active) {
+            turbo_button = 0;
+            turbo_down_at = 0;
+            turbo_up_at = 0;
+        }
         return true;
     case KC_JS_HAT_C:
     case KC_JS_HAT_DL:
@@ -113,6 +114,22 @@ bool joysticks_handle_keycode(uint16_t kc, bool pressed) {
         return true;
     default:
         return false;
+    }
+}
+
+void joysticks_housekeeping(void)
+{
+    if (is_turbo_active && turbo_button > 0) {
+        // we are holding down a joystick button with turbo mode active
+        if (turbo_up_at > 0 && timer_elapsed(turbo_up_at) >= TURBO_DELAY / 2) {
+            register_joystick_button(turbo_button);
+            turbo_down_at = timer_read();
+            turbo_up_at = 0;
+        } else if (turbo_down_at > 0 && timer_elapsed(turbo_down_at) >= TURBO_DELAY / 2) {
+            unregister_joystick_button(turbo_button);
+            turbo_up_at = timer_read();
+            turbo_down_at = 0;
+        }
     }
 }
 

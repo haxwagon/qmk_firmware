@@ -46,4 +46,5 @@ enum JOYSTICKS_KEYCODES {
 void joysticks_init(void);
 void joysticks_move_axis(uint8_t axis, int16_t delta);
 bool joysticks_handle_keycode(uint16_t kc, bool pressed);
+void joysticks_housekeeping(void);
 void joysticks_set_axis(uint8_t axis, int16_t value);
