@@ -353,7 +353,7 @@ static const oled_menu_t MODE_SELECT_MENU = {
 bool oled_task_user(void)
 {
     if (oled_in_menu()) {
-        oled_render_menu();
+        oled_render_menu(5);
         return false;
     }
 
@@ -366,7 +366,7 @@ bool oled_task_user(void)
 
     switch (get_highest_layer(layer_state)) {
     case LAYER_JOYSTICK: {
-        oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), "DPAD", 4);
+        oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), PSTR("DPAD"), 4);
         oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
     } break;
     case LAYER_MOVE: {
@@ -408,9 +408,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
-        KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB,
-        KC_JS_TURBO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
-        KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_R3,
+        KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_DINPUT_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_DINPUT_RB,
+        KC_JS_TURBO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_DINPUT_SQUARE, JS_DINPUT_CROSS, JS_DINPUT_CIRCLE, JS_DINPUT_TRIANGLE,
+        KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_DINPUT_L3, JS_DINPUT_SELECT, JS_DINPUT_START, JS_DINPUT_R3,
         KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
     ),
 #endif

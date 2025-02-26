@@ -23,7 +23,6 @@ enum LAYERS {
     LAYER_MOVE,    // adjust
 #if defined(JOYSTICK_ENABLE)
     LAYER_JOYSTICK,
-    LAYER_CLOSED_JOYSTICK,
 #endif
     LAYER_MEDIA,
     LAYER_MENU,
@@ -36,38 +35,36 @@ static const uint16_t LAYER_DEFAULT = LAYER_QWERTY;
 
 static const char* LAYER_MAPS[] = {
     [LAYER_QWERTY]   = "\
-Q W E R T Y U I O P\n\
-A S D F G H J K L '\n\
-Z X C V B N M ,; .! /\n\
+Q W E R T|Y U I O P\n\
+A S D F G|H J K L '\n\
+Z X C V B|N M , . /\n\
 ",
     [LAYER_FUNC]     = "\
-ES     MO r1r2p2p1<-\n\
-->MnHmFiMe < v ^ >EN\n\
-LS'`=+-_/ {}[]<>()\\\n\
+`      MO|r1r2p2p1<-\n\
+->MnHmFiMe|< v ^ > '\n\
+     + - \\|[ ] ( ) /\n\
 ",
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = "\
-  NW NNE     LBLTRTRB\n\
-TB W C EDP BT X A B Y\n\
-  SW SSE   RAL3SeStR3\n\
-",
-    [LAYER_CLOSED_JOYSTICK] = "\
+ T  S|RB RBT UR U UL\n\
+St Se|LD LDT  R C  L\n\
+ C  X|RA RAT DR D DL\n\
 ",
 #endif
     [LAYER_MEDIA]   = "\
-         BD BU     \n\
-       |< VD VU >| EN\n\
-      << MU    >>   \n\
+     |   BD BU     \n\
+     | |< VD VU >| EN\n\
+     |<< MU    >>   \n\
 ",
     [LAYER_MOVE]    = "\
-wUwLmUwRm2       DE IN\n\
-wDmLmDmRm1  < v ^ > EN\n\
-m7m6m5m4m3 HmPdPuEd  \n\
+wUwLmUwRm2|    DE IN\n\
+wDmLmDmRm1|< v ^ > EN\n\
+m7m6m5m4m3|HmPdPuEd \n\
 ",
     [LAYER_NUMPAD]  = "\
-         */ 6 8 9 <-\n\
-         +- 4 5 6 EN\n\
-          0 1 2 3 .\n\
+        |*/ 6 8 9 <-\n\
+        |+- 4 5 6 EN\n\
+        | 0 1 2 3 .\n\
 ",
     [LAYER_NUMSYMS] = "\
 F1F2F3F4F5F6F7F8F9F0\n\
@@ -75,23 +72,25 @@ F1F2F3F4F5F6F7F8F9F0\n\
  ! @ # $ % ^ & * ( )\n\
 ",
     [LAYER_APP_FPS]  = "\
- 1 2  3 4  5  SS HL \n\
-LS C sp Q  E        \n\
-cZ X  V Rt Fg       \n\
-                    \n\
+ 1 2  3 4  5 |SS HL\n\
+LS C sp Q  E |     \n\
+cZ X  V Rt Fg|     \n\
 ",
     [LAYER_APP_MOBA] = "\
- 1 2 3 4 5  SS HL   \n\
- Q W E R A          \n\
-tE T D F B          \n\
+ 1 2 3 4 5|SS HL   \n\
+ Q W E R A|        \n\
+tE T D F B|        \n\
 ",
 };
 
 enum CUSTOM_KEYCODES {
     CKC_POINTING_DEVICE_INC_DPI = SAFE_RANGE,
     CKC_POINTING_DEVICE_DEC_DPI,
+    CKC_JS_LEFT_DPAD,
     CKC_JS_LEFT_DPAD_TOGGLE,
+    CKC_JS_RIGHT_BUTTONS,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
+    CKC_JS_RIGHT_AXES,
     CKC_JS_RIGHT_AXES_TOGGLE,
     CKC_MENU_TOGGLE,
     CKC_MENU_SELECT,
@@ -109,29 +108,33 @@ uint16_t cirque_pinnacles_get_ninebox(uint8_t cirque_index, uint8_t ninebox_inde
 }
 
 #if defined(KEY_OVERRIDE_ENABLE)
-const key_override_t  backspace_del_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
-const key_override_t  shift1_f1_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_1, KC_F1);
-const key_override_t  shift2_f2_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_2, KC_F2);
-const key_override_t  shift3_f3_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_3, KC_F3);
-const key_override_t  shift4_f4_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_4, KC_F4);
-const key_override_t  shift5_f5_key_override     = ko_make_basic(MOD_MASK_SHIFT, KC_5, KC_F5);
-const key_override_t  f11_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
-const key_override_t  f12_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
-const key_override_t  f13_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
-const key_override_t  f14_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
-const key_override_t  f15_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
-const key_override_t  f16_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
-const key_override_t  f17_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
-const key_override_t  f18_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
-const key_override_t  f19_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
-const key_override_t  f20_key_override           = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
-const key_override_t* key_overrides[]            = {
+const key_override_t  backspace_del_key_override  = ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
+const key_override_t  shift1_f1_key_override      = ko_make_basic(MOD_MASK_SHIFT, KC_1, KC_F1);
+const key_override_t  shift2_f2_key_override      = ko_make_basic(MOD_MASK_SHIFT, KC_2, KC_F2);
+const key_override_t  shift3_f3_key_override      = ko_make_basic(MOD_MASK_SHIFT, KC_3, KC_F3);
+const key_override_t  shift4_f4_key_override      = ko_make_basic(MOD_MASK_SHIFT, KC_4, KC_F4);
+const key_override_t  shift5_f5_key_override      = ko_make_basic(MOD_MASK_SHIFT, KC_5, KC_F5);
+const key_override_t  shiftlprn_labk_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_LPRN, KC_LABK);
+const key_override_t  shiftrprn_rabk_key_override = ko_make_basic(MOD_MASK_SHIFT, KC_RPRN, KC_RABK);
+const key_override_t  f11_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F1, KC_F11);
+const key_override_t  f12_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F2, KC_F12);
+const key_override_t  f13_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F3, KC_F13);
+const key_override_t  f14_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F4, KC_F14);
+const key_override_t  f15_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F5, KC_F15);
+const key_override_t  f16_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F6, KC_F16);
+const key_override_t  f17_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F7, KC_F17);
+const key_override_t  f18_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F8, KC_F18);
+const key_override_t  f19_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F9, KC_F19);
+const key_override_t  f20_key_override            = ko_make_basic(MOD_MASK_SHIFT, KC_F10, KC_F20);
+const key_override_t* key_overrides[]             = {
     &backspace_del_key_override,
     &shift1_f1_key_override,
     &shift2_f2_key_override,
     &shift3_f3_key_override,
     &shift4_f4_key_override,
     &shift5_f5_key_override,
+    &shiftlprn_labk_key_override,
+    &shiftrprn_rabk_key_override,
     &f11_key_override,
     &f12_key_override,
     &f13_key_override,
@@ -188,25 +191,29 @@ tap_dance_action_t tap_dance_actions[] = {
 #endif
 
 #if defined(JOYSTICK_ENABLE)
+bool haxtroller_is_flipped_user(void)
+{
+    switch (get_highest_layer(layer_state)) {
+    case LAYER_JOYSTICK:
+        return true;
+    default:
+        return false;
+    }
+}
+
 static const uint16_t js_left_dpad_ninebox[9] = {
     KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR,
     KC_JS_HAT_L, KC_JS_HAT_C, KC_JS_HAT_R,
     KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR
 };
 static const uint16_t js_right_buttons_ninebox[9] = {
-    KC_NO, JS_3, KC_NO,
-    JS_2, JS_9, JS_1,
-    KC_NO, JS_0, KC_NO
+    KC_NO, JS_DINPUT_TRIANGLE, KC_NO,
+    JS_DINPUT_SQUARE, JS_9, JS_DINPUT_CIRCLE,
+    KC_NO, JS_DINPUT_CROSS, KC_NO
 };
 
 bool cirque_pinnacles_joysticks_active(void) {
-    switch (get_highest_layer(layer_state)) {
-    case LAYER_JOYSTICK:
-    case LAYER_CLOSED_JOYSTICK:
-        return true;
-    default:
-        return false;
-    }
+    return haxtroller_is_flipped_user();
 }
 
 static bool js_right_alt_axes_active = false;
@@ -250,11 +257,6 @@ static const oled_menu_t MODE_SELECT_MENU = {
             .context = { u16: LAYER_JOYSTICK },
         },
         {
-            .name = "Joystick (Closed)",
-            .on_selected = menu_activate_layer,
-            .context = { u16: LAYER_CLOSED_JOYSTICK },
-        },
-        {
             .name = "Numpad",
             .on_selected = menu_activate_layer,
             .context = { u16: LAYER_NUMPAD },
@@ -281,7 +283,7 @@ static const oled_menu_t MODE_SELECT_MENU = {
 bool oled_task_user(void)
 {
     if (oled_in_menu()) {
-        oled_render_menu();
+        oled_render_menu(3);
         return false;
     }
 
@@ -289,10 +291,11 @@ bool oled_task_user(void)
     oled_set_cursor(0, 0);
 
     switch (get_highest_layer(layer_state)) {
-    case LAYER_JOYSTICK:
-    case LAYER_CLOSED_JOYSTICK: {
-        oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), "DPAD", 4);
-        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
+    case LAYER_JOYSTICK: {
+        oled_write_P(PSTR(" "), false);
+        oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), PSTR("DPAD"), 4);
+        oled_write_P(PSTR("|"), false);
+        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS") : (js_right_alt_axes_active ? PSTR("AXES") : PSTR("    ")), false);
     } break;
     case LAYER_MOVE: {
         oled_render_pointing_dpi();
@@ -300,14 +303,7 @@ bool oled_task_user(void)
     default: {
         // oled_render_locks();
         oled_render_mods(false);
-
-        if (dynamic_macro_direction == 0) {
-            oled_render_padding(4);
-        } else {
-            oled_write_P("REC", false);
-            oled_write_P("1", false);
-            // oled_render_u16(dynamic_macro_recording);
-        }
+        oled_render_flag(dynamic_macro_direction != 0, dynamic_macro_direction == 1 ? PSTR("REC1") : PSTR("REC2"), 4);
     } break;
     }
 
@@ -324,37 +320,31 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_QWERTY]   = LAYOUT_ortho_4x10(
         KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P,
         KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_QUOT,
-        LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTCOLN), RSFT_T(KC_SLSH),
-        KC_LCTL, KC_LGUI, KC_LALT, TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR, KC_RALT, KC_RGUI, KC_RCTL
+        KC_Z, KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTCOLN), KC_SLSH,
+        KC_LSFT, KC_LGUI, TL_LOWR,  KC_SPACE, KC_ESC, KC_ENT, KC_SPACE, TL_UPPR, KC_RALT, KC_RCTL
     ),
     [LAYER_FUNC]     = LAYOUT_ortho_4x10(
-        KC_ESC, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
-        KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
-        KC_LSFT, TD(TD_QUOTGRV), TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_ANGLES), TD(TD_PARENS), RSFT_T(KC_BSLS),
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_GRV, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
+        KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_QUOT,
+        KC_NO,  KC_NO, KC_PLUS, KC_MINS, KC_BSLS, KC_LBRC, KC_RBRC, KC_LPRN, KC_RPRN, KC_SLSH,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB,
-        KC_JS_TURBO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_XINPUT_BUTTON_X, JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y,
-        KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_XINPUT_BUTTON_L3, JS_XINPUT_BUTTON_SELECT, JS_XINPUT_BUTTON_START, JS_XINPUT_BUTTON_R3,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
-    ),
-    [LAYER_CLOSED_JOYSTICK] = LAYOUT_ortho_4x10(
-        KC_JS_RIGHT_TRIGGER, JS_XINPUT_BUTTON_RB, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, JS_XINPUT_BUTTON_LB, KC_JS_LEFT_TRIGGER,
-        JS_XINPUT_BUTTON_A, JS_XINPUT_BUTTON_X, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_JS_LEFT_DPAD_TOGGLE,
-        JS_XINPUT_BUTTON_B, JS_XINPUT_BUTTON_Y, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_JS_TURBO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE
+        KC_NO, KC_NO, KC_NO, JS_DINPUT_TRIANGLE, JS_DINPUT_SQUARE, CKC_JS_RIGHT_BUTTONS, CKC_JS_RIGHT_BUTTONS_TOGGLE, KC_JS_HAT_UR, KC_JS_HAT_U, KC_JS_HAT_UL,
+        KC_NO, KC_NO, KC_NO, JS_DINPUT_START, JS_DINPUT_SELECT, CKC_JS_LEFT_DPAD, CKC_JS_LEFT_DPAD_TOGGLE, KC_JS_HAT_R, KC_JS_HAT_D, KC_JS_HAT_L,
+        KC_NO, KC_NO, KC_NO, JS_DINPUT_CIRCLE, JS_DINPUT_CROSS, CKC_JS_RIGHT_AXES, CKC_JS_RIGHT_AXES_TOGGLE, KC_JS_HAT_DR, KC_JS_HAT_D, KC_JS_HAT_DL,
+        JS_DINPUT_R3, JS_DINPUT_RB, KC_JS_RIGHT_TRIGGER, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, TO(LAYER_DEFAULT), KC_JS_LEFT_TRIGGER, JS_DINPUT_LB, JS_DINPUT_L3
     ),
 #endif
     [LAYER_MEDIA]       = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_BRID, KC_BRIU, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, KC_MPLY,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO, KC_MFFD, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
+        KC_TRNS, KC_TRNS, KC_TRNS, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_MENU] = LAYOUT_ortho_4x10(
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        CKC_MENU_TOGGLE, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_HIGHLIGHT_NEXT, CKC_MENU_HIGHLIGHT_PREV, KC_NO, CKC_MENU_SELECT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, KC_NO, KC_NO, KC_NO
@@ -363,13 +353,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, CKC_POINTING_DEVICE_DEC_DPI, CKC_POINTING_DEVICE_INC_DPI, KC_DEL, KC_INS,
         MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN, KC_PGUP, KC_END, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        TO(LAYER_JOYSTICK), KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, TO(LAYER_JOYSTICK)
     ),
     [LAYER_NUMPAD]      = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PASTSLS), KC_P7, KC_P8, KC_P9, KC_BSPC,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PPLSMNS), KC_P4, KC_P5, KC_P6, KC_PENT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_P0, KC_P1, KC_P2, KC_P3, KC_PDOT,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_NUMSYMS]     = LAYOUT_ortho_4x10(
         KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10,
@@ -381,13 +371,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_1, KC_2, KC_3, KC_4, KC_5, LALT(KC_F1), LALT(KC_F10), KC_NO, KC_NO, KC_NO,
         KC_LSFT, KC_C, KC_SPACE, KC_Q, KC_E, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         LCTL_T(KC_Z), KC_X, KC_V, TD(TD_R_T), TD(TD_F_G), KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, TD(TD_M_N), TD(TD_TAB_ESC), KC_SPACE, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, TD(TD_M_N), TD(TD_TAB_ESC), TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
     [LAYER_APP_MOBA]  = LAYOUT_ortho_4x10(
         KC_1, KC_2, KC_3, KC_4, KC_5, LALT(KC_F1), LALT(KC_F10), KC_NO, KC_NO, KC_NO,
         KC_Q, KC_W, KC_E, KC_R, KC_A, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         TD(TD_TAB_ESC), KC_T, KC_D, KC_F, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_LCTL, KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 };
 
@@ -438,11 +428,6 @@ report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t m
     return mouse_report;
 }
 #endif
-
-bool haxgrips_is_open_user(void)
-{
-    return get_highest_layer(layer_state) != LAYER_CLOSED_JOYSTICK;
-}
 
 void keyboard_post_init_user(void) {
     for (uint8_t i = 0; i < CIRQUE_PINNACLES_COUNT; i++)
@@ -539,6 +524,25 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record)
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record)
 {
+    switch (keycode) {
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_LEFT_DPAD:
+        cirque_pinnacles_clear_active_keys(0);
+        _cirque_pinnacles_nineboxes[0] = record->event.pressed ? js_left_dpad_ninebox : NULL;
+        return false;
+    case CKC_JS_RIGHT_BUTTONS:
+        cirque_pinnacles_clear_active_keys(1);
+        _cirque_pinnacles_nineboxes[1] = record->event.pressed ? js_right_buttons_ninebox : NULL;
+        return false;
+    case CKC_JS_RIGHT_AXES:
+        cirque_pinnacles_clear_active_keys(1);
+        js_right_alt_axes_active = record->event.pressed;
+        return false;
+#endif
+    default:
+        break;
+    }
+
     if (record->event.pressed) {
         if (!process_record_user_pressed(keycode, record)) {
             return false;

@@ -32,46 +32,47 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 };
 #endif
 
-__attribute__((weak)) bool haxgrips_is_open_user(void) {
+const static cirque_pinnacles_config_t cirque_pinnacles_configs[CIRQUE_PINNACLES_COUNT] = {
+    {
+        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_LEFT,
+        .flip_x = false,
+        .flip_y = true,
+        .swap_xy = true,
+    },
+    {
+        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_RIGHT,
+        .flip_x = false,
+        .flip_y = true,
+        .swap_xy = true,
+    },
+};
+const static cirque_pinnacles_config_t cirque_pinnacles_flipped_configs[CIRQUE_PINNACLES_COUNT] = {
+    {
+        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_RIGHT,
+        .flip_x = true,
+        .flip_y = true,
+        .swap_xy = true,
+    },
+    {
+        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_LEFT,
+        .flip_x = true,
+        .flip_y = true,
+        .swap_xy = true,
+    },
+};
+
+
+__attribute__((weak)) bool haxtroller_is_flipped_user(void)
+{
     return false;
 }
 
-const static cirque_pinnacles_config_t cirque_pinnacles_closed_configs[CIRQUE_PINNACLES_COUNT] = {
-    {
-        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_LEFT,
-        .flip_x = false,
-        .flip_y = true,
-        .swap_xy = false,
-    },
-    {
-        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_RIGHT,
-        .flip_x = true,
-        .flip_y = false,
-        .swap_xy = false,
-    }
-};
-
-const static cirque_pinnacles_config_t cirque_pinnacles_open_configs[CIRQUE_PINNACLES_COUNT] = {
-    {
-        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_RIGHT,
-        .flip_x = false,
-        .flip_y = true,
-        .swap_xy = false,
-    },
-    {
-        .spi_cs_pin = CIRQUE_PINNACLES_SPI_CS_PIN_LEFT,
-        .flip_x = true,
-        .flip_y = false,
-        .swap_xy = false,
-    }
-};
-
 const cirque_pinnacles_config_t* cirque_pinnacles_get_config(uint8_t cirque_index)
 {
-    if (haxgrips_is_open_user()) {
-        return &cirque_pinnacles_open_configs[cirque_index];
+    if (haxtroller_is_flipped_user()) {
+        return &cirque_pinnacles_flipped_configs[cirque_index];
     } else {
-        return &cirque_pinnacles_closed_configs[cirque_index];
+        return &cirque_pinnacles_configs[cirque_index];
     }
 }
 

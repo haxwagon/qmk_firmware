@@ -97,19 +97,19 @@ bool joysticks_handle_keycode(uint16_t kc, bool pressed) {
     case KC_JS_LEFT_TRIGGER:
         if (pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MIN);
-            register_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
+            register_joystick_button(JS_DINPUT_LT - QK_JOYSTICK);
         } else {
             joysticks_set_axis(JS_AXIS_RX, 0);
-            unregister_joystick_button(JS_XINPUT_BUTTON_LT - QK_JOYSTICK);
+            unregister_joystick_button(JS_DINPUT_LT - QK_JOYSTICK);
         }
         return true;
     case KC_JS_RIGHT_TRIGGER:
         if (pressed) {
             joysticks_set_axis(JS_AXIS_RX, INT16_MAX);
-            register_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
+            register_joystick_button(JS_DINPUT_RT - QK_JOYSTICK);
         } else {
             joysticks_set_axis(JS_AXIS_RX, 0);
-            unregister_joystick_button(JS_XINPUT_BUTTON_RT - QK_JOYSTICK);
+            unregister_joystick_button(JS_DINPUT_RT - QK_JOYSTICK);
         }
         return true;
     default:
