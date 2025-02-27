@@ -412,6 +412,11 @@ report_mouse_t cirque_pinnacles_pointing_device_get_report_user(report_mouse_t m
             mouse_report.buttons = pointing_device_handle_buttons(0, true, POINTING_DEVICE_BUTTON3);
         }
         break;
+#if defined(JOYSTICK_ENABLE)
+    case LAYER_JOYSTICK:
+        memset(&mouse_report, 0, sizeof(report_mouse_t));
+        break;
+#endif
     case LAYER_NUMSYMS:
         if (mouse_report.buttons > 0) {
             mouse_report.buttons = pointing_device_handle_buttons(0, true, POINTING_DEVICE_BUTTON2);
