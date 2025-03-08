@@ -129,7 +129,6 @@ enum CUSTOM_KEYCODES {
     CKC_POINTING_DEVICE_DEC_DPI,
     CKC_JS_LEFT_DPAD_TOGGLE,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
-    CKC_JS_RIGHT_AXES_TOGGLE,
     CKC_MENU_TOGGLE,
     CKC_MENU_SELECT,
     CKC_MENU_HIGHLIGHT_NEXT,
@@ -277,18 +276,13 @@ static const uint16_t js_left_dpad_ninebox[9] = {
     KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR
 };
 static const uint16_t js_right_buttons_ninebox[9] = {
-    KC_NO, JS_3, KC_NO,
-    JS_2, JS_9, JS_1,
-    KC_NO, JS_0, KC_NO
+    KC_NO, JS_DINPUT_TRIANGLE, KC_NO,
+    JS_DINPUT_SQUARE, JS_9, JS_DINPUT_CIRCLE,
+    KC_NO, JS_DINPUT_CROSS, KC_NO
 };
 
 bool cirque_pinnacles_joysticks_active(void) {
     return get_highest_layer(layer_state) == LAYER_JOYSTICK;
-}
-
-static bool js_right_alt_axes_active = false;
-bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
-    return js_right_alt_axes_active;
 }
 #endif
 
@@ -305,6 +299,39 @@ bool dynamic_macro_record_end_user(int8_t direction) {
     dprintf("Stopped recording macro %d\n", dynamic_macro_direction);
     dynamic_macro_direction = 0;
     dynamic_macro_led_blink();
+    return true;
+}
+#endif
+
+#if defined(ENCODER_ENABLE)
+bool encoder_update_user(uint8_t encoder_index, bool clockwise) {
+    switch (get_highest_layer(layer_state)) {
+#if defined(JOYSTICK_ENABLE)
+    case LAYER_JOYSTICK: {
+        switch (encoder_index) {
+        case 0:
+            joysticks_move_axis(JS_AXIS_RX, clockwise ? 10 : -10);
+            return false;
+        case 1:
+            joysticks_move_axis(JS_AXIS_RY, clockwise ? 10 : -10);
+            return false;
+        default:
+            break;
+        }
+    } break;
+#endif
+    default:
+        switch (encoder_index) {
+        case 0:
+            clockwise ? tap_code(KC_PGDN) : tap_code(KC_PGUP);
+            return false;
+        case 1:
+            clockwise ? tap_code(MS_WHLD) : tap_code(MS_WHLU);
+            return false;
+        default:
+            break;
+        }
+    }
     return true;
 }
 #endif
@@ -365,10 +392,12 @@ bool oled_task_user(void)
     oled_set_cursor(0, 1);
 
     switch (get_highest_layer(layer_state)) {
+#if defined(JOYSTICK_ENABLE)
     case LAYER_JOYSTICK: {
         oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), PSTR("DPAD"), 4);
-        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : (js_right_alt_axes_active ? PSTR("ALT  ") : PSTR("     ")), false);
+        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : PSTR("     "), false);
     } break;
+#endif
     case LAYER_MOVE: {
         oled_render_pointing_dpi();
     } break;
@@ -394,67 +423,67 @@ bool oled_task_user(void)
 #endif
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [LAYER_QWERTY]   = LAYOUT_split_3x5_2(
+    [LAYER_QWERTY]   = LAYOUT_ortho_4x10(
         KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P,
         KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_QUOT,
         LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTCOLN), RSFT_T(KC_SLSH),
-        TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR
+        KC_1, KC_2, KC_3, TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR, KC_4, KC_5, KC_6
     ),
-    [LAYER_FUNC]     = LAYOUT_split_3x5_2(
+    [LAYER_FUNC]     = LAYOUT_ortho_4x10(
         KC_ESC, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
         KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         KC_LSFT, TD(TD_QUOTGRV), TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_ANGLES), TD(TD_PARENS), RSFT_T(KC_BSLS),
-        KC_TRNS, KC_ESC, KC_ENT, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 #if defined(JOYSTICK_ENABLE)
-    [LAYER_JOYSTICK] = LAYOUT_split_3x5_2(
+    [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
         KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_DINPUT_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_DINPUT_RB,
         KC_JS_TURBO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_DINPUT_SQUARE, JS_DINPUT_CROSS, JS_DINPUT_CIRCLE, JS_DINPUT_TRIANGLE,
-        KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, CKC_JS_RIGHT_AXES_TOGGLE, JS_DINPUT_L3, JS_DINPUT_SELECT, JS_DINPUT_START, JS_DINPUT_R3,
-        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
+        KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, KC_NO, JS_DINPUT_L3, JS_DINPUT_SELECT, JS_DINPUT_START, JS_DINPUT_R3,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
 #endif
-    [LAYER_MEDIA]       = LAYOUT_split_3x5_2(
+    [LAYER_MEDIA]       = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_BRID, KC_BRIU, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, KC_MPLY,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_MRWD, KC_MUTE, KC_NO, KC_MFFD, KC_NO,
-        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_MENU] = LAYOUT_split_3x5_2(
+    [LAYER_MENU] = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_HIGHLIGHT_NEXT, CKC_MENU_HIGHLIGHT_PREV, KC_NO, CKC_MENU_SELECT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_MOVE]        = LAYOUT_split_3x5_2(
+    [LAYER_MOVE]        = LAYOUT_ortho_4x10(
         MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, CKC_POINTING_DEVICE_DEC_DPI, CKC_POINTING_DEVICE_INC_DPI, KC_DEL, KC_INS,
         MS_WHLD, MS_LEFT, MS_DOWN, MS_RGHT, MS_BTN1, KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
         MS_BTN7, MS_BTN6, MS_BTN5, MS_BTN4, MS_BTN3, KC_HOME, KC_PGDN, KC_PGUP, KC_END, KC_NO,
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_NUMPAD]      = LAYOUT_split_3x5_2(
+    [LAYER_NUMPAD]      = LAYOUT_ortho_4x10(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PASTSLS), KC_P7, KC_P8, KC_P9, KC_BSPC,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TD(TD_PPLSMNS), KC_P4, KC_P5, KC_P6, KC_PENT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_P0, KC_P1, KC_P2, KC_P3, KC_PDOT,
-        KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT)
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
     ),
-    [LAYER_NUMSYMS]     = LAYOUT_split_3x5_2(
+    [LAYER_NUMSYMS]     = LAYOUT_ortho_4x10(
         KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10,
         KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0,
         LSFT_T(KC_EXLM), KC_AT, KC_HASH, KC_DLR, KC_PERC, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, RSFT_T(KC_RPRN),
-        KC_TRNS, MO(LAYER_MOVE), KC_ENT, KC_TRNS
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, MO(LAYER_MOVE), KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_APP_FPS]  = LAYOUT_split_3x5_2(
+    [LAYER_APP_FPS]  = LAYOUT_ortho_4x10(
         KC_1, KC_2, KC_3, KC_4, KC_5, LALT(KC_F1), LALT(KC_F10), KC_NO, KC_NO, KC_NO,
         KC_LSFT, KC_C, KC_SPACE, KC_Q, KC_E, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         LCTL_T(KC_Z), KC_X, KC_V, TD(TD_R_T), TD(TD_F_G), KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        TD(TD_M_N), TD(TD_TAB_ESC), KC_SPACE, TO(LAYER_DEFAULT)
+        KC_TRNS, KC_TRNS, KC_TRNS, TD(TD_M_N), TD(TD_TAB_ESC), KC_SPACE, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
     ),
-    [LAYER_APP_MOBA]  = LAYOUT_split_3x5_2(
+    [LAYER_APP_MOBA]  = LAYOUT_ortho_4x10(
         KC_1, KC_2, KC_3, KC_4, KC_5, LALT(KC_F1), LALT(KC_F10), KC_NO, KC_NO, KC_NO,
         KC_Q, KC_W, KC_E, KC_R, KC_A, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         TD(TD_TAB_ESC), KC_T, KC_D, KC_F, KC_B, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_LCTL, KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT)
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_LCTL, KC_SPACE, KC_SPACE, TO(LAYER_DEFAULT), KC_TRNS, KC_TRNS, KC_TRNS
     ),
 };
 
@@ -572,10 +601,6 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record)
             dprintf("Setting right cirque to buttons mode...\n");
             _cirque_pinnacles_nineboxes[1] = js_right_buttons_ninebox;
         }
-        return false;
-    case CKC_JS_RIGHT_AXES_TOGGLE:
-        cirque_pinnacles_clear_active_keys(1);
-        js_right_alt_axes_active = !js_right_alt_axes_active;
         return false;
 #endif
 #if defined(OLED_ENABLE)
