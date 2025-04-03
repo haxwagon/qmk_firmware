@@ -127,8 +127,12 @@ static const char* LAYER_NAMES[] = {
 enum CUSTOM_KEYCODES {
     CKC_POINTING_DEVICE_INC_DPI = SAFE_RANGE,
     CKC_POINTING_DEVICE_DEC_DPI,
+    CKC_JS_LEFT_DPAD,
     CKC_JS_LEFT_DPAD_TOGGLE,
+    CKC_JS_RIGHT_BUTTONS,
     CKC_JS_RIGHT_BUTTONS_TOGGLE,
+    CKC_JS_RIGHT_AXES,
+    CKC_JS_RIGHT_AXES_TOGGLE,
     CKC_MENU_TOGGLE,
     CKC_MENU_SELECT,
     CKC_MENU_HIGHLIGHT_NEXT,
@@ -284,6 +288,12 @@ static const uint16_t js_right_buttons_ninebox[9] = {
 bool cirque_pinnacles_joysticks_active(void) {
     return get_highest_layer(layer_state) == LAYER_JOYSTICK;
 }
+
+static bool js_right_alt_axes_normal_active = false;
+static bool js_right_alt_axes_active = false;
+bool cirque_pinnacles_joysticks_right_alt_axes_active(void) {
+    return js_right_alt_axes_active;
+}
 #endif
 
 #if defined(DYNAMIC_MACRO_ENABLE)
@@ -304,26 +314,37 @@ bool dynamic_macro_record_end_user(int8_t direction) {
 #endif
 
 #if defined(ENCODER_ENABLE)
+uint16_t js_axis_rx_moved_at = 0;
 bool encoder_update_user(uint8_t encoder_index, bool clockwise) {
     switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
     case LAYER_JOYSTICK: {
         switch (encoder_index) {
         case 0:
-            joysticks_move_axis(JS_AXIS_RX, clockwise ? 10 : -10);
+            joysticks_move_axis(JS_AXIS_RX, clockwise ? 8 : -8);
+            js_axis_rx_moved_at = timer_read();
             return false;
         case 1:
-            joysticks_move_axis(JS_AXIS_RY, clockwise ? 10 : -10);
+            joysticks_move_axis(JS_AXIS_RY, clockwise ? 8 : -8);
             return false;
         default:
             break;
         }
     } break;
 #endif
+    case LAYER_MENU: {
+        switch (encoder_index) {
+        case 1:
+            clockwise ? oled_menu_highlight_next() : oled_menu_highlight_prev();
+            return false;
+        default:
+            break;
+        }
+    } break;
     default:
         switch (encoder_index) {
         case 0:
-            clockwise ? tap_code(KC_PGDN) : tap_code(KC_PGUP);
+            clockwise ? tap_code(KC_VOLU) : tap_code(KC_VOLD);
             return false;
         case 1:
             clockwise ? tap_code(MS_WHLD) : tap_code(MS_WHLU);
@@ -394,8 +415,10 @@ bool oled_task_user(void)
     switch (get_highest_layer(layer_state)) {
 #if defined(JOYSTICK_ENABLE)
     case LAYER_JOYSTICK: {
+        oled_write_P(PSTR(" "), false);
         oled_render_flag((_cirque_pinnacles_nineboxes[0] == js_left_dpad_ninebox), PSTR("DPAD"), 4);
-        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS ") : PSTR("     "), false);
+        oled_write_P(PSTR("|"), false);
+        oled_write_P((_cirque_pinnacles_nineboxes[1] == js_right_buttons_ninebox) ? PSTR("BTNS") : (js_right_alt_axes_active ? PSTR("AXES") : PSTR("    ")), false);
     } break;
 #endif
     case LAYER_MOVE: {
@@ -426,21 +449,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_QWERTY]   = LAYOUT_ortho_4x10(
         KC_Q, KC_W, KC_E, KC_R, KC_T, KC_Y, KC_U, KC_I, KC_O, KC_P,
         KC_A, KC_S, KC_D, KC_F, KC_G, KC_H, KC_J, KC_K, KC_L, KC_QUOT,
-        LSFT_T(KC_Z), KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTCOLN), RSFT_T(KC_SLSH),
-        KC_1, KC_2, KC_3, TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR, KC_4, KC_5, KC_6
+        KC_Z, KC_X, KC_C, KC_V, KC_B, KC_N, KC_M, TD(TD_COMMSCLN), TD(TD_DOTCOLN), KC_SLSH,
+        KC_LSFT, KC_LGUI, KC_ESC, TL_LOWR, KC_SPACE, KC_SPACE, TL_UPPR, KC_ENT, KC_RALT, KC_RCTL
     ),
     [LAYER_FUNC]     = LAYOUT_ortho_4x10(
-        KC_ESC, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
-        KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_ENT,
-        KC_LSFT, TD(TD_QUOTGRV), TD(TD_EQLPLUS), TD(TD_MINSUNDS), TD(TD_SLASHES), TD(TD_BRACES), TD(TD_BRACKETS), TD(TD_ANGLES), TD(TD_PARENS), RSFT_T(KC_BSLS),
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_ESC, KC_ENT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
+        KC_GRV, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, DM_REC1, DM_REC2, DM_PLY2, DM_PLY1, KC_BSPC,
+        KC_TAB, KC_MENU, KC_HOME, KC_FIND, TT(LAYER_MEDIA), KC_LEFT, KC_DOWN, KC_UP, KC_RGHT, KC_QUOT,
+        KC_NO,  KC_NO, KC_PLUS, KC_MINS, KC_BSLS, KC_LBRC, KC_RBRC, KC_LPRN, KC_RPRN, KC_SLSH,
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS
     ),
 #if defined(JOYSTICK_ENABLE)
     [LAYER_JOYSTICK] = LAYOUT_ortho_4x10(
         KC_NO, KC_JS_HAT_UL, KC_JS_HAT_U, KC_JS_HAT_UR, KC_NO, KC_NO, JS_DINPUT_LB, KC_JS_LEFT_TRIGGER, KC_JS_RIGHT_TRIGGER, JS_DINPUT_RB,
         KC_JS_TURBO, KC_JS_HAT_L, KC_JS_HAT_D, KC_JS_HAT_R, CKC_JS_LEFT_DPAD_TOGGLE, CKC_JS_RIGHT_BUTTONS_TOGGLE, JS_DINPUT_SQUARE, JS_DINPUT_CROSS, JS_DINPUT_CIRCLE, JS_DINPUT_TRIANGLE,
         KC_NO, KC_JS_HAT_DL, KC_JS_HAT_D, KC_JS_HAT_DR, KC_NO, KC_NO, JS_DINPUT_L3, JS_DINPUT_SELECT, JS_DINPUT_START, JS_DINPUT_R3,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), KC_NO, KC_NO, KC_NO
+        CKC_JS_LEFT_DPAD, KC_JS_LEFT_TRIGGER, JS_DINPUT_LB, KC_NO, KC_NO, KC_NO, TO(LAYER_DEFAULT), JS_DINPUT_RB, KC_JS_RIGHT_TRIGGER, CKC_JS_RIGHT_BUTTONS
     ),
 #endif
     [LAYER_MEDIA]       = LAYOUT_ortho_4x10(
@@ -453,7 +476,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_HIGHLIGHT_NEXT, CKC_MENU_HIGHLIGHT_PREV, KC_NO, CKC_MENU_SELECT,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, CKC_MENU_TOGGLE, KC_NO, KC_NO, KC_NO
+        KC_NO, KC_NO, CKC_MENU_TOGGLE, CKC_MENU_TOGGLE, KC_NO, KC_NO, CKC_MENU_TOGGLE, CKC_MENU_SELECT, KC_NO, KC_NO
     ),
     [LAYER_MOVE]        = LAYOUT_ortho_4x10(
         MS_WHLU, MS_WHLL, MS_UP, MS_WHLR, MS_BTN2, KC_NO, CKC_POINTING_DEVICE_DEC_DPI, CKC_POINTING_DEVICE_INC_DPI, KC_DEL, KC_INS,
@@ -602,6 +625,11 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record)
             _cirque_pinnacles_nineboxes[1] = js_right_buttons_ninebox;
         }
         return false;
+    case CKC_JS_RIGHT_AXES_TOGGLE:
+        cirque_pinnacles_clear_active_keys(1);
+        js_right_alt_axes_normal_active = !js_right_alt_axes_normal_active;
+        js_right_alt_axes_active = js_right_alt_axes_normal_active;
+        return false;
 #endif
 #if defined(OLED_ENABLE)
     case CKC_MENU_TOGGLE:
@@ -631,10 +659,42 @@ bool process_record_user_pressed(uint16_t keycode, keyrecord_t* record)
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record)
 {
+    switch (keycode) {
+#if defined(JOYSTICK_ENABLE)
+    case CKC_JS_LEFT_DPAD:
+        cirque_pinnacles_clear_active_keys(0);
+        _cirque_pinnacles_nineboxes[0] = record->event.pressed ? js_left_dpad_ninebox : NULL;
+        return false;
+    case CKC_JS_RIGHT_BUTTONS:
+        cirque_pinnacles_clear_active_keys(1);
+        _cirque_pinnacles_nineboxes[1] = record->event.pressed ? js_right_buttons_ninebox : NULL;
+        return false;
+    case CKC_JS_RIGHT_AXES:
+        cirque_pinnacles_clear_active_keys(1);
+        if (js_right_alt_axes_normal_active) {
+            js_right_alt_axes_active = !record->event.pressed;
+        } else {
+            js_right_alt_axes_active = record->event.pressed;
+        }
+        return false;
+#endif
+    default:
+        break;
+    }
+
     if (record->event.pressed) {
         if (!process_record_user_pressed(keycode, record)) {
             return false;
         }
     }
     return true;
+}
+
+void housekeeping_task_user(void)
+{
+#if defined(JOYSTICK_ENABLE) && defined(ENCODER_ENABLE)
+    if (js_axis_rx_moved_at > 0 && timer_elapsed(js_axis_rx_moved_at) > 1000 && joysticks_get_axis(JS_AXIS_RX) != 0) {
+        joysticks_set_axis(JS_AXIS_RX, 0);
+    }
+#endif
 }

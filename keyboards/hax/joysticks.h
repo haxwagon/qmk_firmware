@@ -43,6 +43,7 @@ enum JOYSTICKS_KEYCODES {
     KC_JS_RIGHT_TRIGGER,
 };
 
+int16_t joysticks_get_axis(uint8_t axis);
 void joysticks_init(void);
 void joysticks_move_axis(uint8_t axis, int16_t delta);
 bool joysticks_handle_keycode(uint16_t kc, bool pressed);

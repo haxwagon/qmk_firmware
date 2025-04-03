@@ -12,6 +12,11 @@ void joysticks_init(void)
     }
 }
 
+int16_t joysticks_get_axis(uint8_t axis)
+{
+    return joystick_state.axes[axis];
+}
+
 uint8_t joysticks_map_js_hat_keycode(uint16_t kc) {
     switch (kc) {
     case KC_JS_HAT_C: return JOYSTICK_HAT_CENTER;
